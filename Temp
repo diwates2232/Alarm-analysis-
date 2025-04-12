@@ -1,11 +1,24 @@
-PS C:\Users\W0024618\Desktop\AlarmAnalysis> cd .\Backend
+Read my current packege.json file and correct it 
 
 
-
-
-
-PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> dir
-
-
-PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> node server.js
-
+{
+  "name": "alarm-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+    
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
+    
+  },
+  
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "xlsx": "^0.18.5"
+  },
+  "description": ""
+}
