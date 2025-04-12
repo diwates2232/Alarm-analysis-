@@ -1,3 +1,22 @@
+PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> dir server*
+
+
+
+server.js
+
+
+
+PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> ren server-js server.js
+
+
+
+
+PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend>
+
+
+
+
+
 
 {
   "name": "alarm-backend",
