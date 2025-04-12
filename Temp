@@ -1,16 +1,65 @@
+const xlsx = require('xlsx');
+const path = require('path');
+
+function loadExcelDetails() {
+    const filePath = path.join(__dirname, '../data/Alarms.xlsx');
+    const workbook = xlsx.readFile(filePath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(sheet);
+
+    return data; // returns all rows as detailed data
+}
+
+module.exports = {
+    loadExcelDetails
+};
+
+
+
+
+
+const { loadExcelDetails } = require('../services/excelService');
+
+const getAlarmDetails = (req, res) => {
+    try {
+        const details = loadExcelDetails();
+        res.json(details);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to load alarm details' });
+    }
+};
+
+module.exports = {
+    getAlarmDetails
+};
+
+
+
+
+const express = require('express');
+const router = express.Router();
+const { getAlarmSummary } = require('../controllers/alarmController');
+const { getAlarmDetails } = require('../controllers/alarmController');
+
+router.get('/summary', getAlarmSummary);
+router.get('/details', getAlarmDetails); // <-- New route
+
+module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+
 cd "C:\Users\W0024618\Desktop\AlarmAnalysis"
-
-
-
-
-
-
-
-
 PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> dir server*
-
-
-
 
 server.js
 
