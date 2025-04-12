@@ -1,0 +1,11 @@
+PS C:\Users\W0024618\Desktop\AlarmAnalysis> cd .\Backend
+
+
+
+
+
+PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> dir
+
+
+PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> node server.js
+
