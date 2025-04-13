@@ -1,3 +1,29 @@
+import React from 'react';
+import { Card } from 'react-bootstrap';
+import '../styles/SummaryCards.css';
+
+const SummaryCards = ({ title, count, icon }) => {
+  return (
+    <Card className="summary-card">
+      <Card.Body>
+        <div className="summary-icon">{icon}</div>
+        <div className="summary-title">{title}</div>
+        <div className="summary-count">{count}</div>
+      </Card.Body>
+    </Card>
+  );
+};
+
+export default SummaryCards;
+
+
+
+
+"scripts": {
+  "start": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
+  "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build",
+  "test": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts test"
+}
 
 
 
