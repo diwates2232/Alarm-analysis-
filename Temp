@@ -1,3 +1,45 @@
+--- a/components/SummaryCards.js
++++ b/components/SummaryCards.js
+@@ top
+-import React from 'react';
+-import './SummaryCards.css'; // Optional custom styles
+-import { Pie, Bar } from 'react-chartjs-2';
+-import { Card, CardContent, Typography, Grid } from '@mui/material';
++import React from 'react';
++import './SummaryCards.css'; // Optional custom styles
++import { Pie, Bar } from 'react-chartjs-2';
++import { Card, CardContent, Typography, Grid } from '@mui/material';
++
++// Register chart.js components for react-chartjs-2
++import {
++  Chart as ChartJS,
++  ArcElement,
++  CategoryScale,
++  LinearScale,
++  BarElement,
++  Tooltip,
++  Legend
++} from 'chart.js';
++
++ChartJS.register(
++  ArcElement,
++  CategoryScale,
++  LinearScale,
++  BarElement,
++  Tooltip,
++  Legend
++);
+
+
+
+
+
+
+
+
+
+
+
 Uncaught runtime errors:
 ×
 ERROR
