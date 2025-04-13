@@ -1,3 +1,158 @@
+
+const { loadExcelData } = require('../services/excelService');
+
+// Convert Excel serial date to JS Date object
+const excelSerialDateToJS = (serial) => {
+    return new Date(Math.round((serial - 25569) * 86400 * 1000));
+};
+
+// Format JS Date object to "DD-MMM-YY"
+const formatDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = dateObj.toLocaleString('default', { month: 'short' });
+    const year = String(dateObj.getFullYear()).slice(-2);
+    return `${day}-${month}-${year}`;
+};
+
+// Format time from Date object to "HH:MM:SS"
+const formatTime = (dateObj) => {
+    return dateObj.toTimeString().split(' ')[0];
+};
+
+const getAlarmSummary = (req, res) => {
+    const data = loadExcelData();
+
+    const summary = {
+        totalAlarms: 0,
+        regionWise: {},
+        priorityWise: {},
+        rejectionTypeWise: {},
+        locationWise: {},
+        operatorWise: {},
+        responseSentPercentage: 0,
+        monthWise: {}
+    };
+
+    let responseSentCount = 0;
+
+    data.forEach(row => {
+        summary.totalAlarms++;
+
+        // Region wise
+        const region = row['Region'] || 'Unknown';
+        summary.regionWise[region] = (summary.regionWise[region] || 0) + 1;
+
+        // Priority wise
+        const priority = row['CCURE Incident Priority'] || 'Unknown';
+        summary.priorityWise[priority] = (summary.priorityWise[priority] || 0) + 1;
+
+        // Rejection type wise
+        const rejectionType = row['Rejection'] || 'Unknown';
+        summary.rejectionTypeWise[rejectionType] = (summary.rejectionTypeWise[rejectionType] || 0) + 1;
+
+        // Location wise
+        const location = row['Location'] || 'Unknown';
+        summary.locationWise[location] = (summary.locationWise[location] || 0) + 1;
+
+        // Operator wise
+        const operator = row['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+        summary.operatorWise[operator] = (summary.operatorWise[operator] || 0) + 1;
+
+        // Response Sent Count
+        const actionTaken = (row['Action Taken'] || '').toLowerCase();
+        if (actionTaken.includes('response sent') || actionTaken === 'sent') {
+            responseSentCount++;
+        }
+
+        // Month wise (using Excel serial Date)
+        const excelDate = row['Date'];
+        if (excelDate && typeof excelDate === 'number') {
+            const jsDate = excelSerialDateToJS(excelDate);
+            const monthYear = `${String(jsDate.getMonth() + 1).padStart(2, '0')}-${jsDate.getFullYear()}`;
+            summary.monthWise[monthYear] = (summary.monthWise[monthYear] || 0) + 1;
+        }
+    });
+
+    summary.responseSentPercentage = summary.totalAlarms > 0
+        ? ((responseSentCount / summary.totalAlarms) * 100).toFixed(2) + '%'
+        : '0.00%';
+
+    // Convert to { count, percentage } format
+    const addPercentages = obj => {
+        const result = {};
+        for (const key in obj) {
+            const count = obj[key];
+            const percentage = ((count / summary.totalAlarms) * 100).toFixed(2) + '%';
+            result[key] = { count, percentage };
+        }
+        return result;
+    };
+
+    summary.regionWise = addPercentages(summary.regionWise);
+    summary.priorityWise = addPercentages(summary.priorityWise);
+    summary.rejectionTypeWise = addPercentages(summary.rejectionTypeWise);
+    summary.locationWise = addPercentages(summary.locationWise);
+    summary.operatorWise = addPercentages(summary.operatorWise);
+    summary.monthWise = addPercentages(summary.monthWise);
+
+    res.json(summary);
+};
+
+const getRawAlarms = (req, res) => {
+    const data = loadExcelData();
+
+    const formattedData = data.map(row => {
+        const newRow = { ...row };
+
+        // Date
+        if (newRow['Date'] && typeof newRow['Date'] === 'number') {
+            const dateObj = excelSerialDateToJS(newRow['Date']);
+            newRow['Date'] = formatDate(dateObj);
+        }
+
+        // Time of Alarm
+        if (newRow['Time of  Alarm (Local time)'] && typeof newRow['Time of  Alarm (Local time)'] === 'number') {
+            const timeObj = excelSerialDateToJS(newRow['Time of  Alarm (Local time)']);
+            newRow['Time of  Alarm (Local time)'] = formatTime(timeObj);
+        }
+
+        // Date of Action
+        if (newRow['Date of Action (MM/DD/YY)'] && typeof newRow['Date of Action (MM/DD/YY)'] === 'number') {
+            const dateObj = excelSerialDateToJS(newRow['Date of Action (MM/DD/YY)']);
+            newRow['Date of Action (MM/DD/YY)'] = formatDate(dateObj);
+        }
+
+        // Time of Action
+        if (newRow['Time of Action'] && typeof newRow['Time of Action'] === 'number') {
+            const timeObj = excelSerialDateToJS(newRow['Time of Action']);
+            newRow['Time of Action'] = formatTime(timeObj);
+        }
+
+        // Time of Completion
+        if (newRow['Time of Completion'] && typeof newRow['Time of Completion'] === 'number') {
+            const timeObj = excelSerialDateToJS(newRow['Time of Completion']);
+            newRow['Time of Completion'] = formatTime(timeObj);
+        }
+
+        return newRow;
+    });
+
+    res.json(formattedData);
+};
+
+module.exports = {
+    getAlarmSummary,
+    getRawAlarms
+};
+ 
+
+
+
+
+
+
+
+
 This is my current alarmController.js file then update my file and give me updated js file 
 
 const { loadExcelData } = require('../services/excelService');
