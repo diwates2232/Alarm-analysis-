@@ -1,40 +1,138 @@
-Below is my Table Columns i will Explain you my columns details.
+Now i want to make Summary section like this.
 
-Sr. No   // 1,2,3,4,5....
-Date	  // 01-Apr-25
-Time of  Alarm (Local time)     //12:00:08 AM
-Owner	// GSOC
-Type of Alarm  // Badge Access  
-Door   // Ex -EMEA_LT_VNO_GAMA_9th Flr_Main Entrance  , Door name means in Which door Alarm are raised.
-Location  // LT.Vilnius , ES.Madrid ,AR.Cordoba , CR.Costa Rica Partition     This are site details 
-Region	// APAC , EMEA , LACA, NAMER  This is 4 region and under this 4 region Location are distrubuted...
-Rejection  //     Disabled Badge ,Stolen ,Expired ,Clearance - Access Violation, Lost ,Facility Code ,Wrong Pin,Unknown card,Not activated,Site code,Duress Alarm  - this is our Main Rejection Types . 
-CCURE Incident Priority  //High , Medium , Low
-Name of Person Attending Alarms (First, Last Name)  // Sejal Satpute ,Swapnil Diwate this is name of GSOC operatror Whos attend Alarm.
-Employee Name     //this is simple Employee name 
-Employee ID No	   // Employee ID
+Global - (APAC + EMEA + LACA + NAMER)  Total Number of Alarm Occured.
+then Countand percentage of alarm ffor  specific Region wise - APAC, EMAEA, LACA, NAMEER
+ALARM by rejection type - Count and percentage 
+Alarm Prority - Count and Percentage of Alarm for High , Medium , Low
+Then same for Specific Location.
+
+Also make a summary for GSOC Operator Who Attend alarm count and Percentage for GSOC Operator Who attend alarm .
+also percentage of Responce sent .When Alarm occured.
+also make a make summary for Month wise count and percentage 
 
 
-If Reoccured Yes/No	 
-//IF Reoccured Yes no And Action taken this are relateed to each other if a single alarm are occured then responce has notsent to employee 
-No	Not Sent  no in If Reoccured Yes/No	  column  and not sent for Action Taken this column 
-Action Taken
-
-Remediation Notes	  // remedation means Why rejection occured.
-Target SLA in Mins
-Date of Action (MM/DD/YY)
-Time of Action	
-Time Taken (Min)
-Time of Completion
-If not resolved, escalated to?	
-Date of Escalation	
-Time Of Escalation	
-Result of SLA in (Min)	
-SLA Met	
-Completed By
-Reason
-Action taken by Gsoc Operator
+Read below my backend details and update files as per my request .First Update for only summary
+then we will discuss about improvment for raw data
 
 
 
-this are my columns details once read then We will discuss for next step
+alarmController.js
+
+const { loadExcelData } = require('../services/excelService');
+
+const getAlarmSummary = (req, res) => {
+    const data = loadExcelData();
+
+    const summary = {
+        totalAlarms: data.length,
+        alarmsByRegion: {},
+        alarmsBySeverity: {},
+        reoccurredCount: 0
+    };
+
+    data.forEach(row => {
+        const region = row['Region'] || 'Unknown';
+        const severity = row['CCURE Incident Level'] || 'Unknown';
+        const reoccurred = row['If Reoccurred (Yes/No)'] === 'Yes';
+
+        summary.alarmsByRegion[region] = (summary.alarmsByRegion[region] || 0) + 1;
+        summary.alarmsBySeverity[severity] = (summary.alarmsBySeverity[severity] || 0) + 1;
+
+        if (reoccurred) summary.reoccurredCount++;
+    });
+
+    res.json(summary);
+};
+
+const getRawAlarms = (req, res) => {
+    const data = loadExcelData();
+    res.json(data);
+};
+
+module.exports = {
+    getAlarmSummary,
+    getRawAlarms
+};
+
+
+
+
+
+
+alarmRoutes.js
+
+
+const { loadExcelData } = require('../services/excelService');
+
+const getAlarmSummary = (req, res) => {
+    const data = loadExcelData();
+
+    const summary = {
+        totalAlarms: data.length,
+        alarmsByRegion: {},
+        alarmsBySeverity: {},
+        reoccurredCount: 0
+    };
+
+    data.forEach(row => {
+        const region = row['Region'] || 'Unknown';
+        const severity = row['CCURE Incident Level'] || 'Unknown';
+        const reoccurred = row['If Reoccurred (Yes/No)'] === 'Yes';
+
+        summary.alarmsByRegion[region] = (summary.alarmsByRegion[region] || 0) + 1;
+        summary.alarmsBySeverity[severity] = (summary.alarmsBySeverity[severity] || 0) + 1;
+
+        if (reoccurred) summary.reoccurredCount++;
+    });
+
+    res.json(summary);
+};
+
+const getRawAlarms = (req, res) => {
+    const data = loadExcelData();
+    res.json(data);
+};
+
+module.exports = {
+    getAlarmSummary,
+    getRawAlarms
+};
+
+
+
+
+excelService.js
+
+const xlsx = require('xlsx');
+const path = require('path');
+
+function loadExcelData() {
+    const filePath = path.join(__dirname, '../data/Alarms.xlsx');
+    const workbook = xlsx.readFile('./data/Alarms.xlsx');
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    return xlsx.utils.sheet_to_json(sheet);
+}
+
+module.exports = {
+    loadExcelData
+};
+
+
+
+
+
+Server.js
+
+const express = require('express');
+const cors = require('cors');
+const alarmRoutes = require('./routes/alarmRoutes');
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use('/api/alarms', alarmRoutes);
+
+app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+});
