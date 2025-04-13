@@ -1,3 +1,20 @@
+cd %USERPROFILE%\Desktop\AlarmAnalysis\Backend
+node server.js
+
+
+cd %USERPROFILE%\Desktop\AlarmAnalysis\Frontend
+npm start
+
+
+
+
+
+
+
+
+
+
+
 Read below API and responce for Refrance and make interactive Dashboard
 
 
