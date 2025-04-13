@@ -1,3 +1,110 @@
+const { loadExcelData } = require('../services/excelService');
+
+const excelSerialDateToJS = (serial) => {
+    return new Date(Math.round((serial - 25569) * 86400 * 1000));
+};
+
+const getAlarmSummary = (req, res) => {
+    const data = loadExcelData();
+
+    const summary = {
+        totalAlarms: 0,
+        regionWise: {},
+        priorityWise: {},
+        rejectionTypeWise: {},
+        locationWise: {},
+        operatorWise: {},
+        responseSentPercentage: 0,
+        monthWise: {}
+    };
+
+    let responseSentCount = 0;
+
+    data.forEach(row => {
+        summary.totalAlarms++;
+
+        // Region wise
+        const region = row['Region'] || 'Unknown';
+        summary.regionWise[region] = (summary.regionWise[region] || 0) + 1;
+
+        // Priority wise
+        const priority = row['CCURE Incident Priority'] || 'Unknown';
+        summary.priorityWise[priority] = (summary.priorityWise[priority] || 0) + 1;
+
+        // Rejection type wise
+        const rejectionType = row['Rejection'] || 'Unknown';
+        summary.rejectionTypeWise[rejectionType] = (summary.rejectionTypeWise[rejectionType] || 0) + 1;
+
+        // Location wise
+        const location = row['Location'] || 'Unknown';
+        summary.locationWise[location] = (summary.locationWise[location] || 0) + 1;
+
+        // Operator wise
+        const operator = row['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+        summary.operatorWise[operator] = (summary.operatorWise[operator] || 0) + 1;
+
+        // Response Sent Count
+        const actionTaken = (row['Action Taken'] || '').toLowerCase();
+        if (actionTaken.includes('response sent') || actionTaken === 'sent') {
+            responseSentCount++;
+        }
+
+        // Month wise (using Excel serial Date)
+        const excelDate = row['Date'];
+        if (excelDate && typeof excelDate === 'number') {
+            const jsDate = excelSerialDateToJS(excelDate);
+            const monthYear = `${String(jsDate.getMonth() + 1).padStart(2, '0')}-${jsDate.getFullYear()}`;
+            summary.monthWise[monthYear] = (summary.monthWise[monthYear] || 0) + 1;
+        }
+    });
+
+    summary.responseSentPercentage = summary.totalAlarms > 0
+        ? ((responseSentCount / summary.totalAlarms) * 100).toFixed(2) + '%'
+        : '0.00%';
+
+    // Convert to { count, percentage } format
+    const addPercentages = obj => {
+        const result = {};
+        for (const key in obj) {
+            const count = obj[key];
+            const percentage = ((count / summary.totalAlarms) * 100).toFixed(2) + '%';
+            result[key] = { count, percentage };
+        }
+        return result;
+    };
+
+    summary.regionWise = addPercentages(summary.regionWise);
+    summary.priorityWise = addPercentages(summary.priorityWise);
+    summary.rejectionTypeWise = addPercentages(summary.rejectionTypeWise);
+    summary.locationWise = addPercentages(summary.locationWise);
+    summary.operatorWise = addPercentages(summary.operatorWise);
+    summary.monthWise = addPercentages(summary.monthWise);
+
+    res.json(summary);
+};
+
+const getRawAlarms = (req, res) => {
+    const data = loadExcelData();
+    res.json(data);
+};
+
+module.exports = {
+    getAlarmSummary,
+    getRawAlarms
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 This is my current alarmController.js file so make changes as per my request....
 
 const { loadExcelData } = require('../services/excelService');
