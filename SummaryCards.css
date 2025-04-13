@@ -1,0 +1,32 @@
+.summary-container {
+  padding: 20px;
+}
+
+.summary-cards {
+  margin-bottom: 30px;
+}
+
+.cards {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 20px;
+}
+
+.card {
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 1.2rem;
+}
+
+.charts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: space-around;
+}
+
+.chart {
+  width: 300px;
+  max-width: 100%;
+}
