@@ -1,3 +1,74 @@
+- iimport React from 'react';
++ import React from 'react';
+
+
+import React from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+
+
+
+
+
+import React from 'react';
+import './SummaryCards.css';
+import { Pie, Bar } from 'react-chartjs-2';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+
+
+
+Chart.register(ArcElement, CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+...
+if (chartInstance.current) {
+  chartInstance.current.destroy();
+}
+chartInstance.current = new Chart(ctx, config);
+
+
+
+
 Ok Lets check each file Carefully and solve error
 
 /components
