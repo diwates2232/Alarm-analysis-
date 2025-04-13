@@ -1,25 +1,74 @@
-
-npm install @emotion/react @emotion/styled
-
-
-
-Compiled with problems:
+Uncaught runtime errors:
 ×
-ERROR in ./src/pages/Dashboard.js 7:0-48
-Module not found: Error: Can't resolve '../components/AlarmCard' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\pages'
-ERROR in ./node_modules/@mui/styled-engine/esm/GlobalStyles/GlobalStyles.js 5:0-40
-Module not found: Error: Can't resolve '@emotion/react' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@mui\styled-engine\esm\GlobalStyles'
-ERROR in ./node_modules/@mui/styled-engine/esm/StyledEngineProvider/StyledEngineProvider.js 5:0-47
-Module not found: Error: Can't resolve '@emotion/react' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@mui\styled-engine\esm\StyledEngineProvider'
-ERROR in ./node_modules/@mui/styled-engine/esm/index.js 11:0-39
-Module not found: Error: Can't resolve '@emotion/styled' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@mui\styled-engine\esm'
-ERROR in ./node_modules/@mui/styled-engine/esm/index.js 45:0-62
-Module not found: Error: Can't resolve '@emotion/react' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@mui\styled-engine\esm'
-ERROR in ./node_modules/@mui/system/esm/ThemeProvider/ThemeProvider.js 64:32-65
-export 'ThemeContext' (imported as 'StyledEngineThemeContext') was not found in '@mui/styled-engine' (possible exports: GlobalStyles, StyledEngineProvider, default, internal_mutateStyles, internal_serializeStyles)
-ERROR in ./node_modules/@mui/system/esm/index.js 9:0-74
-export 'css' (reexported as 'css') was not found in '@mui/styled-engine' (possible exports: GlobalStyles, StyledEngineProvider, default, internal_mutateStyles, internal_serializeStyles)
-ERROR in ./node_modules/@mui/system/esm/index.js 9:0-74
-export 'keyframes' (reexported as 'keyframes') was not found in '@mui/styled-engine' (possible exports: GlobalStyles, StyledEngineProvider, default, internal_mutateStyles, internal_serializeStyles)
-ERROR in ./node_modules/@mui/system/esm/useThemeWithoutDefault/useThemeWithoutDefault.js 9:40-52
-export 'ThemeContext' (imported as 'ThemeContext') was not found in '@mui/styled-engine' (possible exports: GlobalStyles, StyledEngineProvider, default, internal_mutateStyles, internal_serializeStyles)
+ERROR
+"arc" is not a registered element.
+    at Registry._get (http://localhost:3001/static/js/bundle.js:110419:13)
+    at Registry.getElement (http://localhost:3001/static/js/bundle.js:110368:17)
+    at Chart.buildOrUpdateControllers (http://localhost:3001/static/js/bundle.js:111195:37)
+    at Chart.update (http://localhost:3001/static/js/bundle.js:111229:33)
+    at new Chart (http://localhost:3001/static/js/bundle.js:110986:12)
+    at renderChart (http://localhost:3001/static/js/bundle.js:123867:24)
+    at http://localhost:3001/static/js/bundle.js:123914:5
+    at react-stack-bottom-frame (http://localhost:3001/static/js/bundle.js:137148:18)
+    at runWithFiberInDEV (http://localhost:3001/static/js/bundle.js:125067:68)
+    at commitHookEffectListMount (http://localhost:3001/static/js/bundle.js:130057:618)
+ERROR
+"arc" is not a registered element.
+    at Registry._get (http://localhost:3001/static/js/bundle.js:110419:13)
+    at Registry.getElement (http://localhost:3001/static/js/bundle.js:110368:17)
+    at Chart.buildOrUpdateControllers (http://localhost:3001/static/js/bundle.js:111195:37)
+    at Chart.update (http://localhost:3001/static/js/bundle.js:111229:33)
+    at new Chart (http://localhost:3001/static/js/bundle.js:110986:12)
+    at renderChart (http://localhost:3001/static/js/bundle.js:123867:24)
+    at http://localhost:3001/static/js/bundle.js:123914:5
+    at react-stack-bottom-frame (http://localhost:3001/static/js/bundle.js:137148:18)
+    at runWithFiberInDEV (http://localhost:3001/static/js/bundle.js:125067:68)
+    at commitHookEffectListMount (http://localhost:3001/static/js/bundle.js:130057:618)
+ERROR
+"category" is not a registered scale.
+    at Registry._get (http://localhost:3001/static/js/bundle.js:110419:13)
+    at Registry.getScale (http://localhost:3001/static/js/bundle.js:110374:17)
+    at http://localhost:3001/static/js/bundle.js:111116:37
+    at each (http://localhost:3001/static/js/bundle.js:117439:12)
+    at Chart.buildOrUpdateScales (http://localhost:3001/static/js/bundle.js:111103:66)
+    at Chart._updateScales (http://localhost:3001/static/js/bundle.js:111268:10)
+    at Chart.update (http://localhost:3001/static/js/bundle.js:111219:10)
+    at new Chart (http://localhost:3001/static/js/bundle.js:110986:12)
+    at renderChart (http://localhost:3001/static/js/bundle.js:123867:24)
+    at http://localhost:3001/static/js/bundle.js:123914:5
+ERROR
+Canvas is already in use. Chart with ID '0' must be destroyed before the canvas with ID '' can be reused.
+    at new Chart (http://localhost:3001/static/js/bundle.js:110941:13)
+    at renderChart (http://localhost:3001/static/js/bundle.js:123867:24)
+    at http://localhost:3001/static/js/bundle.js:123914:5
+    at react-stack-bottom-frame (http://localhost:3001/static/js/bundle.js:137148:18)
+    at runWithFiberInDEV (http://localhost:3001/static/js/bundle.js:125067:68)
+    at commitHookEffectListMount (http://localhost:3001/static/js/bundle.js:130057:618)
+    at commitHookPassiveMountEffects (http://localhost:3001/static/js/bundle.js:130094:56)
+    at reconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131050:9)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131041:66)
+    at reconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131049:9)
+ERROR
+Canvas is already in use. Chart with ID '1' must be destroyed before the canvas with ID '' can be reused.
+    at new Chart (http://localhost:3001/static/js/bundle.js:110941:13)
+    at renderChart (http://localhost:3001/static/js/bundle.js:123867:24)
+    at http://localhost:3001/static/js/bundle.js:123914:5
+    at react-stack-bottom-frame (http://localhost:3001/static/js/bundle.js:137148:18)
+    at runWithFiberInDEV (http://localhost:3001/static/js/bundle.js:125067:68)
+    at commitHookEffectListMount (http://localhost:3001/static/js/bundle.js:130057:618)
+    at commitHookPassiveMountEffects (http://localhost:3001/static/js/bundle.js:130094:56)
+    at reconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131050:9)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131041:66)
+    at reconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131049:9)
+ERROR
+Canvas is already in use. Chart with ID '2' must be destroyed before the canvas with ID '' can be reused.
+    at new Chart (http://localhost:3001/static/js/bundle.js:110941:13)
+    at renderChart (http://localhost:3001/static/js/bundle.js:123867:24)
+    at http://localhost:3001/static/js/bundle.js:123914:5
+    at react-stack-bottom-frame (http://localhost:3001/static/js/bundle.js:137148:18)
+    at runWithFiberInDEV (http://localhost:3001/static/js/bundle.js:125067:68)
+    at commitHookEffectListMount (http://localhost:3001/static/js/bundle.js:130057:618)
+    at commitHookPassiveMountEffects (http://localhost:3001/static/js/bundle.js:130094:56)
+    at reconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131050:9)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131041:66)
+    at reconnectPassiveEffects (http://localhost:3001/static/js/bundle.js:131049:9)
