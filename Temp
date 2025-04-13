@@ -1,3 +1,114 @@
+const { loadExcelData } = require('../services/excelService');
+
+const getAlarmSummary = (req, res) => {
+    const data = loadExcelData();
+
+    const summary = {
+        totalAlarms: data.length,
+        alarmsByRegion: {},
+        regionPercentages: {},
+        alarmsByRejectionType: {},
+        rejectionTypePercentages: {},
+        alarmsByPriority: {},
+        priorityPercentages: {},
+        alarmsByLocation: {},
+        locationPercentages: {},
+        alarmsByGSOCOperator: {},
+        gsocOperatorPercentages: {},
+        responseSentCount: 0,
+        responseSentPercentage: 0,
+        monthWiseCount: {},
+        monthWisePercentage: {},
+    };
+
+    const total = data.length;
+
+    data.forEach(row => {
+        const region = row['Region'] || 'Unknown';
+        const priority = row['CCURE Incident Priority'] || 'Unknown';
+        const rejection = row['Rejection'] || 'Unknown';
+        const location = row['Location'] || 'Unknown';
+        const operator = row['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+        const actionTaken = row['Action Taken'] || '';
+        const reoccurred = row['If Reoccurred Yes/No'] || '';
+
+        // Count by region
+        summary.alarmsByRegion[region] = (summary.alarmsByRegion[region] || 0) + 1;
+
+        // Count by rejection
+        summary.alarmsByRejectionType[rejection] = (summary.alarmsByRejectionType[rejection] || 0) + 1;
+
+        // Count by priority
+        summary.alarmsByPriority[priority] = (summary.alarmsByPriority[priority] || 0) + 1;
+
+        // Count by location
+        summary.alarmsByLocation[location] = (summary.alarmsByLocation[location] || 0) + 1;
+
+        // Count by GSOC operator
+        summary.alarmsByGSOCOperator[operator] = (summary.alarmsByGSOCOperator[operator] || 0) + 1;
+
+        // Check if response sent
+        if (reoccurred.toLowerCase() === 'no' && actionTaken.toLowerCase() !== 'not sent') {
+            summary.responseSentCount++;
+        }
+
+        // Month-wise summary
+        const dateStr = row['Date']; // Format: DD-MMM-YY or DD-MMM-YYYY
+        if (dateStr) {
+            const [day, mon, year] = dateStr.split('-');
+            const monthKey = mon + '-' + (year.length === 2 ? '20' + year : year); // Apr-25
+
+            summary.monthWiseCount[monthKey] = (summary.monthWiseCount[monthKey] || 0) + 1;
+        }
+    });
+
+    // Calculate Percentages
+    for (const [key, value] of Object.entries(summary.alarmsByRegion)) {
+        summary.regionPercentages[key] = ((value / total) * 100).toFixed(2) + '%';
+    }
+
+    for (const [key, value] of Object.entries(summary.alarmsByRejectionType)) {
+        summary.rejectionTypePercentages[key] = ((value / total) * 100).toFixed(2) + '%';
+    }
+
+    for (const [key, value] of Object.entries(summary.alarmsByPriority)) {
+        summary.priorityPercentages[key] = ((value / total) * 100).toFixed(2) + '%';
+    }
+
+    for (const [key, value] of Object.entries(summary.alarmsByLocation)) {
+        summary.locationPercentages[key] = ((value / total) * 100).toFixed(2) + '%';
+    }
+
+    for (const [key, value] of Object.entries(summary.alarmsByGSOCOperator)) {
+        summary.gsocOperatorPercentages[key] = ((value / total) * 100).toFixed(2) + '%';
+    }
+
+    for (const [key, value] of Object.entries(summary.monthWiseCount)) {
+        summary.monthWisePercentage[key] = ((value / total) * 100).toFixed(2) + '%';
+    }
+
+    summary.responseSentPercentage = ((summary.responseSentCount / total) * 100).toFixed(2) + '%';
+
+    res.json(summary);
+};
+
+const getRawAlarms = (req, res) => {
+    const data = loadExcelData();
+    res.json(data);
+};
+
+module.exports = {
+    getAlarmSummary,
+    getRawAlarms
+};
+
+
+
+
+
+
+
+
 Now i want to make Summary section like this.
 
 Global - (APAC + EMEA + LACA + NAMER)  Total Number of Alarm Occured.
