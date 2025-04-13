@@ -1,3 +1,26 @@
+set NODE_OPTIONS=--openssl-legacy-provider
+npm start
+
+
+
+
+"scripts": {
+
+
+
+*If that exact placement errors, instead try:*
+
+```diff
+"start": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts start"
+
+
+
+
+
+
+
+
+
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
 
 > alarm-frontend@0.1.0 start
