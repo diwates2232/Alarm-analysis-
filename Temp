@@ -1,3 +1,8 @@
+
+npm install @emotion/react @emotion/styled
+
+
+
 Compiled with problems:
 ×
 ERROR in ./src/pages/Dashboard.js 7:0-48
