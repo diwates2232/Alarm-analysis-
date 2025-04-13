@@ -1,3 +1,10 @@
+cd %USERPROFILE%\Desktop\AlarmAnalysis
+npx create-react-app frontend
+
+
+
+
+
 cd %USERPROFILE%\Desktop\AlarmAnalysis\Backend
 node server.js
 
