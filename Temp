@@ -1,3 +1,45 @@
+This are my table details a
+
+ "Sr. No": 1,
+    "Date": 45748,
+    "Time of  Alarm (Local time)": 0.000092592592592592,
+    "Owner": "GSOC",
+    "Type of Alarm": "Badge Access",
+    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
+    "Location": "LT.Vilnius",
+    "Region": "EMEA",
+    "Rejection": "Wrong Pin",
+    "CCURE Incident Priority": "Low",
+    "Name of Person Attending Alarms (First, Last Name)": "Manisha Choudhari",
+    "Employee Name": "Jhorar, Kapil",
+    "Employee ID No": 326022,
+    "If Reoccured Yes/No": "No",
+    "Action Taken": "Not Sent",
+    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
+    "Target SLA in Mins": "0:00:00",
+    "Date of Action (MM/DD/YY)": 45748,
+    "Time of Action": 0.000092592592592592,
+    " Time Taken (Min)": 0,
+    "Time of Completion": 0.000092592592592592,
+    "If not resolved, escalated to?": "NA",
+    "Date of Escalation": "NA",
+    "Time Of Escalation": "NA",
+    "Completed By": "Manisha Choudhari"
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Below is my Summary API Responce .
 
 lets see one by one 
