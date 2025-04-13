@@ -1,15 +1,8 @@
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install @emotion/react @emotion/styled
+Would you like to run the app on another port instead? ... yes
+(node:5596) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5596) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+Compiled successfully!
 
-up to date, audited 1394 packages in 2s
-
-277 packages are looking for funding
-  run `npm fund` for details
-
-8 vulnerabilities (2 moderate, 6 high)
-
-To address all issues (including breaking changes), run:
-  npm audit fix --force
-
-Run `npm audit` for details.
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>
+You can now view alarm-frontend in the browser.
