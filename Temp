@@ -1,4 +1,13 @@
- Microsoft Corporation. All rights reserved.
+rm -rf node_modules package-lock.json
+npm install
+npm start
+
+
+
+
+
+
+Microsoft Corporation. All rights reserved.
 
 C:\Users\W0024618>cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend
 
