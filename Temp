@@ -1,125 +1,40 @@
-const xlsx = require('xlsx');
-const path = require('path');
+Below is my Table Columns i will Explain you my columns details.
 
-function loadExcelDetails() {
-    const filePath = path.join(__dirname, '../data/Alarms.xlsx');
-    const workbook = xlsx.readFile(filePath);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = xlsx.utils.sheet_to_json(sheet);
-
-    return data; // returns all rows as detailed data
-}
-
-module.exports = {
-    loadExcelDetails
-};
-
-
+Sr. No   // 1,2,3,4,5....
+Date	  // 01-Apr-25
+Time of  Alarm (Local time)     //12:00:08 AM
+Owner	// GSOC
+Type of Alarm  // Badge Access  
+Door   // Ex -EMEA_LT_VNO_GAMA_9th Flr_Main Entrance  , Door name means in Which door Alarm are raised.
+Location  // LT.Vilnius , ES.Madrid ,AR.Cordoba , CR.Costa Rica Partition     This are site details 
+Region	// APAC , EMEA , LACA, NAMER  This is 4 region and under this 4 region Location are distrubuted...
+Rejection  //     Disabled Badge ,Stolen ,Expired ,Clearance - Access Violation, Lost ,Facility Code ,Wrong Pin,Unknown card,Not activated,Site code,Duress Alarm  - this is our Main Rejection Types . 
+CCURE Incident Priority  //High , Medium , Low
+Name of Person Attending Alarms (First, Last Name)  // Sejal Satpute ,Swapnil Diwate this is name of GSOC operatror Whos attend Alarm.
+Employee Name     //this is simple Employee name 
+Employee ID No	   // Employee ID
 
 
+If Reoccured Yes/No	 
+//IF Reoccured Yes no And Action taken this are relateed to each other if a single alarm are occured then responce has notsent to employee 
+No	Not Sent  no in If Reoccured Yes/No	  column  and not sent for Action Taken this column 
+Action Taken
 
-const { loadExcelDetails } = require('../services/excelService');
-
-const getAlarmDetails = (req, res) => {
-    try {
-        const details = loadExcelDetails();
-        res.json(details);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to load alarm details' });
-    }
-};
-
-module.exports = {
-    getAlarmDetails
-};
-
-
-
-
-const express = require('express');
-const router = express.Router();
-const { getAlarmSummary } = require('../controllers/alarmController');
-const { getAlarmDetails } = require('../controllers/alarmController');
-
-router.get('/summary', getAlarmSummary);
-router.get('/details', getAlarmDetails); // <-- New route
-
-module.exports = router;
+Remediation Notes	  // remedation means Why rejection occured.
+Target SLA in Mins
+Date of Action (MM/DD/YY)
+Time of Action	
+Time Taken (Min)
+Time of Completion
+If not resolved, escalated to?	
+Date of Escalation	
+Time Of Escalation	
+Result of SLA in (Min)	
+SLA Met	
+Completed By
+Reason
+Action taken by Gsoc Operator
 
 
 
-
-
-
-
-
-
-
-
-
-
-cd "C:\Users\W0024618\Desktop\AlarmAnalysis"
-PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> dir server*
-
-server.js
-
-
-
-PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend> ren server-js server.js
-
-
-
-
-PS C:\Users\W0024618\Desktop\AlarmAnalysis\Backend>
-
-
-
-
-
-
-{
-  "name": "alarm-backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "xlsx": "^0.18.5"
-  }
-}p
-
-
-
-
-Read my current packege.json file and correct it 
-
-
-{
-  "name": "alarm-backend",
-  "version": "1.0.0",
-  "main": "server.js",
-    
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-    "start": "node server.js"
-    
-  },
-  
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "xlsx": "^0.18.5"
-  },
-  "description": ""
-}
+this are my columns details once read then We will discuss for next step
