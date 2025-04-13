@@ -1,3 +1,18 @@
+import React from 'react';
+
+const AlarmCard = () => {
+  return (
+    <div>
+      <h3>Alarm Details</h3>
+    </div>
+  );
+};
+
+export default AlarmCard;
+
+
+
+
 cd %USERPROFILE%\Desktop\AlarmAnalysis\Backend
 node server.js
 
