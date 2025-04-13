@@ -1,3 +1,19 @@
+mkdir frontend-backup
+
+
+move frontend\app.js frontend-backup\
+move frontend\components frontend-backup\
+move frontend\index.js frontend-backup\
+move frontend\pages frontend-backup\
+move frontend\services frontend-backup\
+
+
+
+npx create-react-app frontend
+
+
+
+
 cd %USERPROFILE%\Desktop\AlarmAnalysis
 npx create-react-app frontend
 
