@@ -1,219 +1,97 @@
-This are my table details a
+This is my current alarmController.js file so make changes as per my request....
 
- "Sr. No": 1,
-    "Date": 45748,
-    "Time of  Alarm (Local time)": 0.000092592592592592,
-    "Owner": "GSOC",
-    "Type of Alarm": "Badge Access",
-    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-    "Location": "LT.Vilnius",
-    "Region": "EMEA",
-    "Rejection": "Wrong Pin",
-    "CCURE Incident Priority": "Low",
-    "Name of Person Attending Alarms (First, Last Name)": "Manisha Choudhari",
-    "Employee Name": "Jhorar, Kapil",
-    "Employee ID No": 326022,
-    "If Reoccured Yes/No": "No",
-    "Action Taken": "Not Sent",
-    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
-    "Target SLA in Mins": "0:00:00",
-    "Date of Action (MM/DD/YY)": 45748,
-    "Time of Action": 0.000092592592592592,
-    " Time Taken (Min)": 0,
-    "Time of Completion": 0.000092592592592592,
-    "If not resolved, escalated to?": "NA",
-    "Date of Escalation": "NA",
-    "Time Of Escalation": "NA",
-    "Completed By": "Manisha Choudhari"
-  },
+const { loadExcelData } = require('../services/excelService');
 
+const getAlarmSummary = (req, res) => {
+    const data = loadExcelData();
 
+    const summary = {
+        totalAlarms: 0,
+        regionWise: {},
+        priorityWise: {},
+        rejectionTypeWise: {},
+        locationWise: {},
+        operatorWise: {},
+        responseSentPercentage: 0,
+        monthWise: {}
+    };
 
+    let responseSentCount = 0;
 
+    data.forEach(row => {
+        summary.totalAlarms++;
 
+        // Region wise
+        const region = row['Region'] || 'Unknown';
+        summary.regionWise[region] = (summary.regionWise[region] || 0) + 1;
 
+        // Priority wise
+        const priority = row['CCURE Incident Level'] || 'Unknown';
+        summary.priorityWise[priority] = (summary.priorityWise[priority] || 0) + 1;
 
+        // Rejection type wise
+        const rejectionType = row['Alarm Rejection Type'] || 'Unknown';
+        summary.rejectionTypeWise[rejectionType] = (summary.rejectionTypeWise[rejectionType] || 0) + 1;
 
+        // Location wise
+        const location = row['Location'] || 'Unknown';
+        summary.locationWise[location] = (summary.locationWise[location] || 0) + 1;
 
+        // Operator wise
+        const operator = row['GSOC Operator Attended'] || 'Unknown';
+        summary.operatorWise[operator] = (summary.operatorWise[operator] || 0) + 1;
 
+        // Response sent
+        const response = (row['If Response Sent (Yes/No)'] || '').toLowerCase();
+        if (response === 'yes') responseSentCount++;
 
+        // Month wise
+        const dateStr = row['Alarm Date']; // expected format: "DD/MM/YYYY"
+        if (typeof dateStr === 'string' && dateStr.includes('/')) {
+            const [day, month, year] = dateStr.split('/');
+            const monthYear = `${month}-${year}`;
+            summary.monthWise[monthYear] = (summary.monthWise[monthYear] || 0) + 1;
+        }
+    });
 
+    summary.responseSentPercentage = summary.totalAlarms > 0
+        ? ((responseSentCount / summary.totalAlarms) * 100).toFixed(2) + '%'
+        : '0%';
 
+    // Calculate percentage for other categories
+    const addPercentages = obj => {
+        const result = {};
+        for (const key in obj) {
+            const count = obj[key];
+            const percentage = ((count / summary.totalAlarms) * 100).toFixed(2) + '%';
+            result[key] = { count, percentage };
+        }
+        return result;
+    };
 
-Below is my Summary API Responce .
+    summary.regionWise = addPercentages(summary.regionWise);
+    summary.priorityWise = addPercentages(summary.priorityWise);
+    summary.rejectionTypeWise = addPercentages(summary.rejectionTypeWise);
+    summary.locationWise = addPercentages(summary.locationWise);
+    summary.operatorWise = addPercentages(summary.operatorWise);
+    summary.monthWise = addPercentages(summary.monthWise);
 
-lets see one by one 
+    res.json(summary);
+};
 
-"totalAlarms": 2967,
-  "regionWise": {
-    "EMEA": {
-      "count": 1340,
-      "percentage": "45.16%"
-    },
-    "APAC": {
-      "count": 773,
-      "percentage": "26.05%"
-    },
-    "LACA": {
-      "count": 672,
-      "percentage": "22.65%"
-    },
+const getRawAlarms = (req, res) => {
+    const data = loadExcelData();
+    res.json(data);
+};
 
-for region wise display Percentage of rejection type like Wrong Pin -20% , Disable badge -10% like ...
-"priorityWise  Mention alarm prority level High , Low , Medium like this ....
-for all region 
-and all Location 
-then this part
-
-"operatorWise": {
-    "Unknown": {
-      "count": 2967,
-      "percentage": "100.00%"
-    }
-  },
-  "responseSentPercentage": "0.00%",
-  "monthWise": {
-
-
-
-operatorWise means ex - Swapnil Attend 45% alarms 1st t0 12 April like  i want 
-                        Vrutik Attend 10% alarms 1st to 12 April like this 
-
-
-Alos this part - 
-  "responseSentPercentage": "0.00%",  
-
-in Action Taken mention response sent option  count and make percentge how many responce has been sent by Gsoc Operator .
-
-Update Above Summary part and give me Upadted files 
-
-
-
-
+module.exports = {
+    getAlarmSummary,
+    getRawAlarms
+};
 
 
-{
-  "totalAlarms": 2967,
-  "regionWise": {
-    "EMEA": {
-      "count": 1340,
-      "percentage": "45.16%"
-    },
-    "APAC": {
-      "count": 773,
-      "percentage": "26.05%"
-    },
-    "LACA": {
-      "count": 672,
-      "percentage": "22.65%"
-    },
-    "NAMER": {
-      "count": 182,
-      "percentage": "6.13%"
-    }
-  },
-  "priorityWise": {
-    "Unknown": {
-      "count": 2967,
-      "percentage": "100.00%"
-    }
-  },
-  "rejectionTypeWise": {
-    "Unknown": {
-      "count": 2967,
-      "percentage": "100.00%"
-    }
-  },
-  "locationWise": {
-    "LT.Vilnius": {
-      "count": 1037,
-      "percentage": "34.95%"
-    },
-    "IE.Dublin": {
-      "count": 45,
-      "percentage": "1.52%"
-    },
-    "ES.Madrid": {
-      "count": 131,
-      "percentage": "4.42%"
-    },
-    "APAC.Default": {
-      "count": 748,
-      "percentage": "25.21%"
-    },
-    "PH.Manila": {
-      "count": 23,
-      "percentage": "0.78%"
-    },
-    "AR.Cordoba": {
-      "count": 331,
-      "percentage": "11.16%"
-    },
-    "CR.Costa Rica Partition": {
-      "count": 102,
-      "percentage": "3.44%"
-    },
-    "BR.Sao Paulo": {
-      "count": 122,
-      "percentage": "4.11%"
-    },
-    "MX.Mexico City": {
-      "count": 60,
-      "percentage": "2.02%"
-    },
-    "PA.Panama City": {
-      "count": 54,
-      "percentage": "1.82%"
-    },
-    "AUT.Vienna": {
-      "count": 43,
-      "percentage": "1.45%"
-    },
-    "USA/Canada Default": {
-      "count": 37,
-      "percentage": "1.25%"
-    },
-    "US.CO.OBS": {
-      "count": 140,
-      "percentage": "4.72%"
-    },
-    "JP.Tokyo": {
-      "count": 2,
-      "percentage": "0.07%"
-    },
-    "DU.Abu Dhab": {
-      "count": 73,
-      "percentage": "2.46%"
-    },
-    "MA.Casablanca": {
-      "count": 5,
-      "percentage": "0.17%"
-    },
-    "PE.Lima": {
-      "count": 3,
-      "percentage": "0.10%"
-    },
-    "US.NYC": {
-      "count": 5,
-      "percentage": "0.17%"
-    },
-    "UK.London": {
-      "count": 5,
-      "percentage": "0.17%"
-    },
-    "IT.Rome": {
-      "count": 1,
-      "percentage": "0.03%"
-    }
-  },
-  "operatorWise": {
-    "Unknown": {
-      "count": 2967,
-      "percentage": "100.00%"
-    }
-  },
-  "responseSentPercentage": "0.00%",
-  "monthWise": {
 
-  }
-}
+
+
+
+2)  also i dont want limited date operator summary .I have mention date for example ...
