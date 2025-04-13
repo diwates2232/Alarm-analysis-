@@ -1,109 +1,4 @@
 
-import React from 'react';
-import './SummaryCards.css'; // Optional custom styles
-import { Pie, Bar } from 'react-chartjs-2';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-// Register Chart.js elements for react-chartjs-2
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
-
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-);
-
-const SummaryCards = ({ summary }) => {
-  if (!summary) return null;
-
-  const {
-    totalAlarms,
-    responseSentPercentage,
-    regionWise,
-    priorityWise,
-    operatorWise
-  } = summary; // removed rejectionTypeWise since unused
-
-  const regionChart = {
-    labels: Object.keys(regionWise || {}),
-    datasets: [{
-      data: Object.values(regionWise || {}).map(r => r.count),
-      backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1']
-    }]
-  };
-
-  const priorityChart = {
-    labels: Object.keys(priorityWise || {}),
-    datasets: [{
-      data: Object.values(priorityWise || {}).map(p => p.count),
-      backgroundColor: ['#6c757d', '#17a2b8', '#fd7e14', '#20c997']
-    }]
-  };
-
-  const operatorChart = {
-    labels: Object.keys(operatorWise || {}),
-    datasets: [{
-      label: 'Alarm Count',
-      data: Object.values(operatorWise || {}).map(o => o.count),
-      backgroundColor: '#007bff'
-    }]
-  };
-
-  return (
-    <div className="summary-container">
-      <h2>Alarm Summary</h2>
-
-      {/* MUI Cards Summary */}
-      <Grid container spacing={2} className="summary-cards">
-        <Grid item xs={12} sm={6} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Total Alarms</Typography>
-              <Typography variant="h5" color="primary">{totalAlarms}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Response Sent</Typography>
-              <Typography variant="h5" color="secondary">{responseSentPercentage}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Charts Section */}
-      <div className="charts">
-        <div className="chart">
-          <h4>Region Wise</h4>
-          <Pie data={regionChart} />
-        </div>
-        <div className="chart">
-          <h4>Priority Wise</h4>
-          <Pie data={priorityChart} />
-        </div>
-        <div className="chart">
-          <h4>Operator Wise</h4>
-          <Bar data={operatorChart} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default SummaryCards;
 
 
 
@@ -113,73 +8,78 @@ export default SummaryCards;
 
 
 
+request  *
+Severity: moderate
+Server-Side Request Forgery in Request - https://github.com/advisories/GHSA-p8p7-x288-28g6
+Depends on vulnerable versions of tough-cookie
+fix available via `npm audit fix`
+node_modules/request
+  jsdom  0.1.20 || 0.2.0 - 16.5.3
+  Depends on vulnerable versions of request
+  Depends on vulnerable versions of request-promise-native
+  Depends on vulnerable versions of tough-cookie
+  node_modules/jest-environment-jsdom-fourteen/node_modules/jsdom
+  node_modules/jsdom
+  request-promise-core  *
+  Depends on vulnerable versions of request
+  node_modules/request-promise-core
+    request-promise-native  >=1.0.0
+    Depends on vulnerable versions of request
+    Depends on vulnerable versions of request-promise-core
+    Depends on vulnerable versions of tough-cookie
+    node_modules/request-promise-native
 
-
-
-277 packages are looking for funding
-
-
-
-
-
-  run `npm fund` for details
-
-# npm audit report
-
-nth-check  <2.0.1
+semver  6.0.0 - 6.3.0
 Severity: high
-Inefficient Regular Expression Complexity in nth-check - https://github.com/advisories/GHSA-rp65-9cf3-cjxr
+semver vulnerable to Regular Expression Denial of Service - https://github.com/advisories/GHSA-c2qf-rxjj-qqgw
 fix available via `npm audit fix --force`
-Will install react-scripts@3.0.1, which is a breaking change
-node_modules/svgo/node_modules/nth-check
-  css-select  <=3.1.0
-  Depends on vulnerable versions of nth-check
-  node_modules/svgo/node_modules/css-select
-    svgo  1.0.0 - 1.3.2
-    Depends on vulnerable versions of css-select
-    node_modules/svgo
-      @svgr/plugin-svgo  <=5.5.0
-      Depends on vulnerable versions of svgo
-Failed to compile.
+Will install react-scripts@5.0.1, which is a breaking change
+node_modules/semver
 
-[eslint] 
-src\components\SummaryCards.js
-  Line 1:1:  Expected an assignment or function call and instead saw an expression  no-unused-expressions
-  Line 1:1:  'b' is not defined                                                     no-undef
-  Line 1:3:  'Components' is not defined                                            no-undef
-  Line 2:1:  Import in body of module; reorder to top                               import/first
-  Line 3:1:  Import in body of module; reorder to top                               import/first
-  Line 4:1:  Import in body of module; reorder to top                               import/first
-  Line 5:1:  Import in body of module; reorder to top                               import/first
-  Line 7:1:  Import in body of module; reorder to top                               import/first
+shell-quote  <=1.7.2
+Severity: critical
+Improper Neutralization of Special Elements used in a Command in Shell-quote - https://github.com/advisories/GHSA-g4rg-993r-mgx7
+fix available via `npm audit fix --force`
+Will install react-scripts@5.0.1, which is a breaking change
+Starting the development server...
 
-Search for the keywords to learn more about each error.
-WARNING in [eslint] 
-src\components\SummaryCards.js
-  Line 1:14:   'SummaryCards' was used before it was defined           no-use-before-define
-  Line 2:17:   'Component' is defined but never used                   no-unused-vars
-  Line 30:74:  'rejectionTypeWise' is assigned a value but never used  no-unused-vars
+Error: error:0308010C:digital envelope routines::unsupported
+    at new Hash (node:internal/crypto/hash:79:19)
+    at Object.createHash (node:crypto:139:10)
+    at module.exports (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\util\createHash.js:135:53)
+    at NormalModule._initBuildHash (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\NormalModule.js:417:16)
+    at handleParseError (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\NormalModule.js:471:10)
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\NormalModule.js:503:5
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\NormalModule.js:358:12
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:373:3
+    at iterateNormalLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:214:10)
+    at iterateNormalLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:221:10)
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\scripts\start.js:19
+  throw err;
+  ^
 
-ERROR in [eslint] 
-src\components\SummaryCards.js
-  Line 1:1:  Expected an assignment or function call and instead saw an expression  no-unused-expressions
-  Line 1:1:  'b' is not defined                                                     no-undef
-  Line 1:3:  'Components' is not defined                                            no-undef
-  Line 2:1:  Import in body of module; reorder to top                               import/first
-  Line 3:1:  Import in body of module; reorder to top                               import/first
-  Line 4:1:  Import in body of module; reorder to top                               import/first
-  Line 5:1:  Import in body of module; reorder to top                               import/first
-  Line 7:1:  Import in body of module; reorder to top                               import/first
+Error: error:0308010C:digital envelope routines::unsupported
+    at new Hash (node:internal/crypto/hash:79:19)
+    at Object.createHash (node:crypto:139:10)
+    at module.exports (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\util\createHash.js:135:53)
+    at NormalModule._initBuildHash (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\NormalModule.js:417:16)
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\NormalModule.js:452:10
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack\lib\NormalModule.js:323:13
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:367:11
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:233:18
+    at context.callback (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:111:13)
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\babel-loader\lib\index.js:59:103 {
+  opensslErrorStack: [
+    'error:03000086:digital envelope routines::initialization error',
+    'error:0308010C:digital envelope routines::unsupported'
+  ],
+  library: 'digital envelope routines',
+  reason: 'unsupported',
+  code: 'ERR_OSSL_EVP_UNSUPPORTED'
+}
 
-Search for the keywords to learn more about each error.
-
-webpack compiled with 1 error and 1 warning
+Node.js v22.14.0
 PS C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend> 
-
-
-
-
-
 
 
 
