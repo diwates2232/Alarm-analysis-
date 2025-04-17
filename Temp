@@ -1,5 +1,25 @@
-Compiled with problems:
-×
+webpack compiled with 4 errors
+Terminate batch job (Y/N)? n
+
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
+
+> alarm-frontend@0.1.0 start
+> craco start
+√ Something is already running on port 3000.
+
+Would you like to run the app on another port instead? ... yes
+(node:18212) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:18212) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+Failed to compile.
+
+Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\axios\lib'
+Did you mean 'browser.js'?
+BREAKING CHANGE: The request 'process/browser' failed to resolve only because it was resolved as fully specified
+(probably because the origin is strict EcmaScript Module, e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"').
+The extension in the request is mandatory for it to be fully specified.
+Add the extension to the request.
 ERROR in ./node_modules/axios/lib/utils.js 632:91-98
 Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\axios\lib'
 Did you mean 'browser.js'?
@@ -7,6 +27,7 @@ BREAKING CHANGE: The request 'process/browser' failed to resolve only because it
 (probably because the origin is strict EcmaScript Module, e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"').
 The extension in the request is mandatory for it to be fully specified.
 Add the extension to the request.
+
 ERROR in ./node_modules/xlsx/xlsx.mjs 177:49-56
 Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\xlsx'
 Did you mean 'browser.js'?
@@ -14,17 +35,12 @@ BREAKING CHANGE: The request 'process/browser' failed to resolve only because it
 (probably because the origin is strict EcmaScript Module, e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"').
 The extension in the request is mandatory for it to be fully specified.
 Add the extension to the request.
+
 ERROR in ./node_modules/axios/lib/utils.js
 Cannot read properties of undefined (reading 'module')
+
 ERROR in ./node_modules/xlsx/xlsx.mjs
 Cannot read properties of undefined (reading 'module')
-ERROR
-[eslint] 
-src\index.js
-  Line 3:1:  Import in body of module; reorder to top  import/first
-  Line 4:1:  Import in body of module; reorder to top  import/first
-  Line 5:1:  Import in body of module; reorder to top  import/first
-  Line 6:1:  Import in body of module; reorder to top  import/first
-  Line 7:1:  Import in body of module; reorder to top  import/first
 
-Search for the keywords to learn more about each error.
+webpack compiled with 4 errors
+Watchpack Error (initial scan): Error: ENOTDIR: not a directory, scandir 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\process\browser.js'
