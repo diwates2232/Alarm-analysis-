@@ -1,68 +1,42 @@
-npm install --save-dev @craco/craco @babel/plugin-proposal-optional-chaining @babel/plugin-proposal-nullish-coalescing-operator process
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:113
+                throw new Error('craco: Config file not found. check if file exists at root (craco.config.ts, craco.config.js, .cracorc.js, .cracorc.json, .cracorc.yaml, .cracorc)');
+                      ^
 
+Error: craco: Config file not found. check if file exists at root (craco.config.ts, craco.config.js, .cracorc.js, .cracorc.json, .cracorc.yaml, .cracorc)
+    at getConfigPath (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:113:23)
+    at getConfigAsObject (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:120:26)
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:145:46
+    at step (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:33:23)
+    at Object.next (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:14:53)
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:8:71
+    at new Promise (<anonymous>)
+    at __awaiter (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:4:12)
+    at loadCracoConfigAsync (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:141:12)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\scripts\start.js:19:35)
 
+Node.js v22.14.0
 
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
 
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  process --save-dev
-'process' is not recognized as an internal or external command,
-operable program or batch file.
+> alarm-frontend@0.1.0 start
+> craco start
 
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install @craco/craco \
-npm error code ENOENT
-npm error syscall open
-npm error path C:\package.json
-npm error errno -4058
-npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open 'C:\package.json'
-npm error enoent This is related to npm not being able to find a file.
-npm error enoent
-npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-04-17T06_22_42_703Z-debug-0.log
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:113
+                throw new Error('craco: Config file not found. check if file exists at root (craco.config.ts, craco.config.js, .cracorc.js, .cracorc.json, .cracorc.yaml, .cracorc)');
+                      ^
 
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend> @babel/plugin-proposal-optional-chaining \
-'babel' is not recognized as an internal or external command,
-operable program or batch file.
+Error: craco: Config file not found. check if file exists at root (craco.config.ts, craco.config.js, .cracorc.js, .cracorc.json, .cracorc.yaml, .cracorc)
+    at getConfigPath (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:113:23)
+    at getConfigAsObject (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:120:26)
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:145:46
+    at step (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:33:23)
+    at Object.next (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:14:53)
+    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:8:71
+    at new Promise (<anonymous>)
+    at __awaiter (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:4:12)
+    at loadCracoConfigAsync (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:141:12)
+    at Object.<anonymous> (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\scripts\start.js:19:35)
 
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install @craco/craco \
-npm error code ENOENT
-npm error syscall open
-npm error path C:\package.json
-npm error errno -4058
-npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open 'C:\package.json'
-npm error enoent This is related to npm not being able to find a file.
-npm error enoent
-npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-04-17T06_25_34_376Z-debug-0.log
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  @babel/plugin-proposal-optional-chaining \
-'babel' is not recognized as an internal or external command,
-operable program or batch file.
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  @babel/plugin-proposal-nullish-coalescing-operator \
-'babel' is not recognized as an internal or external command,
-operable program or batch file.
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  process --save-dev
-'process' is not recognized as an internal or external command,
-operable program or batch file.
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install @craco/craco \
-npm error code ENOENT
-npm error syscall open
-npm error path C:\package.json
-npm error errno -4058
-npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open 'C:\package.json'
-npm error enoent This is related to npm not being able to find a file.
-npm error enoent
-npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-04-17T06_31_50_110Z-debug-0.log
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  @babel/plugin-proposal-optional-chaining \
-'babel' is not recognized as an internal or external command,
-operable program or batch file.
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  @babel/plugin-proposal-nullish-coalescing-operator \
-'babel' is not recognized as an internal or external command,
-operable program or batch file.
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  process --save-dev
-'process' is not recognized as an internal or external command,
-operable program or batch file.
+Node.js v22.14.0
 
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>
