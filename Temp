@@ -13,6 +13,15 @@ C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco
 
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\carco.config.js
 
+npm install --save-dev @craco/craco \
+  @babel/plugin-proposal-optional-chaining \
+  @babel/plugin-proposal-nullish-coalescing-operator \
+  process
+
+
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+
+
 
 
 
