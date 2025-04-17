@@ -2,6 +2,21 @@ C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco
                 throw new Error('craco: Config file not found. check if file exists at root (craco.config.ts, craco.config.js, .cracorc.js, .cracorc.json, .cracorc.yaml, .cracorc)');
                       ^
 
+
+
+
+
+
+
+
+
+
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\carco.config.js
+
+
+
+
+
 Error: craco: Config file not found. check if file exists at root (craco.config.ts, craco.config.js, .cracorc.js, .cracorc.json, .cracorc.yaml, .cracorc)
     at getConfigPath (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:113:23)
     at getConfigAsObject (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\@craco\craco\dist\lib\config.js:120:26)
