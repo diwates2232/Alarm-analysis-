@@ -1,3 +1,120 @@
+import React from 'react';
+import './SummaryCards.css';
+import { Pie, Bar } from 'react-chartjs-2';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+const SummaryCards = ({ summary }) => {
+  if (!summary) return null;
+
+  const { totalAlarms, responseSentPercentage } = summary;
+
+  // Define which keys to chart, their display title, and chart type
+  const chartConfigs = [
+    { key: 'regionWise', title: 'Region Wise', type: 'pie' },
+    { key: 'priorityWise', title: 'Priority Wise', type: 'pie' },
+    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
+    { key: 'locationWise', title: 'Location Wise', type: 'pie' },
+    { key: 'operatorWise', title: 'Operator Wise', type: 'bar' },
+    { key: 'monthWise', title: 'Month Wise', type: 'bar' },
+  ];
+
+  // A simple color palette to cycle through
+  const COLORS = [
+    '#007bff','#28a745','#ffc107','#dc3545','#6f42c1',
+    '#17a2b8','#fd7e14','#20c997','#6c757d','#6610f2'
+  ];
+
+  const makeChartData = (dataObj, title, type) => {
+    const labels = Object.keys(dataObj || {});
+    const counts = labels.map(label => dataObj[label].count);
+    // pick as many colors as needed, cycling through
+    const backgroundColor = labels.map((_, i) => COLORS[i % COLORS.length]);
+    return {
+      labels,
+      datasets: [{
+        label: title,
+        data: counts,
+        backgroundColor,
+      }]
+    };
+  };
+
+  return (
+    <div className="summary-container">
+      <Typography variant="h4" gutterBottom>Alarm Summary</Typography>
+
+      {/* Top‐line cards */}
+      <Grid container spacing={2} className="summary-cards" style={{ marginBottom: 24 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Total Alarms</Typography>
+              <Typography variant="h5" color="primary">{totalAlarms}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Response Sent %</Typography>
+              <Typography variant="h5" color="secondary">{responseSentPercentage}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Dynamically rendered charts */}
+      <div className="charts">
+        {chartConfigs.map(({ key, title, type }) => {
+          const dataObj = summary[key];
+          if (!dataObj || Object.keys(dataObj).length === 0) return null;
+
+          const chartData = makeChartData(dataObj, title, type);
+          return (
+            <div className="chart" key={key}>
+              <Typography variant="h6" gutterBottom>{title}</Typography>
+              {type === 'pie'
+                ? <Pie data={chartData} />
+                : <Bar data={chartData} />}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default SummaryCards;
+
+
+
+
+
+
+
+
+
+
+
+
 Now Raed below my Summary API And Responce .
 
 http://localhost:3000/api/alarms/summary
