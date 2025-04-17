@@ -1,3 +1,15 @@
+npm install @craco/craco \
+  @babel/plugin-proposal-optional-chaining \
+  @babel/plugin-proposal-nullish-coalescing-operator \
+  process --save-dev
+
+
+
+
+
+
+
+
 Uncaught Error: Cannot find module 'react-router/dom'
     at webpackMissingModule (index.mjs:1:1)
     at ./node_modules/react-router-dom/dist/index.mjs (index.mjs:1:1)
