@@ -1,19 +1,4 @@
-
-Would you like to run the app on another port instead? Yes
-i ｢wds｣: Project is running at http://10.199.34.103/
-i ｢wds｣: webpack output is served from
-i ｢wds｣: Content not from webpack is served from C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\public
-i ｢wds｣: 404s will fallback to /
-Starting the development server...
-Failed to compile.
-
-./src/components/SummaryCards.js
-Module not found: Can't resolve '../styles/SummaryCards.css' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\components'
-Error from chokidar (C:\): Error: EBUSY: resource busy or locked, lstat 'C:\DumpStack.log.tmp'
-
-
-
-ncaught Error: Cannot find module 'react-router/dom'
+Uncaught Error: Cannot find module 'react-router/dom'
     at webpackMissingModule (index.mjs:1:1)
     at ./node_modules/react-router-dom/dist/index.mjs (index.mjs:1:1)
     at __webpack_require__ (bootstrap:789:1)
@@ -42,7 +27,6 @@ VM9:2 Uncaught ReferenceError: process is not defined
     at <anonymous>:2:324254
     at <anonymous>:2:324258
     at e.onload (index.js:1:1)Understand this error
-ContentMain.js:5 [ContentService.SetContentInitData] target: { TabId: 1454077495, FrameId: 98}
 index.js:1 ./src/components/SummaryCards.js
 Module not found: Can't resolve '../styles/SummaryCards.css' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\components'
 console.<computed> @ index.js:1Understand this error
@@ -124,3 +108,803 @@ You may need an additional loader to handle the result of these loaders.
 |   // ends with sxConfig
 >   keys[0] === 'palette' && !!keys[1]?.match(/(mode|contrastThreshold|tonalOffset)/);
 | }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-internals/esm/forwardRef/forwardRef.js 10:56
+Module parse failed: Unexpected token (10:56)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+| export const forwardRef = render => {
+|   if (reactMajor >= 19) {
+>     const Component = props => render(props, props.ref ?? null);
+|     Component.displayName = render.displayName ?? render.name;
+|     return Component;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/base/GridFooterPlaceholder.js 10:84
+Module parse failed: Unexpected token (10:84)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     return null;
+|   }
+>   return /*#__PURE__*/_jsx(rootProps.slots.footer, _extends({}, rootProps.slotProps?.footer /* FIXME: typing error */));
+| }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/breakpoints/breakpoints.js 112:51
+Module parse failed: Unexpected token (112:51)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+| }
+| function createEmptyBreakpointObject(breakpointsInput = {}) {
+>   const breakpointsInOrder = breakpointsInput.keys?.reduce((acc, key) => {
+|     const breakpointStyleKey = breakpointsInput.up(key);
+|     acc[breakpointStyleKey] = {};
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/columnSelection/GridHeaderCheckbox.js 113:25
+Module parse failed: Unexpected token (113:25)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     onKeyDown: handleKeyDown,
+|     disabled: !isMultipleRowSelectionEnabled(rootProps)
+>   }, rootProps.slotProps?.baseCheckbox, other, {
+|     ref: ref
+|   }));
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/GridPagination.js 113:47
+Module parse failed: Unexpected token (113:47)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     // eslint-disable-next-line react-hooks/rules-of-hooks
+|     const warnedOnceMissingInPageSizeOptions = React.useRef(false);
+>     const pageSize = rootProps.paginationModel?.pageSize ?? paginationModel.pageSize;
+|     if (!warnedOnceMissingInPageSizeOptions.current && !rootProps.autoPageSize && !isPageSizeIncludedInPageSizeOptions(pageSize)) {
+|       console.warn([`MUI X: The page size \`${paginationModel.pageSize}\` is not present in the \`pageSizeOptions\`.`, `Add it to show the pagination select.`].join('\n'));
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/GridRow.js 125:23
+Module parse failed: Unexpected token (125:23)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const publishClick = React.useCallback(event => {
+|     const cell = findParentElementFromClassName(event.target, gridClasses.cell);
+>     const field = cell?.getAttribute('data-field');
+| 
+|     // Check if the field is available because the cell that fills the empty
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/esm/RtlProvider/index.js 12:18
+Module parse failed: Unexpected token (12:18)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+| }) {
+|   return /*#__PURE__*/_jsx(RtlContext.Provider, {
+>     value: value ?? true,
+|     ...props
+|   });
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/utils/esm/requirePropFactory/requirePropFactory.js 12:45
+Module parse failed: Unexpected token (12:45)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const requireProp = requiredProp => (props, propName, componentName, location, propFullName, ...args) => {
+|     const propFullNameSafe = propFullName || propName;
+>     const defaultTypeChecker = prevPropTypes?.[propFullNameSafe];
+|     if (defaultTypeChecker) {
+|       const typeCheckerResult = defaultTypeChecker(props, propName, componentName, location, propFullName, ...args);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Checkbox/Checkbox.js 132:46
+Module parse failed: Unexpected token (132:46)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   };
+|   const classes = useUtilityClasses(ownerState);
+>   const externalInputProps = slotProps.input ?? inputProps;
+|   const [RootSlot, rootSlotProps] = useSlot('root', {
+|     ref,
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/panel/filterPanel/GridFilterForm.js 132:57
+Module parse failed: Unexpected token (132:57)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const valueRef = React.useRef(null);
+|   const filterSelectorRef = React.useRef(null);
+>   const multiFilterOperator = filterModel.logicOperator ?? GridLogicOperator.And;
+|   const hasLogicOperatorColumn = hasMultipleFilters && logicOperators.length > 0;
+|   const baseFormControlProps = rootProps.slotProps?.baseFormControl || {};
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/FilledInput/FilledInput.js 134:74
+Module parse failed: Unexpected token (134:74)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       style: {
+|         '&::after': {
+>           borderBottom: `2px solid ${(theme.vars || theme).palette[color]?.main}`
+|         }
+|       }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/FormControlLabel/FormControlLabel.js 135:33
+Module parse failed: Unexpected token (135:33)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   } = props;
+|   const muiFormControl = useFormControl();
+>   const disabled = disabledProp ?? control.props.disabled ?? muiFormControl?.disabled;
+|   const required = requiredProp ?? control.props.required;
+|   const controlProps = {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/ListItemText/ListItemText.js 135:34
+Module parse failed: Unexpected token (135:34)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     primary = /*#__PURE__*/_jsx(PrimarySlot, {
+|       variant: dense ? 'body2' : 'body1',
+>       component: primarySlotProps?.variant ? undefined : 'span',
+|       ...primarySlotProps,
+|       children: primary
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/hooks/features/virtualization/useGridVirtualScroller.js 138:61
+Module parse failed: Unexpected token (138:61)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|    * that are part of this old context will keep their same render context as to avoid re-rendering.
+|    */
+>   const scrollPosition = React.useRef(rootProps.initialState?.scroll ?? EMPTY_SCROLL_POSITION);
+|   const ignoreNextScrollEvent = React.useRef(false);
+|   const previousContextScrollPosition = React.useRef(EMPTY_SCROLL_POSITION);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/utils/esm/getReactElementRef/getReactElementRef.js 13:19
+Module parse failed: Unexpected token (13:19)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   // 'ref' is passed as prop in React 19, whereas 'ref' is directly attached to children in older versions
+|   if (parseInt(React.version, 10) >= 19) {
+>     return element?.props?.ref || null;
+|   }
+|   // @ts-expect-error element.ref is not included in the ReactElement type
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/TextareaAutosize/TextareaAutosize.js 140:33
+Module parse failed: Unexpected token (140:33)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   useEnhancedEffect(() => {
+|     const debouncedHandleResize = debounce(syncHeight);
+>     const textarea = textareaRef?.current;
+|     if (!textarea) {
+|       return undefined;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Radio/Radio.js 141:12
+Module parse failed: Unexpected token (141:12)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     }
+|   }
+>   disabled ??= false;
+|   const ownerState = {
+|     ...props,
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/columnHeaders/GridColumnHeaderItem.js 141:47
+Module parse failed: Unexpected token (141:47)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     target: iconButtonRef.current,
+|     ContentComponent: rootProps.slots.columnMenu,
+>     contentComponentProps: rootProps.slotProps?.columnMenu,
+|     onExited: handleExited
+|   });
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/ListItemText/ListItemText.js 142:34
+Module parse failed: Unexpected token (142:34)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     primary = /*#__PURE__*/(0, _jsxRuntime.jsx)(PrimarySlot, {
+|       variant: dense ? 'body2' : 'body1',
+>       component: primarySlotProps?.variant ? undefined : 'span',
+|       ...primarySlotProps,
+|       children: primary
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/utils/isMuiElement/isMuiElement.js 14:24
+Module parse failed: Unexpected token (14:24)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   // relevant info - https://github.com/facebook/react/blob/2807d781a08db8e9873687fccc25c0f12b4fb3d4/packages/react/src/ReactLazy.js#L45
+|   // eslint-disable-next-line no-underscore-dangle
+>   element.type.muiName ?? element.type?._payload?.value?.muiName) !== -1;
+| }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/esm/cssContainerQueries/cssContainerQueries.js 14:28
+Module parse failed: Unexpected token (14:28)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const sorted = Object.keys(css).filter(key => key.startsWith('@container')).sort((a, b) => {
+|     const regex = /min-width:\s*([0-9.]+)/;
+>     return +(a.match(regex)?.[1] || 0) - +(b.match(regex)?.[1] || 0);
+|   });
+|   if (!sorted.length) {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/esm/sizing/sizing.js 14:37
+Module parse failed: Unexpected token (14:37)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   if (props.maxWidth !== undefined && props.maxWidth !== null) {
+|     const styleFromPropValue = propValue => {
+>       const breakpoint = props.theme?.breakpoints?.values?.[propValue] || breakpointsValues[propValue];
+|       if (!breakpoint) {
+|         return {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/columnsManagement/GridColumnsManagement.js 150:33
+Module parse failed: Unexpected token (150:33)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|             tabIndex: -1,
+|             onClick: handleSearchReset
+>           }, rootProps.slotProps?.baseIconButton, {
+|             children: /*#__PURE__*/_jsx(rootProps.slots.quickFilterClearIcon, {
+|               fontSize: "small"
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Input/Input.js 157:37
+Module parse failed: Unexpected token (157:37)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     }
+|   };
+>   const componentsProps = slotProps ?? componentsPropsProp ? deepmerge(slotProps ?? componentsPropsProp, inputComponentsProps) : inputComponentsProps;
+|   const RootSlot = slots.root ?? components.Root ?? InputRoot;
+|   const InputSlot = slots.input ?? components.Input ?? InputInput;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/hooks/features/editing/gridEditingSelectors.js 15:22
+Module parse failed: Unexpected token (15:22)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   rowId,
+|   field
+> }) => editRows[rowId]?.[field] ?? null);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/styleFunctionSx/extendSxProp.js 15:23
+Module parse failed: Unexpected token (15:23)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     otherProps: {}
+|   };
+>   const config = props?.theme?.unstable_sxConfig ?? _defaultSxConfig.default;
+|   Object.keys(props).forEach(prop => {
+|     if (config[prop]) {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/AccordionSummary/AccordionSummary.js 165:25
+Module parse failed: Unexpected token (165:25)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       ...handlers,
+|       onClick: event => {
+>         handlers.onClick?.(event);
+|         handleChange(event);
+|       }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Select/SelectInput.js 169:36
+Module parse failed: Unexpected token (169:36)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     }
+|   }, []);
+>   const anchorElement = displayNode?.parentNode;
+|   React.useImperativeHandle(handleRef, () => ({
+|     focus: () => {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/utils/useTimeout/useTimeout.js 16:12
+Module parse failed: Unexpected token (16:12)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     return new Timeout();
+|   }
+>   currentId = null;
+| 
+|   /**
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/hooks/features/rows/gridRowsUtils.js 171:57
+Module parse failed: Unexpected token (171:57)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     type: 'partial',
+|     actions: {
+>       insert: [...(previousCache.updates.actions.insert ?? [])],
+|       modify: [...(previousCache.updates.actions.modify ?? [])],
+|       remove: [...(previousCache.updates.actions.remove ?? [])]
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/SpeedDialAction/SpeedDialAction.js 174:96
+Module parse failed: Unexpected token (174:96)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     }
+|   };
+>   const [tooltipOpen, setTooltipOpen] = React.useState(externalForwardedProps.slotProps.tooltip?.open);
+|   const handleTooltipClose = () => {
+|     setTooltipOpen(false);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/TablePagination/TablePagination.js 179:32
+Module parse failed: Unexpected token (179:32)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const ownerState = props;
+|   const classes = useUtilityClasses(ownerState);
+>   const selectProps = slotProps?.select ?? SelectProps;
+|   const MenuItemComponent = selectProps.native ? 'option' : TablePaginationMenuItem;
+|   let colSpan;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Modal/Modal.js 179:39
+Module parse failed: Unexpected token (179:39)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     getSlotProps: getRootProps,
+|     ownerState,
+>     className: clsx(className, classes?.root, !ownerState.open && ownerState.exited && classes?.hidden)
+|   });
+|   const [BackdropSlot, backdropProps] = useSlot('backdrop', {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/internal/SwitchBase.js 180:25
+Module parse failed: Unexpected token (180:25)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       ...handlers,
+|       onFocus: event => {
+>         handlers.onFocus?.(event);
+|         handleFocus(event);
+|       },
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Menu/Menu.js 180:27
+Module parse failed: Unexpected token (180:27)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       onKeyDown: event => {
+|         handleListKeyDown(event);
+>         handlers.onKeyDown?.(event);
+|       }
+|     }),
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/GridLegacy/GridLegacy.js 183:34
+Module parse failed: Unexpected token (183:34)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|         };
+|       }
+>       if (zeroValueBreakpointKeys?.includes(breakpoint)) {
+|         return {};
+|       }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/ButtonBase/TouchRipple.js 188:14
+Module parse failed: Unexpected token (188:14)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       fakeElement = false // For test purposes
+|     } = options;
+>     if (event?.type === 'mousedown' && ignoringMouseDown.current) {
+|       ignoringMouseDown.current = false;
+|       return;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/utils/requirePropFactory/requirePropFactory.js 18:45
+Module parse failed: Unexpected token (18:45)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const requireProp = requiredProp => (props, propName, componentName, location, propFullName, ...args) => {
+|     const propFullNameSafe = propFullName || propName;
+>     const defaultTypeChecker = prevPropTypes?.[propFullNameSafe];
+|     if (defaultTypeChecker) {
+|       const typeCheckerResult = defaultTypeChecker(props, propName, componentName, location, propFullName, ...args);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/ButtonBase/TouchRipple.js 195:14
+Module parse failed: Unexpected token (195:14)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       fakeElement = false // For test purposes
+|     } = options;
+>     if (event?.type === 'mousedown' && ignoringMouseDown.current) {
+|       ignoringMouseDown.current = false;
+|       return;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/IconButton/IconButton.js 197:49
+Module parse failed: Unexpected token (197:49)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   } = props;
+|   const loadingId = useId(idProp);
+>   const loadingIndicator = loadingIndicatorProp ?? /*#__PURE__*/_jsx(CircularProgress, {
+|     "aria-labelledby": loadingId,
+|     color: "inherit",
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/hooks/features/rows/gridRowsSelector.js 19:117
+Module parse failed: Unexpected token (19:117)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     return 1;
+|   }
+>   return (entries.filter(([, nodeCount]) => nodeCount > 0).map(([depth]) => Number(depth)).sort((a, b) => b - a)[0] ?? 0) + 1;
+| });
+| export const gridDataRowIdsSelector = createSelector(gridRowsStateSelector, rows => rows.dataRowIds);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/RtlProvider/index.js 19:18
+Module parse failed: Unexpected token (19:18)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+| }) {
+|   return /*#__PURE__*/(0, _jsxRuntime.jsx)(RtlContext.Provider, {
+>     value: value ?? true,
+|     ...props
+|   });
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/utils/getReactElementRef/getReactElementRef.js 19:19
+Module parse failed: Unexpected token (19:19)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   // 'ref' is passed as prop in React 19, whereas 'ref' is directly attached to children in older versions
+|   if (parseInt(React.version, 10) >= 19) {
+>     return element?.props?.ref || null;
+|   }
+|   // @ts-expect-error element.ref is not included in the ReactElement type
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/StepLabel/StepLabel.js 202:50
+Module parse failed: Unexpected token (202:50)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       children: [children ? /*#__PURE__*/_jsx(LabelSlot, {
+|         ...labelProps,
+>         className: clsx(classes.label, labelProps?.className),
+|         children: children
+|       }) : null, optional]
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Unstable_TrapFocus/FocusTrap.js 202:55
+Module parse failed: Unexpected token (202:55)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       // to the first/last tabbable element inside the focus trap
+|       if (tabbable.length > 0) {
+>         const isShiftTab = Boolean(lastKeydown.current?.shiftKey && lastKeydown.current?.key === 'Tab');
+|         const focusNext = tabbable[0];
+|         const focusPrevious = tabbable[tabbable.length - 1];
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Snackbar/Snackbar.js 207:29
+Module parse failed: Unexpected token (207:29)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     getSlotProps: handlers => ({
+|       onClickAway: (...params) => {
+>         handlers.onClickAway?.(...params);
+|         onClickAway(...params);
+|       }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/Unstable_TrapFocus/FocusTrap.js 209:55
+Module parse failed: Unexpected token (209:55)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       // to the first/last tabbable element inside the focus trap
+|       if (tabbable.length > 0) {
+>         const isShiftTab = Boolean(lastKeydown.current?.shiftKey && lastKeydown.current?.key === 'Tab');
+|         const focusNext = tabbable[0];
+|         const focusPrevious = tabbable[tabbable.length - 1];
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Badge/Badge.js 215:27
+Module parse failed: Unexpected token (215:27)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+| function getAnchorOrigin(anchorOrigin) {
+|   return {
+>     vertical: anchorOrigin?.vertical ?? 'top',
+|     horizontal: anchorOrigin?.horizontal ?? 'right'
+|   };
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/OutlinedInput/OutlinedInput.js 217:31
+Module parse failed: Unexpected token (217:31)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     type
+|   };
+>   const RootSlot = slots.root ?? components.Root ?? OutlinedInputRoot;
+|   const InputSlot = slots.input ?? components.Input ?? OutlinedInputInput;
+|   return /*#__PURE__*/_jsx(InputBase, {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/cell/GridActionsCellItem.js 22:14
+Module parse failed: Unexpected token (22:14)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       other = _objectWithoutPropertiesLoose(props, _excluded);
+|     const handleClick = event => {
+>       onClick?.(event);
+|     };
+|     return /*#__PURE__*/_jsx(rootProps.slots.baseIconButton, _extends({
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/toolbar/GridToolbarExport.js 23:15
+Module parse failed: Unexpected token (23:15)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     onClick: () => {
+|       apiRef.current.exportDataAsCsv(options);
+>       hideMenu?.();
+|     }
+|   }, other, {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/GridFooter.js 23:166
+Module parse failed: Unexpected token (23:166)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     selectedRowCount: selectedRowCount
+|   }) : /*#__PURE__*/_jsx("div", {});
+>   const rowCountElement = !rootProps.hideFooterRowCount && !rootProps.pagination ? /*#__PURE__*/_jsx(rootProps.slots.footerRowCount, _extends({}, rootProps.slotProps?.footerRowCount, {
+|     rowCount: totalTopLevelRowCount,
+|     visibleRowCount: visibleTopLevelRowCount
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/sizing/sizing.js 23:37
+Module parse failed: Unexpected token (23:37)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   if (props.maxWidth !== undefined && props.maxWidth !== null) {
+|     const styleFromPropValue = propValue => {
+>       const breakpoint = props.theme?.breakpoints?.values?.[propValue] || _breakpoints.values[propValue];
+|       if (!breakpoint) {
+|         return {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/menu/columnMenu/GridColumnHeaderMenu.js 24:17
+Module parse failed: Unexpected token (24:17)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       // Prevent triggering the sorting
+|       event.stopPropagation();
+>       if (target?.contains(event.target)) {
+|         return;
+|       }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/menu/columnMenu/menuItems/GridColumnMenuSortItem.js 24:20
+Module parse failed: Unexpected token (24:20)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     }
+|     const sortItem = sortModel.find(item => item.field === colDef.field);
+>     return sortItem?.sort;
+|   }, [colDef, sortModel]);
+|   const sortingOrder = colDef.sortingOrder ?? rootProps.sortingOrder;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/containers/GridRootStyles.js 271:96
+Module parse failed: Unexpected token (271:96)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const borderColor = getBorderColor(t);
+|   const radius = t.shape.borderRadius;
+>   const containerBackground = t.vars ? t.vars.palette.background.default : t.mixins.MuiDataGrid?.containerBackground ?? t.palette.background.default;
+|   const pinnedBackground = t.mixins.MuiDataGrid?.pinnedBackground ?? containerBackground;
+|   const overlayBackground = t.vars ? `rgba(${t.vars.palette.background.defaultChannel} / ${t.vars.palette.action.disabledOpacity})` : alpha(t.palette.background.default, t.palette.action.disabledOpacity);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Rating/Rating.js 272:24
+Module parse failed: Unexpected token (272:24)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     },
+|     additionalProps: {
+>       style: labelProps?.style,
+|       htmlFor: id
+|     }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/hooks/features/columns/gridColumnsUtils.js 292:95
+Module parse failed: Unexpected token (292:95)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const columnsStateWithPreProcessing = apiRef.current.unstable_applyPipeProcessors('hydrateColumns', columnsState);
+|   const columnsStateWithPortableColumns = applyInitialState(columnsStateWithPreProcessing, initialState);
+>   return hydrateColumnsWidth(columnsStateWithPortableColumns, apiRef.current.getRootDimensions?.() ?? undefined);
+| };
+| export function getFirstNonSpannedColumnToRender({
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/toolbar/GridToolbarColumnsButton.js 29:24
+Module parse failed: Unexpected token (29:24)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       apiRef.current.showPreferences(GridPreferencePanelsValue.columns, columnPanelId, columnButtonId);
+|     }
+>     buttonProps.onClick?.(event);
+|   };
+|
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/toolbar/GridToolbarExportContainer.js 29:24
+Module parse failed: Unexpected token (29:24)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const handleMenuOpen = event => {
+|     setOpen(prevOpen => !prevOpen);
+>     buttonProps.onClick?.(event);
+|   };
+|   const handleMenuClose = () => setOpen(false);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/AppBar/AppBar.js 29:48
+Module parse failed: Unexpected token (29:48)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+| // var2 is the fallback.
+| // Ex. var1: 'var(--a)', var2: 'var(--b)'; return: 'var(--a, var(--b))'
+> const joinVars = (var1, var2) => var1 ? `${var1?.replace(')', '')}, ${var2})` : var2;
+| const AppBarRoot = styled(Paper, {
+|   name: 'MuiAppBar',
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Popover/Popover.js 305:28
+Module parse failed: Unexpected token (305:28)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       ...handlers,
+|       onEntering: (element, isAppearing) => {
+>         handlers.onEntering?.(element, isAppearing);
+|         handleEntering();
+|       },
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/PaginationItem/PaginationItem.js 305:32
+Module parse failed: Unexpected token (305:32)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const externalForwardedProps = {
+|     slots: {
+>       previous: slots.previous ?? components.previous,
+|       next: slots.next ?? components.next,
+|       first: slots.first ?? components.first,
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/hooks/features/overlays/useGridOverlays.js 31:48
+Module parse failed: Unexpected token (31:48)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   if (loading) {
+|     overlayType = 'loadingOverlay';
+>     loadingOverlayVariant = rootProps.slotProps?.loadingOverlay?.[noRows ? 'noRowsVariant' : 'variant'] || null;
+|   }
+|   return {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/utils/esm/useSlotProps/useSlotProps.js 31:62
+Module parse failed: Unexpected token (31:62)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     externalSlotProps: resolvedComponentsProps
+|   });
+>   const ref = useForkRef(internalRef, resolvedComponentsProps?.ref, parameters.additionalProps?.ref);
+|   const props = appendOwnerState(elementType, {
+|     ...mergedProps,
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/virtualization/GridVirtualScrollerContent.js 31:65
+Module parse failed: Unexpected token (31:65)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+| const GridVirtualScrollerContent = forwardRef(function GridVirtualScrollerContent(props, ref) {
+|   const rootProps = useGridRootProps();
+>   const overflowedContent = !rootProps.autoHeight && props.style?.minHeight === 'auto';
+|   const classes = useUtilityClasses(rootProps, overflowedContent);
+|   const ownerState = {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/hooks/utils/useGridApiEventHandler.js 33:29
+Module parse failed: Unexpected token (33:29)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       const enhancedHandler = (params, event, details) => {
+|         if (!event.defaultMuiPrevented) {
+>           handlerRef.current?.(params, event, details);
+|         }
+|       };
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/utils/mergeSlotProps.js 34:40
+Module parse failed: Unexpected token (34:40)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|         ...defaultSlotPropsValue
+|       }) : externalSlotProps;
+>       const className = clsx(ownerState?.className, defaultSlotPropsValue?.className, externalSlotPropsValue?.className);
+|       const handlers = extractHandlers(externalSlotPropsValue, defaultSlotPropsValue);
+|       return {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/ScopedCssBaseline/ScopedCssBaseline.js 35:38
+Module parse failed: Unexpected token (35:38)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       if (selector.startsWith('@')) {
+|         colorSchemeStyles[selector] = {
+>           colorScheme: scheme.palette?.mode
+|         };
+|       } else {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/DataGrid/DataGrid.js 35:45
+Module parse failed: Unexpected token (35:45)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       style: props.style,
+|       sx: props.sx
+>     }, props.forwardedProps, props.slotProps?.root, {
+|       ref: ref
+|     }))
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/styles/createTheme.js 35:60
+Module parse failed: Unexpected token (35:60)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|       light: true
+|     } : undefined,
+>     defaultColorScheme: initialDefaultColorScheme = palette?.mode,
+|     ...rest
+|   } = options;
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/panel/filterPanel/GridFilterInputMultipleValue.js 36:34
+Module parse failed: Unexpected token (36:34)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const rootProps = useGridRootProps();
+|   React.useEffect(() => {
+>     const itemValue = item.value ?? [];
+|     setFilterValueState(itemValue.map(String));
+|   }, [item.value]);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/cell/GridEditSingleSelectCell.js 36:46
+Module parse failed: Unexpected token (36:46)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const inputRef = React.useRef(null);
+|   const [open, setOpen] = React.useState(initialOpen);
+>   const baseSelectProps = rootProps.slotProps?.baseSelect || {};
+|   const isSelectNative = baseSelectProps.native ?? false;
+|   const _ref = rootProps.slotProps?.baseSelect || {},
+console.<computed> @ index.js:1Understand this error
