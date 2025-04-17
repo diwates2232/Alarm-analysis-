@@ -1,3 +1,236 @@
+// Filters.js
+import React from 'react';
+import { TextField, MenuItem } from '@mui/material';
+
+const regionLocations = {
+  APAC: ['Pune', 'Mumbai', 'Manila'],
+  EMEA: ['London', 'Madrid', 'China'],
+  LACA: ['Cordoba', 'Costa Rica', 'Sao Paulo'],
+  NAMER: ['New York', 'Toronto', 'San Francisco'],
+};
+
+const Filters = ({ filters, setFilters }) => {
+  const handleChange = (field) => (event) => {
+    setFilters({ ...filters, [field]: event.target.value });
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <TextField
+        select
+        label="Region"
+        value={filters.region}
+        onChange={handleChange('region')}
+      >
+        <MenuItem value="">Global</MenuItem>
+        {Object.keys(regionLocations).map((region) => (
+          <MenuItem key={region} value={region}>
+            {region}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {filters.region && (
+        <TextField
+          select
+          label="Location"
+          value={filters.location}
+          onChange={handleChange('location')}
+        >
+          <MenuItem value="">All</MenuItem>
+          {regionLocations[filters.region].map((location) => (
+            <MenuItem key={location} value={location}>
+              {location}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    </div>
+  );
+};
+
+export default Filters;
+
+
+
+
+// Dashboard.js
+import React, { useEffect, useState } from 'react';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard from '../components/AlarmCard';
+import Filters from '../components/Filters';
+import { getAlarmSummary } from '../services/api';
+
+const Dashboard = () => {
+  const [summary, setSummary] = useState(null);
+  const [filters, setFilters] = useState({ region: '', location: '' });
+
+  useEffect(() => {
+    getAlarmSummary()
+      .then((res) => setSummary(res.data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const applyFilters = (data) => {
+    if (!data) return null;
+
+    // Implement filtering logic based on selected region and location
+    const filteredData = { ...data };
+
+    // Example: Filter locationWise data
+    if (filters.region) {
+      // Filter regionWise
+      filteredData.regionWise = {
+        [filters.region]: data.regionWise[filters.region],
+      };
+
+      // Filter locationWise
+      const locations = Object.keys(data.locationWise).filter((loc) =>
+        loc.startsWith(filters.region)
+      );
+      filteredData.locationWise = {};
+      locations.forEach((loc) => {
+        if (
+          !filters.location ||
+          loc.toLowerCase().includes(filters.location.toLowerCase())
+        ) {
+          filteredData.locationWise[loc] = data.locationWise[loc];
+        }
+      });
+    }
+
+    return filteredData;
+  };
+
+  if (!summary) return <div>Loading Summary...</div>;
+
+  const filteredSummary = applyFilters(summary);
+
+  return (
+    <div>
+      <h1>Alarm Analysis Dashboard</h1>
+      <Filters filters={filters} setFilters={setFilters} />
+      <SummaryCards summary={filteredSummary} />
+      <AlarmCard />
+    </div>
+  );
+};
+
+export default Dashboard;
+
+
+
+
+// SummaryCards.js
+import React from 'react';
+import './SummaryCards.css';
+import { Pie, Bar } from 'react-chartjs-2';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+const SummaryCards = ({ summary }) => {
+  if (!summary) return null;
+
+  const { totalAlarms, responseSentPercentage } = summary;
+
+  const chartConfigs = [
+    { key: 'regionWise', title: 'Region Wise', type: 'pie' },
+    { key: 'priorityWise', title: 'Priority Wise', type: 'pie' },
+    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
+    { key: 'locationWise', title: 'Location Wise', type: 'pie' },
+    { key: 'operatorWise', title: 'Operator Wise', type: 'bar' },
+    { key: 'monthWise', title: 'Month Wise', type: 'bar' },
+  ];
+
+  const COLORS = [
+    '#007bff',
+    '#28a745',
+    '#ffc107',
+    '#dc3545',
+    '#6f42c1',
+    '#17a2b8',
+    '#fd7e14',
+    '#20c997',
+    '#6c757d',
+    '#6610f2',
+  ];
+
+  const makeChartData = (dataObj, title, type) => {
+    const labels = Object.keys(dataObj || {});
+    const counts = labels.map((label) => dataObj[label].count);
+    const backgroundColor = labels.map((_, i) => COLORS[i % COLORS.length]);
+    return {
+      labels,
+      datasets: [
+        {
+          label: title,
+          data: counts,
+          backgroundColor,
+        },
+      ],
+    };
+  };
+
+  return (
+    <div className="summary-container">
+      <Typography variant="h4" gutterBottom>
+        Alarm Summary
+      </Typography>
+
+      <Grid container spacing={2} className="summary-cards" style={{ marginBottom: 24 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Total Alarms</Typography>
+              <Typography variant="h5" color="primary">
+                {totalAlarms}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Response Sent %</Typography>
+              <Typography variant="h5" color="secondary">
+                {responseSentPercentage}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <div className="charts">
+        
+
+
+
+
+
+
+
+
+
+
+
+
 Update my Ui like this 
 
 I want to make Dashboard like this 
