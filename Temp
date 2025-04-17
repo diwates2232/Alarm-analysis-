@@ -1,91 +1,89 @@
-// craco.config.js
-const webpack = require('webpack');
-const path = require('path');
+Check bith file and solve above errors and give me Correct files
 
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (webpackConfig) => {
-      // 1) Fallback for require('process')
-      webpackConfig.resolve = {
-        ...webpackConfig.resolve,
-        fallback: {
-          ...(webpackConfig.resolve.fallback || {}),
-          process: require.resolve('process/browser.js'),
-        },
-        // 2) Alias for require('process/browser')
-        alias: {
-          ...(webpackConfig.resolve.alias || {}),
-          'process/browser': require.resolve('process/browser.js'),
+
+AlarmsTable.js
+
+
+import React from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+const AlarmsTable = ({ alarms }) => {
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(alarms);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alarms');
+    XLSX.writeFile(workbook, 'alarms.xlsx');
+  };
+
+  const columns = [
+    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
+    { field: 'Date', headerName: 'Date', width: 120 },
+    { field: 'Time of Alarm (Local time)', headerName: 'Time', width: 150 },
+    { field: 'Region', headerName: 'Region', width: 120 },
+    { field: 'Rejection', headerName: 'Rejection', width: 150 },
+    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
+    { field: 'Name of Person Attending Alarms (First, Last Name)', headerName: 'Operator', width: 200 },
+    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
+    { field: 'Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 },
+    // Add other necessary fields
+  ];
+
+  const rows = alarms.map((alarm, index) => ({
+    id: index,
+    ...alarm,
+  }));
+
+  return (
+    <div style={{ height: 600, width: '100%' }}>
+      <Button variant="contained" color="primary" onClick={exportToExcel}>
+        Export to Excel
+      </Button>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowClassName={(params) =>
+          params.row['Time Taken (Min)'] > 0 ? 'sla-breach' : ''
         }
-      };
-
-      // 3) Provide global process
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser',
-        })
-      );
-
-      return webpackConfig;
-    }
-  }
+        pageSize={10}
+        rowsPerPageOptions={[10, 20, 50]}
+      />
+    </div>
+  );
 };
 
+export default AlarmsTable;
 
 
 
 
 
 
-webpack compiled with 4 errors
-Terminate batch job (Y/N)? n
+RawAlarms.js
 
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
 
-> alarm-frontend@0.1.0 start
-> craco start
-√ Something is already running on port 3000.
+import React, { useEffect, useState } from 'react';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
 
-Would you like to run the app on another port instead? ... yes
-(node:18212) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-(node:18212) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-Starting the development server...
-Failed to compile.
+const RawAlarms = () => {
+  const [alarms, setAlarms] = useState([]);
 
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\axios\lib'
-Did you mean 'browser.js'?
-BREAKING CHANGE: The request 'process/browser' failed to resolve only because it was resolved as fully specified
-(probably because the origin is strict EcmaScript Module, e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"').
-The extension in the request is mandatory for it to be fully specified.
-Add the extension to the request.
-ERROR in ./node_modules/axios/lib/utils.js 632:91-98
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\axios\lib'
-Did you mean 'browser.js'?
-BREAKING CHANGE: The request 'process/browser' failed to resolve only because it was resolved as fully specified
-(probably because the origin is strict EcmaScript Module, e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"').
-The extension in the request is mandatory for it to be fully specified.
-Add the extension to the request.
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data))
+      .catch(err => console.error(err));
+  }, []);
 
-ERROR in ./node_modules/xlsx/xlsx.mjs 177:49-56
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\xlsx'
-Did you mean 'browser.js'?
-BREAKING CHANGE: The request 'process/browser' failed to resolve only because it was resolved as fully specified
-(probably because the origin is strict EcmaScript Module, e. g. a module with javascript mimetype, a '*.mjs' file, or a '*.js' file where the package.json contains '"type": "module"').
-The extension in the request is mandatory for it to be fully specified.
-Add the extension to the request.
+  return (
+    <div>
+      <AlarmsTable data={alarms} />
+    </div>
+  );
+};
 
-ERROR in ./node_modules/axios/lib/utils.js
-Cannot read properties of undefined (reading 'module')
+export default RawAlarms;
 
-ERROR in ./node_modules/xlsx/xlsx.mjs
-Cannot read properties of undefined (reading 'module')
 
-webpack compiled with 4 errors
-Watchpack Error (initial scan): Error: ENOTDIR: not a directory, scandir 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\process\browser.js'
+
