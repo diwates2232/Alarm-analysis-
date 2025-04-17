@@ -1,0 +1,319 @@
+Read Below js files carefully and update UI as per my request
+
+
+
+Summarycards.js
+
+import React from 'react';
+import './SummaryCards.css';
+import { Pie, Bar } from 'react-chartjs-2';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+const SummaryCards = ({ summary }) => {
+  if (!summary) return null;
+
+  const { totalAlarms, responseSentPercentage } = summary;
+
+  // Define which keys to chart, their display title, and chart type
+  const chartConfigs = [
+    { key: 'regionWise', title: 'Region Wise', type: 'pie' },
+    { key: 'priorityWise', title: 'Priority Wise', type: 'pie' },
+    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
+    { key: 'locationWise', title: 'Location Wise', type: 'pie' },
+    { key: 'operatorWise', title: 'Operator Wise', type: 'bar' },
+    { key: 'monthWise', title: 'Month Wise', type: 'bar' },
+  ];
+
+  // A simple color palette to cycle through
+  const COLORS = [
+    '#007bff','#28a745','#ffc107','#dc3545','#6f42c1',
+    '#17a2b8','#fd7e14','#20c997','#6c757d','#6610f2'
+  ];
+
+  const makeChartData = (dataObj, title, type) => {
+    const labels = Object.keys(dataObj || {});
+    const counts = labels.map(label => dataObj[label].count);
+    // pick as many colors as needed, cycling through
+    const backgroundColor = labels.map((_, i) => COLORS[i % COLORS.length]);
+    return {
+      labels,
+      datasets: [{
+        label: title,
+        data: counts,
+        backgroundColor,
+      }]
+    };
+  };
+
+  return (
+    <div className="summary-container">
+      <Typography variant="h4" gutterBottom>Alarm Summary</Typography>
+
+      {/* Top‐line cards */}
+      <Grid container spacing={2} className="summary-cards" style={{ marginBottom: 24 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Total Alarms</Typography>
+              <Typography variant="h5" color="primary">{totalAlarms}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Response Sent %</Typography>
+              <Typography variant="h5" color="secondary">{responseSentPercentage}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Dynamically rendered charts */}
+      <div className="charts">
+        {chartConfigs.map(({ key, title, type }) => {
+          const dataObj = summary[key];
+          if (!dataObj || Object.keys(dataObj).length === 0) return null;
+
+          const chartData = makeChartData(dataObj, title, type);
+          return (
+            <div className="chart" key={key}>
+              <Typography variant="h6" gutterBottom>{title}</Typography>
+              {type === 'pie'
+                ? <Pie data={chartData} />
+                : <Bar data={chartData} />}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default SummaryCards;
+
+
+
+
+Dashboard.js
+import React, { useEffect, useState } from 'react';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard from '../components/AlarmCard';
+import { getAlarmSummary } from '../services/api';
+
+const Dashboard = () => {
+  const [summary, setSummary] = useState(null);
+
+  useEffect(() => {
+    getAlarmSummary()
+      .then(res => setSummary(res.data))
+      .catch(err => console.error(err));
+  }, []);
+
+  if (!summary) return <div>Loading Summary...</div>;
+
+  return (
+    <div>
+      <h1>Alarm Analysis Dashboard</h1>
+      <SummaryCards summary={summary} />
+      <AlarmCard />
+    </div>
+  );
+};
+
+export default Dashboard;
+
+
+
+Chaarts.js
+
+import React, { useEffect, useRef } from 'react';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+const MyChart = ({ data }) => {
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+
+  useEffect(() => {
+    const ctx = chartRef.current.getContext('2d');
+
+    // Destroy existing chart instance if it exists
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
+    }
+
+    // Define chart configuration
+    const config = {
+      type: 'bar', // Change to 'doughnut', 'line', etc. as needed
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'My Dataset',
+          data: data.values,
+          backgroundColor: [
+            '#8884d8',
+            '#82ca9d',
+            '#ffc658',
+            '#ff7f50',
+            '#a29bfe',
+          ],
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            enabled: true,
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+          },
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    };
+
+    // Create new chart instance
+    chartInstance.current = new Chart(ctx, config);
+  }, [data]);
+
+  return (
+    <div style={{ width: '100%', height: '400px' }}>
+      <canvas ref={chartRef}></canvas>
+    </div>
+  );
+};
+
+export default MyChart;
+
+
+
+Filters.js
+
+import React from 'react';
+import { TextField, MenuItem } from '@mui/material';
+import { DateRangePicker } from '@mui/lab';
+
+const Filters = ({ filters, setFilters }) => {
+  const handleChange = (field) => (event) => {
+    setFilters({ ...filters, [field]: event.target.value });
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <TextField
+        select
+        label="Region"
+        value={filters.region}
+        onChange={handleChange('region')}
+      >
+        {/* Map through regions */}
+        <MenuItem value="">All</MenuItem>
+        <MenuItem value="EMEA">EMEA</MenuItem>
+        <MenuItem value="APAC">APAC</MenuItem>
+        <MenuItem value="LACA">LACA</MenuItem>
+        <MenuItem value="NAMER">NAMER</MenuItem>
+        {/* Add other regions */}
+      </TextField>
+
+      <TextField
+        select
+        label="Operator"
+        value={filters.operator}
+        onChange={handleChange('operator')}
+      >
+        {/* Map through operators */}
+        <MenuItem value="">All</MenuItem>
+        <MenuItem value="Manisha Choudhari">Manisha Choudhari</MenuItem>
+        <MenuItem value="Swapnil Diwate">Swapnil Diwate</MenuItem>
+        <MenuItem value="Sejal Satpute">Sejal Satpute</MenuItem>
+        <MenuItem value="Sankalp Mahitkar">Sankalp Mahitkar</MenuItem>
+        <MenuItem value="Vrutik Paste">Vrutik Paste</MenuItem>
+        <MenuItem value="Aniket Kakde">Aniket Kakde</MenuItem>
+        <MenuItem value="Ayush Kumar">Ayush Kumar</MenuItem>
+        <MenuItem value="Abhishek Dhobhle">Abhishek Dhobhle</MenuItem>
+        {/* Add other operators */}
+      </TextField>
+
+      <DateRangePicker
+        startText="Start Date"
+        endText="End Date"
+        value={filters.dateRange}
+        onChange={(newValue) => {
+          setFilters({ ...filters, dateRange: newValue });
+        }}
+        renderInput={(startProps, endProps) => (
+          <>
+            <TextField {...startProps} />
+            <TextField {...endProps} />
+          </>
+        )}
+      />
+    </div>
+  );
+};
+
+export default Filters;
+
+
+
+AlarmCard.js
+
+import React from 'react';
+
+const AlarmCard = () => {
+  // You can replace this with dynamic alarm data later
+  return (
+    <div style={{ border: '1px solid #ccc', padding: '20px', marginTop: '20px' }}>
+      <h2>Alarm Summary</h2>
+      <p>Critical Alarms: 5</p>
+      <p>Major Alarms: 12</p>
+      <p>Minor Alarms: 8</p>
+    </div>
+  );
+};
+
+export default AlarmCard;
