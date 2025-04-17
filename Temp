@@ -1,3 +1,8 @@
+npm install --save-dev @craco/craco @babel/plugin-proposal-optional-chaining @babel/plugin-proposal-nullish-coalescing-operator process
+
+
+
+
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>  process --save-dev
 'process' is not recognized as an internal or external command,
 operable program or batch file.
