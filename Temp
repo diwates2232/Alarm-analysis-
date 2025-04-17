@@ -1,5 +1,4 @@
 
-
 Would you like to run the app on another port instead? Yes
 i ｢wds｣: Project is running at http://10.199.34.103/
 i ｢wds｣: webpack output is served from
@@ -9,129 +8,119 @@ Starting the development server...
 Failed to compile.
 
 ./src/components/SummaryCards.js
-  Line 6:10:  Parsing error: Identifier 'Card' has already been declared.
-
-  4 | import '../styles/SummaryCards.css';
-  5 | import { Pie, Bar } from 'react-chartjs-2';
-> 6 | import { Card, CardContent, Typography, Grid } from '@mui/material';
-    |          ^
-  7 |
-  8 | // Register Chart.js elements for react-chartjs-2
-  9 | import {
+Module not found: Can't resolve '../styles/SummaryCards.css' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\components'
 Error from chokidar (C:\): Error: EBUSY: resource busy or locked, lstat 'C:\DumpStack.log.tmp'
 
 
 
-
-
-Read below SummaryCards.js
-and solve above errors
-
-import { Card  } from '@mui/material';
-//import { Card } from 'react-bootstrap';
-import React from 'react';
-import '../styles/SummaryCards.css';
-import { Pie, Bar } from 'react-chartjs-2';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-// Register Chart.js elements for react-chartjs-2
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
-
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-);
-
-
-const SummaryCards = ({ summary }) => {
-  if (!summary) return null;
-
-  const {
-    totalAlarms,
-    responseSentPercentage,
-    regionWise,
-    priorityWise,
-    operatorWise
-  } = summary; // removed rejectionTypeWise since unused
-
-  const regionChart = {
-    labels: Object.keys(regionWise || {}),
-    datasets: [{
-      data: Object.values(regionWise || {}).map(r => r.count),
-      backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1']
-    }]
-  };
-
-  const priorityChart = {
-    labels: Object.keys(priorityWise || {}),
-    datasets: [{
-      data: Object.values(priorityWise || {}).map(p => p.count),
-      backgroundColor: ['#6c757d', '#17a2b8', '#fd7e14', '#20c997']
-    }]
-  };
-
-  const operatorChart = {
-    labels: Object.keys(operatorWise || {}),
-    datasets: [{
-      label: 'Alarm Count',
-      data: Object.values(operatorWise || {}).map(o => o.count),
-      backgroundColor: '#007bff'
-    }]
-  };
-
-  return (
-    <div className="summary-container">
-      <h2>Alarm Summary</h2>
-
-      {/* MUI Cards Summary */}
-      <Grid container spacing={2} className="summary-cards">
-        <Grid item xs={12} sm={6} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Total Alarms</Typography>
-              <Typography variant="h5" color="primary">{totalAlarms}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Response Sent</Typography>
-              <Typography variant="h5" color="secondary">{responseSentPercentage}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Charts Section */}
-      <div className="charts">
-        <div className="chart">
-          <h4>Region Wise</h4>
-          <Pie data={regionChart} />
-        </div>
-        <div className="chart">
-          <h4>Priority Wise</h4>
-          <Pie data={priorityChart} />
-        </div>
-        <div className="chart">
-          <h4>Operator Wise</h4>
-          <Bar data={operatorChart} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default SummaryCards;
+ncaught Error: Cannot find module 'react-router/dom'
+    at webpackMissingModule (index.mjs:1:1)
+    at ./node_modules/react-router-dom/dist/index.mjs (index.mjs:1:1)
+    at __webpack_require__ (bootstrap:789:1)
+    at fn (bootstrap:150:1)
+    at ./src/App.js (index.css:7:1)
+    at __webpack_require__ (bootstrap:789:1)
+    at fn (bootstrap:150:1)
+    at ./src/index.js (index.css:45:1)
+    at __webpack_require__ (bootstrap:789:1)
+    at fn (bootstrap:150:1)
+    at 1 (api.js:4:1)
+    at __webpack_require__ (bootstrap:789:1)
+    at checkDeferredModules (bootstrap:45:1)
+    at Array.webpackJsonpCallback [as push] (bootstrap:32:1)
+    at main.chunk.js:1:81Understand this error
+ContentMain.js:18 [ContentMain]
+ContentMain.js:18 [ContentService] document.readyState: loading
+VM9:2 Uncaught ReferenceError: process is not defined
+    at 4043 (<anonymous>:2:13175)
+    at r (<anonymous>:2:306606)
+    at 8048 (<anonymous>:2:9504)
+    at r (<anonymous>:2:306606)
+    at 8641 (<anonymous>:2:1379)
+    at r (<anonymous>:2:306606)
+    at <anonymous>:2:315634
+    at <anonymous>:2:324254
+    at <anonymous>:2:324258
+    at e.onload (index.js:1:1)Understand this error
+ContentMain.js:5 [ContentService.SetContentInitData] target: { TabId: 1454077495, FrameId: 98}
+index.js:1 ./src/components/SummaryCards.js
+Module not found: Can't resolve '../styles/SummaryCards.css' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\components'
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/react-router-dom/dist/index.mjs
+Module not found: Can't resolve 'react-router/dom' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-router-dom\dist'
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/base/GridOverlays.js 100:34
+Module parse failed: Unexpected token (100:34)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     return null;
+|   }
+>   const Overlay = rootProps.slots?.[overlayType];
+|   const overlayProps = rootProps.slotProps?.[overlayType];
+|   return /*#__PURE__*/_jsx(GridOverlayWrapper, _extends({}, props, {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/esm/Grid/createGrid.js 102:37
+Module parse failed: Unexpected token (102:37)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     const size = parseResponsiveProp(sizeProp, theme.breakpoints, val => val !== false);
+|     const offset = parseResponsiveProp(offsetProp, theme.breakpoints);
+>     const columns = inProps.columns ?? (level ? undefined : columnsProp);
+|     const spacing = inProps.spacing ?? (level ? undefined : spacingProp);
+|     const rowSpacing = inProps.rowSpacing ?? inProps.spacing ?? (level ? undefined : rowSpacingProp);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/Paper/Paper.js 104:49
+Module parse failed: Unexpected token (104:49)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|         '--Paper-shadow': (theme.vars || theme).shadows[elevation],
+|         ...(theme.vars && {
+>           '--Paper-overlay': theme.vars.overlays?.[elevation]
+|         }),
+|         ...(!theme.vars && theme.palette.mode === 'dark' && {
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/esm/AvatarGroup/AvatarGroup.js 107:43
+Module parse failed: Unexpected token (107:43)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     slots,
+|     slotProps: {
+>       surplus: slotProps.additionalAvatar ?? componentsProps?.additionalAvatar,
+|       ...componentsProps,
+|       ...slotProps
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/system/Grid/createGrid.js 109:37
+Module parse failed: Unexpected token (109:37)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     const size = parseResponsiveProp(sizeProp, theme.breakpoints, val => val !== false);
+|     const offset = parseResponsiveProp(offsetProp, theme.breakpoints);
+>     const columns = inProps.columns ?? (level ? undefined : columnsProp);
+|     const spacing = inProps.spacing ?? (level ? undefined : spacingProp);
+|     const rowSpacing = inProps.rowSpacing ?? inProps.spacing ?? (level ? undefined : rowSpacingProp);
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/x-data-grid/components/panel/GridColumnsPanel.js 10:100
+Module parse failed: Unexpected token (10:100)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   const rootProps = useGridRootProps();
+|   return /*#__PURE__*/_jsx(GridPanelWrapper, _extends({}, props, {
+>     children: /*#__PURE__*/_jsx(rootProps.slots.columnsManagement, _extends({}, rootProps.slotProps?.columnsManagement))
+|   }));
+| }
+console.<computed> @ index.js:1Understand this error
+index.js:1 ./node_modules/@mui/material/styles/shouldSkipGeneratingVar.js 10:37
+Module parse failed: Unexpected token (10:37)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|   return !!keys[0].match(/(cssVarPrefix|colorSchemeSelector|rootSelector|typography|mixins|breakpoints|direction|transitions)/) || !!keys[0].match(/sxConfig$/) ||
+|   // ends with sxConfig
+>   keys[0] === 'palette' && !!keys[1]?.match(/(mode|contrastThreshold|tonalOffset)/);
+| }
