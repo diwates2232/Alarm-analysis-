@@ -1,1 +1,470 @@
+AlarmCard.js
+
+import React from 'react';
+
+const AlarmCard = () => {
+  // You can replace this with dynamic alarm data later
+  return (
+    <div style={{ border: '1px solid #ccc', padding: '20px', marginTop: '20px' }}>
+      <h2>Alarm Summary</h2>
+      <p>Critical Alarms: 5</p>
+      <p>Major Alarms: 12</p>
+      <p>Minor Alarms: 8</p>
+    </div>
+  );
+};
+
+export default AlarmCard;
+
+
+AlarmTable.js
+
+import React from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button, Typography } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+const AlarmsTable = ({ alarms = [] }) => {
+  // Guard: if no alarms yet, show a message
+  if (alarms.length === 0) {
+    return (
+      <Typography variant="h6" align="center" style={{ marginTop: 40 }}>
+        No alarm records to display.
+      </Typography>
+    );
+  }
+
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(alarms);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alarms');
+    XLSX.writeFile(workbook, 'alarms.xlsx');
+  };
+
+  const columns = [
+    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
+    { field: 'Date', headerName: 'Date', width: 120 },
+    { field: 'Time of Alarm (Local time)', headerName: 'Time', width: 150 },
+    { field: 'Region', headerName: 'Region', width: 120 },
+    { field: 'Rejection', headerName: 'Rejection', width: 150 },
+    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
+    {
+      field: 'Name of Person Attending Alarms (First, Last Name)',
+      headerName: 'Operator',
+      width: 200
+    },
+    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
+    { field: 'Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 },
+    // Add other necessary fields
+  ];
+
+  const rows = alarms.map((alarm, index) => ({
+    id: index,
+    ...alarm
+  }));
+
+  return (
+    <div style={{ height: 600, width: '100%' }}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={exportToExcel}
+        style={{ marginBottom: 16 }}
+      >
+        Export to Excel
+      </Button>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowClassName={(params) =>
+          params.row['Time Taken (Min)'] > 0 ? 'sla-breach' : ''
+        }
+        pageSize={10}
+        rowsPerPageOptions={[10, 20, 50]}
+      />
+    </div>
+  );
+};
+
+export default AlarmsTable;
+
+
+
+
+Chart.js
+
+import React, { useEffect, useRef } from 'react';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+const MyChart = ({ data }) => {
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+
+  useEffect(() => {
+    const ctx = chartRef.current.getContext('2d');
+
+    // Destroy existing chart instance if it exists
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
+    }
+
+    // Define chart configuration
+    const config = {
+      type: 'bar', // Change to 'doughnut', 'line', etc. as needed
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'My Dataset',
+          data: data.values,
+          backgroundColor: [
+            '#8884d8',
+            '#82ca9d',
+            '#ffc658',
+            '#ff7f50',
+            '#a29bfe',
+          ],
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            enabled: true,
+          },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+          },
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    };
+
+    // Create new chart instance
+    chartInstance.current = new Chart(ctx, config);
+  }, [data]);
+
+  return (
+    <div style={{ width: '100%', height: '400px' }}>
+      <canvas ref={chartRef}></canvas>
+    </div>
+  );
+};
+
+export default MyChart;
+
+
+
+Filters.js
+
+import React from 'react';
+import { TextField, MenuItem } from '@mui/material';
+
+const regionLocations = {
+  APAC: ['Pune', 'Mumbai', 'Manila'],
+  EMEA: ['London', 'Madrid', 'China'],
+  LACA: ['Cordoba', 'Costa Rica', 'Sao Paulo'],
+  NAMER: ['New York', 'Toronto', 'San Francisco'],
+};
+
+const Filters = ({ filters, setFilters }) => {
+  const handleChange = (field) => (event) => {
+    setFilters({ ...filters, [field]: event.target.value });
+  };
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <TextField
+        select
+        label="Region"
+        value={filters.region}
+        onChange={handleChange('region')}
+      >
+        <MenuItem value="">Global</MenuItem>
+        {Object.keys(regionLocations).map((region) => (
+          <MenuItem key={region} value={region}>
+            {region}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {filters.region && (
+        <TextField
+          select
+          label="Location"
+          value={filters.location}
+          onChange={handleChange('location')}
+        >
+          <MenuItem value="">All</MenuItem>
+          {regionLocations[filters.region].map((location) => (
+            <MenuItem key={location} value={location}>
+              {location}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    </div>
+  );
+};
+
+export default Filters;
+
+
+
+SummaryCard.css
+.summary-container {
+    padding: 20px;
+  }
+  
+  .summary-cards {
+    margin-bottom: 30px;
+  }
+  
+  .cards {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 20px;
+  }
+  
+  .card {
+    background-color: black;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 1.2rem;
+  }
+  
+  .charts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: space-around;
+  }
+  
+  .chart {
+    width: 300px;
+    max-width: 100%;
+  }
+
+
+
+
+SummaryCard.js
+
+import React from 'react';
+import './SummaryCards.css';
+import { Pie, Bar } from 'react-chartjs-2';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+const SummaryCards = ({ summary }) => {
+  if (!summary) return null;
+
+  const { totalAlarms, responseSentPercentage } = summary;
+
+  const chartConfigs = [
+    { key: 'regionWise', title: 'Region Wise', type: 'pie' },
+    { key: 'priorityWise', title: 'Priority Wise', type: 'pie' },
+    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
+    { key: 'locationWise', title: 'Location Wise', type: 'pie' },
+    { key: 'operatorWise', title: 'Operator Wise', type: 'bar' },
+    { key: 'monthWise', title: 'Month Wise', type: 'bar' },
+  ];
+
+  const COLORS = [
+    '#007bff',
+    '#28a745',
+    '#ffc107',
+    '#dc3545',
+    '#6f42c1',
+    '#17a2b8',
+    '#fd7e14',
+    '#20c997',
+    '#6c757d',
+    '#6610f2',
+  ];
+
+  const makeChartData = (dataObj, title, type) => {
+    const labels = Object.keys(dataObj || {});
+    const counts = labels.map((label) => dataObj[label].count);
+    const backgroundColor = labels.map((_, i) => COLORS[i % COLORS.length]);
+    return {
+      labels,
+      datasets: [
+        {
+          label: title,
+          data: counts,
+          backgroundColor,
+        },
+      ],
+    };
+  };
+
+  return (
+    <div className="summary-container">
+      <Typography variant="h4" gutterBottom>
+        Alarm Summary
+      </Typography>
+
+      <Grid container spacing={2} className="summary-cards" style={{ marginBottom: 24 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Total Alarms</Typography>
+              <Typography variant="h5" color="primary">
+                {totalAlarms}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6">Response Sent %</Typography>
+              <Typography variant="h5" color="secondary">
+                {responseSentPercentage}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+
+      {/* Dynamically rendered charts */}
+      <div className="charts">
+        {chartConfigs.map(({ key, title, type }) => {
+          const dataObj = summary[key];
+          if (!dataObj || Object.keys(dataObj).length === 0) return null;
+
+          const chartData = makeChartData(dataObj, title, type);
+          return (
+            <div className="chart" key={key}>
+              <Typography variant="h6" gutterBottom>{title}</Typography>
+              {type === 'pie'
+                ? <Pie data={chartData} />
+                : <Bar data={chartData} />}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default SummaryCards;
+
+
+
+
+
+
+Dashboard.js
+
+
+import React, { useEffect, useState } from 'react';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard from '../components/AlarmCard';
+import Filters from '../components/Filters';
+import { getAlarmSummary } from '../services/api';
+
+const Dashboard = () => {
+  const [summary, setSummary] = useState(null);
+  const [filters, setFilters] = useState({ region: '', location: '' });
+
+  useEffect(() => {
+    getAlarmSummary()
+      .then((res) => setSummary(res.data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  const applyFilters = (data) => {
+    if (!data) return null;
+
+    // Implement filtering logic based on selected region and location
+    const filteredData = { ...data };
+
+    // Example: Filter locationWise data
+    if (filters.region) {
+      // Filter regionWise
+      filteredData.regionWise = {
+        [filters.region]: data.regionWise[filters.region],
+      };
+
+      // Filter locationWise
+      const locations = Object.keys(data.locationWise).filter((loc) =>
+        loc.startsWith(filters.region)
+      );
+      filteredData.locationWise = {};
+      locations.forEach((loc) => {
+        if (
+          !filters.location ||
+          loc.toLowerCase().includes(filters.location.toLowerCase())
+        ) {
+          filteredData.locationWise[loc] = data.locationWise[loc];
+        }
+      });
+    }
+
+    return filteredData;
+  };
+
+  if (!summary) return <div>Loading Summary...</div>;
+
+  const filteredSummary = applyFilters(summary);
+
+  return (
+    <div>
+      <h1>Alarm Analysis Dashboard</h1>
+      <Filters filters={filters} setFilters={setFilters} />
+      <SummaryCards summary={filteredSummary} />
+      <AlarmCard />
+    </div>
+  );
+};
+
+export default Dashboard;
+
+
+
+
 
