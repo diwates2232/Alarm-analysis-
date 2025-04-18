@@ -1,12 +1,10 @@
+Lets check above files Deatails and below API Responce and update files as per my request
+
 Lets check both API responce and make a dynamic dashboard expected output is
 Add Location wise dropdown automatically.
 Region Wise Partiation pie chart ...When i select APAC region i want Update Region Wise pie bar display APAC wise Paratation
 initially it display Global When it is on Global its Display Region ...APAC.. EMEA  .. LACA.. NAMER
 then When i select APAC i want to update same chart and display Locations for this Region .
-for more infformation i will share u my Recat files then update my filaes as per my request.
-
-
-
 
 {
   "totalAlarms": 2967,
