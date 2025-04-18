@@ -1,3 +1,110 @@
+
+
+
+
+
+
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useMemo } from 'react';
+import SummaryCards   from '../components/SummaryCards';
+import AlarmCard      from '../components/AlarmCard';
+import Filters        from '../components/Filters';
+import AlarmsTable    from '../components/AlarmTable';  // ← adjust to your filename
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+
+const Dashboard = () => {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({ region: '', location: '' });
+
+  // 1) Load data
+  useEffect(() => {
+    getAlarmSummary()
+      .then(res => setSummary(res.data))
+      .catch(console.error);
+
+    getRawAlarms()
+      .then(res => setRawAlarms(res.data))
+      .catch(console.error);
+  }, []);
+
+  // 2) Build dropdown options (always defined)
+  const regionOptions = summary ? Object.keys(summary.regionWise) : [];
+  const locationOptions = filters.region
+    ? Array.from(new Set(
+        rawAlarms
+          .filter(a => a.Region === filters.region)
+          .map(a => a.Location)
+      ))
+    : [];
+
+  // 3) Always call this hook (even if summary is null)
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+
+    const fs = { ...summary };
+
+    if (filters.region) {
+      // Only keep selected region
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
+
+      // Build locationWise for that region + optional location filter
+      fs.locationWise = {};
+      locationOptions
+        .filter(loc => !filters.location || loc === filters.location)
+        .forEach(loc => {
+          fs.locationWise[loc] = summary.locationWise[loc];
+        });
+    }
+    return fs;
+  }, [summary, filters, locationOptions]);
+
+  // 4) Early return if still loading
+  if (!summary) {
+    return <div>Loading dashboard…</div>;
+  }
+
+  return (
+    <div style={{ padding: 24 }}>
+      <h1>Alarm Analysis Dashboard</h1>
+
+      <Filters
+        filters={filters}
+        setFilters={setFilters}
+        regionOptions={regionOptions}
+        locationOptions={locationOptions}
+      />
+
+      <SummaryCards
+        summary={filteredSummary}
+        filters={filters}
+      />
+
+      {/* Detailed table of all raw alarms */}
+      <AlarmsTable alarms={rawAlarms} />
+
+      <AlarmCard />
+    </div>
+  );
+};
+
+export default Dashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Compiled with problems:
 ×
 ERROR in ./src/pages/Dashboard.js 72:0-51
