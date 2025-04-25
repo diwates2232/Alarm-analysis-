@@ -6,6 +6,330 @@ import { Typography, Container, Grid, TextField, MenuItem } from '@mui/material'
 const RawAlarms = () => {
   const [alarms, setAlarms] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [filters, setFilters] = useState({
+    region: '',
+    location: '',
+    employee: '',
+    door: '',
+    priority: '',
+    rejection: ''
+  });
+
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(err => {
+        console.error(err);
+        setAlarms([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Filtered by region first
+  const regionFiltered = useMemo(() => {
+    return filters.region
+      ? alarms.filter(a => a.Region === filters.region)
+      : alarms;
+  }, [alarms, filters.region]);
+
+  // Then by location
+  const locationFiltered = useMemo(() => {
+    return filters.location
+      ? regionFiltered.filter(a => a.Location === filters.location)
+      : regionFiltered;
+  }, [regionFiltered, filters.location]);
+
+  // Now build options from locationFiltered
+  const regionOptions = useMemo(() => [...new Set(alarms.map(a => a.Region))], [alarms]);
+  const locationOptions = useMemo(() => [...new Set(regionFiltered.map(a => a.Location))], [regionFiltered]);
+  const employeeOptions = useMemo(() => [...new Set(locationFiltered.map(a => a['Employee Name']))], [locationFiltered]);
+  const doorOptions = useMemo(() => [...new Set(locationFiltered.map(a => a.Door))], [locationFiltered]);
+  const priorityOptions = useMemo(() => [...new Set(locationFiltered.map(a => a['CCURE Incident Priority']))], [locationFiltered]);
+  const rejectionOptions = useMemo(() => [...new Set(locationFiltered.map(a => a.Rejection))], [locationFiltered]);
+
+  // Finally apply all filters
+  const filteredAlarms = useMemo(() => {
+    return alarms.filter(a => {
+      if (filters.region && a.Region !== filters.region) return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.employee && a['Employee Name'] !== filters.employee) return false;
+      if (filters.door && a.Door !== filters.door) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      if (filters.rejection && a.Rejection !== filters.rejection) return false;
+      return true;
+    });
+  }, [alarms, filters]);
+
+  if (loading) {
+    return (
+      <Container style={{ marginTop: 24 }}>
+        <Typography variant="h4">Raw Alarms</Typography>
+        <Typography>Loading alarms…</Typography>
+      </Container>
+    );
+  }
+
+  return (
+    <Container style={{ marginTop: 24 }}>
+      <Typography variant="h4" gutterBottom>
+        Raw Alarms
+      </Typography>
+
+      <Grid container spacing={2} style={{ marginBottom: 16 }}>
+        {[
+          { label: 'Region', field: 'region', options: regionOptions },
+          { label: 'Location', field: 'location', options: locationOptions },
+          { label: 'Employee', field: 'employee', options: employeeOptions },
+          { label: 'Door', field: 'door', options: doorOptions },
+          { label: 'Priority', field: 'priority', options: priorityOptions },
+          { label: 'Rejection', field: 'rejection', options: rejectionOptions },
+        ].map(({ label, field, options }) => (
+          <Grid item xs={12} sm={6} md={4} lg={2} key={field}>
+            <TextField
+              select
+              label={label}
+              fullWidth
+              value={filters[field]}
+              onChange={e => setFilters(f => ({ ...f, [field]: e.target.value }))}
+            >
+              <MenuItem value="">All</MenuItem>
+              {options.map(opt => (
+                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+        ))}
+      </Grid>
+
+      <AlarmsTable alarms={filteredAlarms} />
+    </Container>
+  );
+};
+
+export default RawAlarms;
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useMemo } from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button, Typography } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+const AlarmsTable = ({ alarms = [] }) => {
+  // 1) Excel export
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(alarms);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alarms');
+    XLSX.writeFile(workbook, 'alarms.xlsx');
+  };
+
+  // 2) Employee Analysis: only employees with >1 rejection
+  const employeeCounts = useMemo(() => {
+    const c = {};
+    alarms.forEach(a => {
+      const emp = a['Employee Name'] || 'Unknown';
+      c[emp] = (c[emp] || 0) + 1;
+    });
+    return c;
+  }, [alarms]);
+
+  const employeeRows = useMemo(() => {
+    return alarms
+      .filter(a => (employeeCounts[a['Employee Name']] || 0) > 1)
+      .map((a, i) => ({
+        id: i,
+        employee: a['Employee Name'],
+        date: a.Date,
+        time: a['Time of  Alarm (Local time)'],
+        rejection: a.Rejection,
+        door: a.Door,
+        location: a.Location,
+        region: a.Region,
+        response: (a['Action Taken'] || '').toLowerCase().includes('sent') ? 'Yes' : 'No'
+      }));
+  }, [alarms, employeeCounts]);
+
+  // 3) Door Analysis: only doors with >1 rejection, plus counts of each rejection type
+  const doorStats = useMemo(() => {
+    const stats = {};
+    alarms.forEach(a => {
+      const door = a.Door || 'Unknown';
+      stats[door] = stats[door] || { total:0, rejections:{} };
+      stats[door].total += 1;
+      stats[door].rejections[a.Rejection] = (stats[door].rejections[a.Rejection]||0)+1;
+    });
+    return stats;
+  }, [alarms]);
+
+  const doorRows = useMemo(() => {
+    return Object.entries(doorStats)
+      .filter(([, s]) => s.total > 1)
+      .map(([door, s], idx) => ({
+        id: idx,
+        door,
+        total: s.total,
+        rejectionCounts: Object.entries(s.rejections)
+          .map(([type, cnt]) => `${type}:${cnt}`)
+          .join(', ')
+      }));
+  }, [doorStats]);
+
+  // Columns
+  const employeeColumns = [
+    { field: 'employee', headerName: 'Employee', width: 180 },
+    { field: 'date', headerName: 'Date', width: 120 },
+    { field: 'time', headerName: 'Time', width: 120 },
+    { field: 'rejection', headerName: 'Rejection', width: 180 },
+    { field: 'door', headerName: 'Door', width: 240 },
+    { field: 'location', headerName: 'Location', width: 150 },
+    { field: 'region', headerName: 'Region', width: 120 },
+    { field: 'response', headerName: 'Response Sent', width: 140 }
+  ];
+
+  const doorColumns = [
+    { field: 'door', headerName: 'Door', width: 300 },
+    { field: 'total', headerName: 'Total Alarms', width: 150 },
+    { field: 'rejectionCounts', headerName: 'Rejection Counts', width: 400 }
+  ];
+
+  const rawColumns = [
+    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
+    { field: 'Date', headerName: 'Date', width: 120 },
+    { field: 'Time of  Alarm (Local time)', headerName: 'Time', width: 150 },
+    { field: 'Type of Alarm', headerName: 'Type', width: 150 },
+    { field: 'Door', headerName: 'Door', width: 250 },
+    { field: 'Location', headerName: 'Location', width: 150 },
+    { field: 'Region', headerName: 'Region', width: 120 },
+    { field: 'Rejection', headerName: 'Rejection', width: 180 },
+    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
+    {
+      field: 'Name of Person Attending Alarms (First, Last Name)',
+      headerName: 'Operator',
+      width: 200
+    },
+    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
+    { field: ' Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 }
+  ];
+
+  const rawRows = alarms.map((a, i) => ({ id: i, ...a }));
+
+  if (alarms.length === 0) {
+    return (
+      <Typography variant="h6" align="center" style={{ marginTop: 40 }}>
+        No alarm records to display.
+      </Typography>
+    );
+  }
+
+  return (
+    <div>
+      <Typography variant="h5" gutterBottom>
+        Employee Analysis (only those with >1 alarms)
+      </Typography>
+      <div style={{ height: 300, marginBottom: 24 }}>
+        <DataGrid
+          rows={employeeRows}
+          columns={employeeColumns}
+          pageSize={5}
+          rowsPerPageOptions={[5]}
+        />
+      </div>
+
+      <Typography variant="h5" gutterBottom>
+        Door Analysis (only those with >1 alarms)
+      </Typography>
+      <div style={{ height: 300, marginBottom: 24 }}>
+        <DataGrid
+          rows={doorRows}
+          columns={doorColumns}
+          pageSize={5}
+          rowsPerPageOptions={[5]}
+        />
+      </div>
+
+      <Typography variant="h5" gutterBottom>
+        Detailed Alarm Records
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={exportToExcel}
+        style={{ marginBottom: 16 }}
+      >
+        Export to Excel
+      </Button>
+      <div style={{ height: 600, width: '100%' }}>
+        <DataGrid
+          rows={rawRows}
+          columns={rawColumns}
+          getRowClassName={params =>
+            params.row[' Time Taken (Min)'] > 0 ? 'sla-breach' : ''
+          }
+          pageSize={10}
+          rowsPerPageOptions={[10, 20, 50]}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default AlarmsTable;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import React, { useEffect, useState, useMemo } from 'react';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+import { Typography, Container, Grid, TextField, MenuItem } from '@mui/material';
+
+const RawAlarms = () => {
+  const [alarms, setAlarms] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     region: '',
     location: '',
