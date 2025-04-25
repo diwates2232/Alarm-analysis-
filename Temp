@@ -1,7 +1,7 @@
+Read below Dashboard.js file carefully .i dont need Raw Alarms Section in dashboard page .kindly remove Raw alarms section and give me Updated files.
 
 
-
-
+Dashboard.js
 
 
 // src/pages/Dashboard.js
@@ -9,7 +9,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import SummaryCards   from '../components/SummaryCards';
 import AlarmCard      from '../components/AlarmCard';
 import Filters        from '../components/Filters';
-import AlarmsTable    from '../components/AlarmTable';  // ← adjust to your filename
+import AlarmsTable    from '../components/AlarmsTable';  // ← adjust to your filename
 import { getAlarmSummary, getRawAlarms } from '../services/api';
 
 const Dashboard = () => {
@@ -90,28 +90,3 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Compiled with problems:
-×
-ERROR in ./src/pages/Dashboard.js 72:0-51
-Module not found: Error: Can't resolve '../components/AlarmTable' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\pages'
-ERROR
-[eslint] 
-src\pages\Dashboard.js
-  Line 105:27:  React Hook "React.useMemo" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
-
-Search for the keywords to learn more about each error.
