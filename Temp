@@ -1,92 +1,209 @@
-Read below Dashboard.js file carefully .i dont need Raw Alarms Section in dashboard page .kindly remove Raw alarms section and give me Updated files.
+http://localhost:3000/api/alarms/raw
+
+responce-
+[
+  {
+    "Sr. No": 1,
+    "Date": "01-Apr-25",
+    "Time of  Alarm (Local time)": "05:21:18",
+    "Owner": "GSOC",
+    "Type of Alarm": "Badge Access",
+    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
+    "Location": "LT.Vilnius",
+    "Region": "EMEA",
+    "Rejection": "Wrong Pin",
+    "CCURE Incident Priority": "Low",
+    "Name of Person Attending Alarms (First, Last Name)": "Manisha Choudhari",
+    "Employee Name": "Jhorar, Kapil",
+    "Employee ID No": 326022,
+    "If Reoccured Yes/No": "No",
+    "Action Taken": "Not Sent",
+    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
+    "Target SLA in Mins": "0:00:00",
+    "Date of Action (MM/DD/YY)": "01-Apr-25",
+    "Time of Action": "05:21:18",
+    " Time Taken (Min)": 0,
+    "Time of Completion": "05:21:18",
+    "If not resolved, escalated to?": "NA",
+    "Date of Escalation": "NA",
+    "Time Of Escalation": "NA",
+    "Completed By": "Manisha Choudhari"
+  },
+  {
+    "Sr. No": 2,
+    "Date": "01-Apr-25",
+    "Time of  Alarm (Local time)": "11:12:09",
+    "Owner": "GSOC",
+    "Type of Alarm": "Badge Access",
+    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
+    "Location": "LT.Vilnius",
+    "Region": "EMEA",
+    "Rejection": "Wrong Pin",
+    "CCURE Incident Priority": "Low",
+    "Name of Person Attending Alarms (First, Last Name)": "Swapnil Diwate",
+    "Employee Name": "Zikov Laurino, Ivan Alexander",
+    "If Reoccured Yes/No": "No",
+    "Action Taken": "Not Sent",
+    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
+    "Target SLA in Mins": "0:00:00",
+    "Date of Action (MM/DD/YY)": "01-Apr-25",
+    "Time of Action": "11:12:09",
+    " Time Taken (Min)": 0,
+    "Time of Completion": "11:12:09",
+    "If not resolved, escalated to?": "NA",
+    "Date of Escalation": "NA",
+    "Time Of Escalation": "NA",
+    "Completed By": "Swapnil Diwate"
+  },
 
 
-Dashboard.js
 
 
-// src/pages/Dashboard.js
-import React, { useEffect, useState, useMemo } from 'react';
-import SummaryCards   from '../components/SummaryCards';
-import AlarmCard      from '../components/AlarmCard';
-import Filters        from '../components/Filters';
-import AlarmsTable    from '../components/AlarmsTable';  // ← adjust to your filename
-import { getAlarmSummary, getRawAlarms } from '../services/api';
+This is raw Alarms Details API responce.
+OUR Excel Data is already Fromated I want to perform Operation on this raw Alarmas data.
 
-const Dashboard = () => {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '' });
+In raw Alarm Table Display this type of table .
+Sr. No , Date ,Time of  Alarm (Local time),Type of Alarm ,Door,Location,Region,Rejection,"CCURE Incident Priority,Employee Name,If Reoccured Yes/No,Action Taken,Remediation Notes,Name of Person Attending Alarms.
 
-  // 1) Load data
-  useEffect(() => {
-    getAlarmSummary()
-      .then(res => setSummary(res.data))
-      .catch(console.error);
 
-    getRawAlarms()
-      .then(res => setRawAlarms(res.data))
-      .catch(console.error);
-  }, []);
+i want this row in Raw Alarms table.
+i want to perform operation on this data to make this data Actionable.
 
-  // 2) Build dropdown options (always defined)
-  const regionOptions = summary ? Object.keys(summary.regionWise) : [];
-  const locationOptions = filters.region
-    ? Array.from(new Set(
-        rawAlarms
-          .filter(a => a.Region === filters.region)
-          .map(a => a.Location)
-      ))
-    : [];
+Like Filter data Employee Wise ,Also door Wise,CCURE Incident Priority,Rejection Wise...
 
-  // 3) Always call this hook (even if summary is null)
-  const filteredSummary = useMemo(() => {
-    if (!summary) return null;
+you have all Raw data Perform some operation And Find this Cases .
 
-    const fs = { ...summary };
+1) case 1-segrigate raw data Employee Wise and Flag out Employee ..like We got Clearnace Access Violation rejection many time on same door.Also We have many rejection types .
+2)case 2- Segrigate raw data on door Wise ,like Same ddor Same Person We got Same Rejection in one day or daily,
+3)Case 3- Highlights Employee Whose we got rejection in many times
+4) Case 4 - make 1 Column Where Display Employee and their Rejection types. like How many Access Violation Occures (Count) Disable Badge (Count)....If rejection  Count Are more Also Check Door are same then Highlight this Employee on top of thw page.
+Alos in your Openion Make 2 to 3 Cases so i can make this Raw data Actioanble , .
 
-    if (filters.region) {
-      // Only keep selected region
-      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
 
-      // Build locationWise for that region + optional location filter
-      fs.locationWise = {};
-      locationOptions
-        .filter(loc => !filters.location || loc === filters.location)
-        .forEach(loc => {
-          fs.locationWise[loc] = summary.locationWise[loc];
-        });
-    }
-    return fs;
-  }, [summary, filters, locationOptions]);
+For more information Read below js files and Give me Updated js Files as per above requirnments.
 
-  // 4) Early return if still loading
-  if (!summary) {
-    return <div>Loading dashboard…</div>;
+
+
+File-1 
+
+AlarmsTable.js
+
+import React from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button, Typography } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+const AlarmsTable = ({ alarms = [] }) => {
+  // Guard: if no alarms yet, show a message
+  if (alarms.length === 0) {
+    return (
+      <Typography variant="h6" align="center" style={{ marginTop: 40 }}>
+        No alarm records to display.
+      </Typography>
+    );
   }
 
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(alarms);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alarms');
+    XLSX.writeFile(workbook, 'alarms.xlsx');
+  };
+
+  const columns = [
+    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
+    { field: 'Date', headerName: 'Date', width: 120 },
+    { field: 'Time of Alarm (Local time)', headerName: 'Time', width: 150 },
+    { field: 'Region', headerName: 'Region', width: 120 },
+    { field: 'Rejection', headerName: 'Rejection', width: 150 },
+    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
+    {
+      field: 'Name of Person Attending Alarms (First, Last Name)',
+      headerName: 'Operator',
+      width: 200
+    },
+    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
+    { field: 'Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 },
+    // Add other necessary fields
+  ];
+
+  const rows = alarms.map((alarm, index) => ({
+    id: index,
+    ...alarm
+  }));
+
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Alarm Analysis Dashboard</h1>
-
-      <Filters
-        filters={filters}
-        setFilters={setFilters}
-        regionOptions={regionOptions}
-        locationOptions={locationOptions}
+    <div style={{ height: 600, width: '100%' }}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={exportToExcel}
+        style={{ marginBottom: 16 }}
+      >
+        Export to Excel
+      </Button>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        getRowClassName={(params) =>
+          params.row['Time Taken (Min)'] > 0 ? 'sla-breach' : ''
+        }
+        pageSize={10}
+        rowsPerPageOptions={[10, 20, 50]}
       />
-
-      <SummaryCards
-        summary={filteredSummary}
-        filters={filters}
-      />
-
-      {/* Detailed table of all raw alarms */}
-      <AlarmsTable alarms={rawAlarms} />
-
-      <AlarmCard />
     </div>
   );
 };
 
-export default Dashboard;
+export default AlarmsTable;
+
+
+
+
+File-2 rawAlarms.js
+
+import React, { useEffect, useState } from 'react';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+import { Typography, Container } from '@mui/material';
+
+const RawAlarms = () => {
+  const [alarms, setAlarms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getRawAlarms()
+      .then((res) => {
+        setAlarms(res.data || []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch raw alarms:', err);
+        setAlarms([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <Container style={{ marginTop: 24 }}>
+      <Typography variant="h4" gutterBottom>
+        Raw Alarms
+      </Typography>
+
+      {loading ? (
+        <Typography>Loading alarms…</Typography>
+      ) : (
+        <AlarmsTable alarms={alarms} />
+      )}
+    </Container>
+  );
+};
+
+export default RawAlarms;
+
+
+
+
+Read above details Information Carefully and make changes and give me Updated.js files.
 
