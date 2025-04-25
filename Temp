@@ -1,3 +1,333 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+import { Typography, Container, Grid, TextField, MenuItem } from '@mui/material';
+
+const RawAlarms = () => {
+  const [alarms, setAlarms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    employee: '',
+    door: '',
+    priority: '',
+    rejection: ''
+  });
+
+  useEffect(() => {
+    getRawAlarms()
+      .then((res) => {
+        setAlarms(res.data || []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch raw alarms:', err);
+        setAlarms([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  // Build unique lists for filter dropdowns
+  const employeeOptions = useMemo(() => {
+    const setE = new Set(alarms.map(a => a["Name of Person Attending Alarms (First, Last Name)"]));
+    return Array.from(setE).sort();
+  }, [alarms]);
+
+  const doorOptions = useMemo(() => {
+    const setD = new Set(alarms.map(a => a.Door));
+    return Array.from(setD).sort();
+  }, [alarms]);
+
+  const priorityOptions = useMemo(() => {
+    const setP = new Set(alarms.map(a => a["CCURE Incident Priority"]));
+    return Array.from(setP).sort();
+  }, [alarms]);
+
+  const rejectionOptions = useMemo(() => {
+    const setR = new Set(alarms.map(a => a.Rejection));
+    return Array.from(setR).sort();
+  }, [alarms]);
+
+  // Apply filters
+  const filteredAlarms = useMemo(() => {
+    return alarms.filter(a => {
+      if (filters.employee && a["Name of Person Attending Alarms (First, Last Name)"] !== filters.employee) return false;
+      if (filters.door && a.Door !== filters.door) return false;
+      if (filters.priority && a["CCURE Incident Priority"] !== filters.priority) return false;
+      if (filters.rejection && a.Rejection !== filters.rejection) return false;
+      return true;
+    });
+  }, [alarms, filters]);
+
+  if (loading) {
+    return (
+      <Container style={{ marginTop: 24 }}>
+        <Typography variant="h4">Raw Alarms</Typography>
+        <Typography>Loading alarms…</Typography>
+      </Container>
+    );
+  }
+
+  return (
+    <Container style={{ marginTop: 24 }}>
+      <Typography variant="h4" gutterBottom>
+        Raw Alarms
+      </Typography>
+
+      {/* Filter Controls */}
+      <Grid container spacing={2} style={{ marginBottom: 16 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            select
+            label="Employee"
+            fullWidth
+            value={filters.employee}
+            onChange={e => setFilters(f => ({ ...f, employee: e.target.value }))}
+          >
+            <MenuItem value="">All</MenuItem>
+            {employeeOptions.map(emp => (
+              <MenuItem key={emp} value={emp}>{emp}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            select
+            label="Door"
+            fullWidth
+            value={filters.door}
+            onChange={e => setFilters(f => ({ ...f, door: e.target.value }))}
+          >
+            <MenuItem value="">All</MenuItem>
+            {doorOptions.map(door => (
+              <MenuItem key={door} value={door}>{door}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            select
+            label="Priority"
+            fullWidth
+            value={filters.priority}
+            onChange={e => setFilters(f => ({ ...f, priority: e.target.value }))}
+          >
+            <MenuItem value="">All</MenuItem>
+            {priorityOptions.map(p => (
+              <MenuItem key={p} value={p}>{p}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            select
+            label="Rejection"
+            fullWidth
+            value={filters.rejection}
+            onChange={e => setFilters(f => ({ ...f, rejection: e.target.value }))}
+          >
+            <MenuItem value="">All</MenuItem>
+            {rejectionOptions.map(r => (
+              <MenuItem key={r} value={r}>{r}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      </Grid>
+
+      <AlarmsTable alarms={filteredAlarms} />
+    </Container>
+  );
+};
+
+export default RawAlarms;
+
+
+
+
+
+
+
+import React, { useMemo } from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button, Typography, Grid, Card, CardContent } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+const AlarmsTable = ({ alarms = [] }) => {
+  // 1) Excel export
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(alarms);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Alarms');
+    XLSX.writeFile(workbook, 'alarms.xlsx');
+  };
+
+  // 2) Build employee-level stats
+  const employeeStats = useMemo(() => {
+    const stats = {};
+    alarms.forEach(a => {
+      const emp = a["Name of Person Attending Alarms (First, Last Name)"] || 'Unknown';
+      if (!stats[emp]) {
+        stats[emp] = { total: 0, rejections: {}, doors: {} };
+      }
+      stats[emp].total += 1;
+      // count rejections
+      const rej = a.Rejection || 'None';
+      stats[emp].rejections[rej] = (stats[emp].rejections[rej] || 0) + 1;
+      // count doors
+      const door = a.Door || 'Unknown';
+      stats[emp].doors[door] = (stats[emp].doors[door] || 0) + 1;
+    });
+    // turn into array
+    return Object.entries(stats).map(([emp, s]) => {
+      // find top rejection type
+      const topRej = Object.entries(s.rejections).sort((a,b)=>b[1]-a[1])[0] || ['None',0];
+      return {
+        id: emp,
+        employee: emp,
+        totalAlarms: s.total,
+        topRejection: `${topRej[0]} (${topRej[1]})`,
+        flagged: topRej[1] > 1  // flag if same rejection >1
+      };
+    });
+  }, [alarms]);
+
+  // 3) Build door-level stats
+  const doorStats = useMemo(() => {
+    const stats = {};
+    alarms.forEach(a => {
+      const door = a.Door || 'Unknown';
+      if (!stats[door]) stats[door] = { total: 0, rejections: {} };
+      stats[door].total += 1;
+      const rej = a.Rejection || 'None';
+      stats[door].rejections[rej] = (stats[door].rejections[rej] || 0) + 1;
+    });
+    return Object.entries(stats).map(([door, s]) => {
+      const topRej = Object.entries(s.rejections).sort((a,b)=>b[1]-a[1])[0] || ['None',0];
+      return {
+        id: door,
+        door,
+        totalAlarms: s.total,
+        topRejection: `${topRej[0]} (${topRej[1]})`,
+        flagged: topRej[1] > 1
+      };
+    });
+  }, [alarms]);
+
+  // 4) Detailed table columns
+  const columns = [
+    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
+    { field: 'Date', headerName: 'Date', width: 120 },
+    { field: 'Time of  Alarm (Local time)', headerName: 'Time', width: 150 },
+    { field: 'Type of Alarm', headerName: 'Type', width: 150 },
+    { field: 'Door', headerName: 'Door', width: 250 },
+    { field: 'Location', headerName: 'Location', width: 150 },
+    { field: 'Region', headerName: 'Region', width: 120 },
+    { field: 'Rejection', headerName: 'Rejection', width: 180 },
+    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
+    {
+      field: 'Name of Person Attending Alarms (First, Last Name)',
+      headerName: 'Operator',
+      width: 200
+    },
+    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
+    { field: ' Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 },
+  ];
+
+  const rows = alarms.map((alarm, index) => ({
+    id: index,
+    ...alarm
+  }));
+
+  return (
+    <div>
+      {/* Employee Analysis */}
+      <Typography variant="h5" gutterBottom>
+        Employee Analysis
+      </Typography>
+      <div style={{ height: 300, marginBottom: 24 }}>
+        <DataGrid
+          rows={employeeStats}
+          columns={[
+            { field: 'employee', headerName: 'Employee', width: 200 },
+            { field: 'totalAlarms', headerName: 'Total Alarms', width: 150 },
+            { field: 'topRejection', headerName: 'Top Rejection', width: 200 },
+            {
+              field: 'flagged',
+              headerName: 'Flagged',
+              width: 120,
+              renderCell: (params) => params.value ? '⚠️' : ''
+            }
+          ]}
+          pageSize={5}
+          rowsPerPageOptions={[5]}
+        />
+      </div>
+
+      {/* Door Analysis */}
+      <Typography variant="h5" gutterBottom>
+        Door Analysis
+      </Typography>
+      <div style={{ height: 300, marginBottom: 24 }}>
+        <DataGrid
+          rows={doorStats}
+          columns={[
+            { field: 'door', headerName: 'Door', width: 300 },
+            { field: 'totalAlarms', headerName: 'Total Alarms', width: 150 },
+            { field: 'topRejection', headerName: 'Top Rejection', width: 200 },
+            {
+              field: 'flagged',
+              headerName: 'Flagged',
+              width: 120,
+              renderCell: (params) => params.value ? '⚠️' : ''
+            }
+          ]}
+          pageSize={5}
+          rowsPerPageOptions={[5]}
+        />
+      </div>
+
+      {/* Detailed Alarms Table */}
+      <Typography variant="h5" gutterBottom>
+        Detailed Alarm Records
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={exportToExcel}
+        style={{ marginBottom: 16 }}
+      >
+        Export to Excel
+      </Button>
+      <div style={{ height: 600, width: '100%' }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          getRowClassName={(params) =>
+            params.row[' Time Taken (Min)'] > 0 ? 'sla-breach' : ''
+          }
+          pageSize={10}
+          rowsPerPageOptions={[10, 20, 50]}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default AlarmsTable;
+
+
+
+
+
+
+
+
+
+
+
+
 http://localhost:3000/api/alarms/raw
 
 responce-
