@@ -1,3 +1,51 @@
+// craco.config.js
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      // Ensure `resolve` exists
+      webpackConfig.resolve = webpackConfig.resolve || {};
+
+      // 1) Add a fallback so that `require('process')` uses the browser shim
+      webpackConfig.resolve.fallback = {
+        ...(webpackConfig.resolve.fallback || {}),
+        process: require.resolve('process/browser')
+      };
+
+      // 2) Alias the bare import `process` to the same shim
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser')
+      };
+
+      // 3) Provide `process` as a global automatically
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return webpackConfig;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
+
 webpackConfig.resolve = {
   ...webpackConfig.resolve,
   fallback: { … },
