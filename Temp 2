@@ -1,3 +1,13 @@
+webpackConfig.resolve = {
+  ...webpackConfig.resolve,
+  fallback: { … },
+  alias: { … }
+};
+
+
+
+
+
 // craco.config.js
 const webpack = require('webpack');
 const path = require('path');
