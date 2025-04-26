@@ -1,124 +1,49 @@
-npm install --save-dev react-scripts@^5.0.0
-
-
-
-npm install process eslint-loader --save-dev
-
-
-
-
-rm -rf node_modules package-lock.json
-npm install
-
-
-// craco.config.js
-const webpack = require('webpack');
-
-module.exports = {
-  // 1) Turn off the old eslint-loader check
-  eslint: {
-    enable: false
-  },
-
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-
-  webpack: {
-    configure: (webpackConfig) => {
-      // Ensure resolve exists
-      webpackConfig.resolve = webpackConfig.resolve || {};
-
-      // 2) Polyfill `process`
-      webpackConfig.resolve.fallback = {
-        ...(webpackConfig.resolve.fallback || {}),
-        process: require.resolve('process/browser')
-      };
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        process: require.resolve('process/browser')
-      };
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return webpackConfig;
-    }
-  }
-};
-
-
-
-
-
-
-
-
-
-Still We got this error guide me step by step to solve this errors
-
-
-
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
 
 > alarm-frontend@0.1.0 start
 > craco start
 
-craco:  *** Cannot find ESLint loader (eslint-loader). ***
-√ Something is already running on port 3000.
 
-Would you like to run the app on another port instead? ... yes
-(node:38480) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-(node:38480) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
-Starting the development server...
-Failed to compile.
+There might be a problem with the project dependency tree.
+It is likely not a bug in Create React App, but something you need to fix locally.
 
-Module not found: Error: Package path ./auto/chart.js is not exported from package C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\chart.js (see exports field in C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\chart.js\package.json)
-ERROR in ./src/components/Chart.js 90:0-43
-Module not found: Error: Package path ./auto/chart.js is not exported from package C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\chart.js (see exports field in C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\chart.js\package.json)
+The react-scripts package provided by Create React App requires a dependency:
 
-ERROR in ./node_modules/react-dom/cjs/react-dom-client.development.js 13308:37-44
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-dom\cjs'
+  "eslint": "^5.16.0"
 
-ERROR in ./node_modules/react/cjs/react.development.js 450:37-44
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react\cjs'
+Don't try to install it manually: your package manager does it automatically.
+However, a different version of eslint was detected higher up in the tree:
 
-ERROR in ./node_modules/webpack-dev-server/client/modules/logger/index.js 266:43-50
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\webpack-dev-server\client\modules\logger'
+  C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\eslint (version: 7.32.0)
 
-ERROR in ./node_modules/axios/lib/utils.js 632:91-98
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\axios\lib'
+Manually installing incompatible versions is known to cause hard-to-debug issues.
 
-ERROR in ./node_modules/react-router/dist/development/chunk-BAXFHI7N.mjs 8806:13-20
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-router\dist\development'
+If you would prefer to ignore this check, add SKIP_PREFLIGHT_CHECK=true to an .env file in your project.
+That will permanently disable this message but you might encounter other issues.
 
-ERROR in ./node_modules/xlsx/xlsx.mjs 177:49-56
-Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\xlsx'
+To fix the dependency tree, try following the steps below in the exact order:
 
-ERROR in ./node_modules/react-dom/cjs/react-dom-client.development.js
-Cannot read properties of undefined (reading 'module')
+  1. Delete package-lock.json (not package.json!) and/or yarn.lock in your project folder.
+  2. Delete node_modules in your project folder.
+  3. Remove "eslint" from dependencies and/or devDependencies in the package.json file in your project folder.
+  4. Run npm install or yarn, depending on the package manager you use.
 
-ERROR in ./node_modules/react/cjs/react.development.js
-Cannot read properties of undefined (reading 'module')
+In most cases, this should be enough to fix the problem.
+If this has not helped, there are a few other things you can try:
 
-ERROR in ./node_modules/webpack-dev-server/client/modules/logger/index.js
-Cannot read properties of undefined (reading 'module')
+  5. If you used npm, install yarn (http://yarnpkg.com/) and repeat the above steps with it instead.
+     This may help because npm has known issues with package hoisting which may get resolved in future versions.
 
-ERROR in ./node_modules/axios/lib/utils.js
-Cannot read properties of undefined (reading 'module')
+  6. Check if C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\eslint is outside your project directory.
+     For example, you might have accidentally installed something in your home folder.
 
-ERROR in ./node_modules/react-router/dist/development/chunk-BAXFHI7N.mjs
-Cannot read properties of undefined (reading 'module')
+  7. Try running npm ls eslint in your project folder.
+     This will tell you which other package (apart from the expected react-scripts) installed eslint.
 
-ERROR in ./node_modules/xlsx/xlsx.mjs
-Cannot read properties of undefined (reading 'module')
+If nothing else helps, add SKIP_PREFLIGHT_CHECK=true to an .env file in your project.
+That would permanently disable this preflight check in case you want to proceed anyway.
 
-webpack compiled with 13 errors
-Watchpack Error (initial scan): Error: ENOTDIR: not a directory, scandir 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\process\browser.js'
-Watchpack Error (initial scan): Error: ENOTDIR: not a directory, scandir 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\components\chart.js'
+P.S. We know this message is long but please read the steps above :-) We hope you find them helpful!
+
+
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>
