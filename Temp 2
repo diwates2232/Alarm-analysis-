@@ -1,36 +1,6 @@
-// craco.config.js
-const webpack = require('webpack');
-
-module.exports = {
-  babel: { /* … */ },
-  webpack: {
-    configure(webpackConfig) {
-      webpackConfig.resolve = webpackConfig.resolve || {};
-
-      // now supported in Webpack 5
-      webpackConfig.resolve.fallback = {
-        ...(webpackConfig.resolve.fallback || {}),
-        process: require.resolve('process/browser')
-      };
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        process: require.resolve('process/browser')
-      };
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({ process: 'process/browser' })
-      );
-      return webpackConfig;
-    }
-  }
-};
 
 
-
-
-
-
-
-
+i have update above files as per given code still we are getting this erros
 
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
 
@@ -38,19 +8,15 @@ C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
 > craco start
 
 craco:  *** Cannot find ESLint loader (eslint-loader). ***
-(node:37492) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(node:31528) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
 (Use `node --trace-deprecation ...` to show where the warning was created)
-(node:37492) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(node:31528) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
 Starting the development server...
 Failed to compile.
 
-Module not found: Error: Cannot find file: 'chart.js' does not match the corresponding name on disk: '.\src\components\Chart.js'.
-WARNING in [eslint]
-src\pages\Dashboard.js
-  Line 115:9:  The 'locationOptions' conditional could make the dependencies of useMemo Hook (at line 137) change on every render. To fix this, wrap the initialization of 'locationOptions' in its own useMemo() Hook  react-hooks/exhaustive-deps
-
-ERROR in ./src/components/SummaryCards.js 128:0-30
-Module not found: Error: Cannot find file: 'chart.js' does not match the corresponding name on disk: '.\src\components\Chart.js'.
+Module not found: Error: Cannot find file: 'auto.js' does not match the corresponding name on disk: '.\node_modules\Chart.js\auto\chart.js'.
+ERROR in ./src/components/Chart.js 90:0-34
+Module not found: Error: Cannot find file: 'auto.js' does not match the corresponding name on disk: '.\node_modules\Chart.js\auto\chart.js'.
 
 ERROR in ./node_modules/react-dom/cjs/react-dom-client.development.js 13308:37-44
 Module not found: Error: Can't resolve 'process/browser' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-dom\cjs'
@@ -88,5 +54,5 @@ Cannot read properties of undefined (reading 'module')
 ERROR in ./node_modules/xlsx/xlsx.mjs
 Cannot read properties of undefined (reading 'module')
 
-webpack compiled with 13 errors and 1 warning
+webpack compiled with 13 errors
 Watchpack Error (initial scan): Error: ENOTDIR: not a directory, scandir 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\process\browser.js'
