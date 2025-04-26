@@ -10,6 +10,52 @@ module.exports = {
   },
   webpack: {
     configure: (webpackConfig) => {
+      // ensure resolve.alias exists
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser')
+      };
+
+      // provide global `process`
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return webpackConfig;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// craco.config.js
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
       // Ensure `resolve` exists
       webpackConfig.resolve = webpackConfig.resolve || {};
 
