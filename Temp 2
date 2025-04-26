@@ -1,3 +1,48 @@
+{
+  "name": "alarm-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^7.0.2",
+    "@mui/material": "^7.0.2",
+    "@mui/x-data-grid": "^7.28.3",
+    "axios": "^1.8.4",
+    "chart.js": "^4.4.9",
+    "react-chartjs-2": "^5.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.5.0",
+    "recharts": "^2.15.3",
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@craco/craco": "^7.0.0",
+    "craco": "^0.0.3",
+    "process": "^0.11.10",
+    "react-scripts": "^5.0.1"
+  },
+  "babel": {
+    "plugins": [
+      "@babel/plugin-proposal-optional-chaining",
+      "@babel/plugin-proposal-nullish-coalescing-operator"
+    ]
+  }
+}
+
+
+
+
+
+
 rmdir /s /q node_modules
 del package-lock.json
 
