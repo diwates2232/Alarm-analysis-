@@ -1,3 +1,65 @@
+npm install --save-dev react-scripts@^5.0.0
+
+
+
+npm install process eslint-loader --save-dev
+
+
+
+
+rm -rf node_modules package-lock.json
+npm install
+
+
+// craco.config.js
+const webpack = require('webpack');
+
+module.exports = {
+  // 1) Turn off the old eslint-loader check
+  eslint: {
+    enable: false
+  },
+
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+
+  webpack: {
+    configure: (webpackConfig) => {
+      // Ensure resolve exists
+      webpackConfig.resolve = webpackConfig.resolve || {};
+
+      // 2) Polyfill `process`
+      webpackConfig.resolve.fallback = {
+        ...(webpackConfig.resolve.fallback || {}),
+        process: require.resolve('process/browser')
+      };
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser')
+      };
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return webpackConfig;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
 Still We got this error guide me step by step to solve this errors
 
 
