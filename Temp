@@ -1,3 +1,15 @@
+// Build slides: global → each region only
++   const slides = [{ region: '', location: '' }];
++   regionOptions.forEach(region => {
++     slides.push({ region, location: '' });
++   });
+
+    slides
+
+
+
+
+
 // src/components/SummaryCards.js
 import React from 'react';
 import './SummaryCards.css';
