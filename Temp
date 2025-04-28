@@ -1,125 +1,132 @@
-Read Below recat.js File carefully and make changes as per requirnment.
-I have shared you images referred image and make dashboard like this .
-Dont use at only pie chart use diffrent diffrent tools to make attractive dashboards.
-kindly check images and make changes on file and give me updated files carefully.
+Now I am We are displaying Alarm Analysis Dashboard. 
+Now see What i Expected Display Alarm Analysis dashboard like Slide show.
+Initailyy Display alarm Anlaysis dashboard as Globally.
+then after 1 minutes Display Alarm analysis dashboard region wise location Wise after minutes break.
+also for .Month Wise Display this section using Line chart.
+also Priority Wise section adjust colors like low for light green, medium for light yellow
+High for red.
 
+Read carefully below js files and update files as per my request.
 
-
-File 1 
-
+File 1
 Alarmcard.js
 
 import React from 'react';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
 
-const AlarmCard = () => {
-  // You can replace this with dynamic alarm data later
+export default function AlarmCard({ summary }) {
+  if (!summary) return null;
+
   return (
-    <div style={{ border: '1px solid #ccc', padding: '20px', marginTop: '20px' }}>
-      <h2>Alarm Summary</h2>
-      <p>Critical Alarms: 5</p>
-      <p>Major Alarms: 12</p>
-      <p>Minor Alarms: 8</p>
-    </div>
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Total Alarms
+            </Typography>
+            <Typography variant="h4">
+              {summary.totalAlarms}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Response Sent %
+            </Typography>
+            <Typography variant="h4">
+              {summary.responseSentPercentage}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
   );
-};
-
-export default AlarmCard;
+}
 
 
+File 2
 
-File -2 
+Chart.js
 
-chart.js
+
 
 import React, { useEffect, useRef } from 'react';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import Chart from 'chart.js/auto';
 
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-);
+const defaultColors = [
+  '#8884d8',
+  '#82ca9d',
+  '#ffc658',
+  '#ff7f50',
+  '#a29bfe',
+  '#20c997',
+  '#fd7e14',
+  '#6c757d',
+];
 
-const MyChart = ({ data }) => {
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
+export default function MyChart({ 
+  type = 'bar',
+  data, 
+  options = {}, 
+  width = '100%', 
+  height = 400 
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
 
   useEffect(() => {
-    const ctx = chartRef.current.getContext('2d');
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
 
-    // Destroy existing chart instance if it exists
-    if (chartInstance.current) {
-      chartInstance.current.destroy();
+    if (chartRef.current) {
+      chartRef.current.destroy();
     }
 
-    // Define chart configuration
-    const config = {
-      type: 'bar', // Change to 'doughnut', 'line', etc. as needed
-      data: {
-        labels: data.labels,
-        datasets: [{
-          label: 'My Dataset',
-          data: data.values,
-          backgroundColor: [
-            '#8884d8',
-            '#82ca9d',
-            '#ffc658',
-            '#ff7f50',
-            '#a29bfe',
-          ],
-          borderWidth: 1,
-        }],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          tooltip: {
-            enabled: true,
-          },
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-          },
-          y: {
-            beginAtZero: true,
-          },
-        },
-      },
+    const chartData = {
+      labels: data.labels,
+      datasets: [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: data.bgColors || defaultColors.slice(0, data.values.length),
+        borderWidth: 1,
+      }],
     };
 
-    // Create new chart instance
-    chartInstance.current = new Chart(ctx, config);
-  }, [data]);
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        ...options,
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) },
+        },
+      },
+    });
+
+    return () => {
+      if (chartRef.current) chartRef.current.destroy();
+    };
+  }, [type, data, options]);
 
   return (
-    <div style={{ width: '100%', height: '400px' }}>
-      <canvas ref={chartRef}></canvas>
+    <div style={{ width, height }}>
+      <canvas ref={canvasRef} />
     </div>
   );
-};
-
-export default MyChart;
+}
 
 
-file 3 
 
-Filters.js
+file 3
 
+filters.js
 
 
 import React from 'react';
@@ -132,11 +139,14 @@ const Filters = ({
   locationOptions = []
 }) => {
   const handleChange = (field) => (e) =>
-    setFilters(prev => ({ ...prev, [field]: e.target.value, ...(field === 'region' && { location: '' }) }));
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
 
   return (
     <div style={{ display: 'flex', gap: '1rem', marginBottom: 16 }}>
-      {/* Region dropdown */}
       <TextField
         select
         label="Region"
@@ -152,7 +162,6 @@ const Filters = ({
         ))}
       </TextField>
 
-      {/* Location dropdown, only shown when a region is selected */}
       {filters.region && (
         <TextField
           select
@@ -176,70 +185,17 @@ const Filters = ({
 export default Filters;
 
 
+
 File 4
-Summary.card.css
-.summary-container {
-    padding: 20px;
-  }
-  
-  .summary-cards {
-    margin-bottom: 30px;
-  }
-  
-  .cards {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 20px;
-  }
-  
-  .card {
-    background-color: black;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 1.2rem;
-  }
-  
-  .charts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    justify-content: space-around;
-  }
-  
-  .chart {
-    width: 300px;
-    max-width: 100%;
-  }
 
-
-File 5
-
-SummmaryCards.js
+SummaryCards.js
 
 
 
 import React from 'react';
 import './SummaryCards.css';
-import { Pie, Bar } from 'react-chartjs-2';
+import MyChart from './Chart';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-
-ChartJS.register(
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-);
 
 const COLORS = [
   '#007bff', '#28a745', '#ffc107',
@@ -248,150 +204,118 @@ const COLORS = [
   '#6610f2',
 ];
 
-export default function SummaryCards({ summary, filters, locationOptions }) {
-  const { totalAlarms, responseSentPercentage } = summary;
+export default function SummaryCards({ summary, filters }) {
+  if (!summary) return null;
 
-  // ** Dynamic Partition Chart **
-  const makeChartData = (dataObj, title) => {
-    const labels = Object.keys(dataObj);
-    const counts = labels.map(lbl => dataObj[lbl].count);
-    const bg = labels.map((_, i) => COLORS[i % COLORS.length]);
-
-    return { labels, datasets: [{ data: counts, backgroundColor: bg }] };
+  const makeData = obj => {
+    const labels = Object.keys(obj);
+    const values = labels.map(lbl => obj[lbl].count);
+    const bg     = labels.map((_, i) => COLORS[i % COLORS.length]);
+    return { labels, values, bg };
   };
 
-  // Partition data:
   const partitionObj = !filters.region
     ? summary.regionWise
     : summary.locationWise;
 
-  const partitionTitle = !filters.region
-    ? 'Global Partition'
-    : `${filters.region} Partition`;
-
-  // The rest of your six charts:
-  const chartConfigs = [
-    { key: 'priorityWise', title: 'Priority Wise', type: 'pie' },
+  const charts = [
+    { key: 'priorityWise',      title: 'Priority Wise',      type: 'pie' },
     { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
-    { key: 'operatorWise', title: 'Operator Wise', type: 'bar' },
-    { key: 'monthWise', title: 'Month Wise', type: 'bar' },
-    // you can still include the filtered locationWise if you wish:
-    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'pie' },
+    { key: 'operatorWise',      title: 'Operator Wise',      type: 'bar' },
+    { key: 'monthWise',         title: 'Month Wise',         type: 'bar' },
+    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'pie' }
   ].filter(Boolean);
 
   return (
     <div className="summary-container">
-      <Typography variant="h4" gutterBottom>
-        Alarm Summary
-      </Typography>
-
-      {/* Top‑left cards */}
-      <Grid container spacing={2} className="summary-cards" style={{ marginBottom: 24 }}>
-        <Grid item xs={12} sm={6} md={4}>
+      <Grid container spacing={2} sx={{ mb: 4, justifyContent: 'center' }}>
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-              <Typography variant="h6">Total Alarms</Typography>
-              <Typography variant="h5" color="primary">
-                {totalAlarms}
+              <Typography variant="h6" gutterBottom>
+                {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6">Response Sent %</Typography>
-              <Typography variant="h5" color="secondary">
-                {responseSentPercentage}
-              </Typography>
+              <MyChart
+                type="doughnut"
+                data={makeData(partitionObj)}
+                height={300}
+              />
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Partition Pie Chart */}
-      <div className="charts" style={{ justifyContent: 'center' }}>
-        <div className="chart">
-          <Typography variant="h6" gutterBottom>
-            {partitionTitle}
-          </Typography>
-          <Pie data={makeChartData(partitionObj, partitionTitle)} />
-        </div>
-      </div>
-
-      {/* Other summary charts */}
-      <div className="charts">
-        {chartConfigs.map(({ key, title, type }) => {
-          const dataObj = summary[key];
-          if (!dataObj || Object.keys(dataObj).length === 0) return null;
-          const data = makeChartData(dataObj, title);
-
+      <Grid container spacing={2}>
+        {charts.map(({ key, title, type }) => {
+          const obj = summary[key];
+          if (!obj || Object.keys(obj).length === 0) return null;
           return (
-            <div className="chart" key={key}>
-              <Typography variant="h6" gutterBottom>
-                {title}
-              </Typography>
-              {type === 'pie' ? <Pie data={data} /> : <Bar data={data} />}
-            </div>
+            <Grid item xs={12} md={6} key={key}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {title}
+                  </Typography>
+                  <MyChart
+                    type={type}
+                    data={makeData(obj)}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
           );
         })}
-      </div>
+      </Grid>
     </div>
   );
-}   
+}
 
 
 
-file 6 
+File 5
 
-Dashboard.js  
+dashboard.js
 
 
-// src/pages/Dashboard.js
+
 import React, { useEffect, useState, useMemo } from 'react';
-import SummaryCards   from '../components/SummaryCards';
-import AlarmCard      from '../components/AlarmCard';
-import Filters        from '../components/Filters';
-import AlarmsTable    from '../components/AlarmsTable';  // ← adjust to your filename
+import { Container, Typography } from '@mui/material';
+import Filters      from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard    from '../components/AlarmCard';
 import { getAlarmSummary, getRawAlarms } from '../services/api';
 
-const Dashboard = () => {
+export default function Dashboard() {
   const [summary, setSummary]     = useState(null);
   const [rawAlarms, setRawAlarms] = useState([]);
   const [filters, setFilters]     = useState({ region: '', location: '' });
 
-  // 1) Load data
   useEffect(() => {
     getAlarmSummary()
       .then(res => setSummary(res.data))
       .catch(console.error);
-
     getRawAlarms()
       .then(res => setRawAlarms(res.data))
       .catch(console.error);
   }, []);
 
-  // 2) Build dropdown options (always defined)
   const regionOptions = summary ? Object.keys(summary.regionWise) : [];
-  const locationOptions = filters.region
-    ? Array.from(new Set(
-        rawAlarms
-          .filter(a => a.Region === filters.region)
-          .map(a => a.Location)
-      ))
-    : [];
 
-  // 3) Always call this hook (even if summary is null)
+  const locationOptions = useMemo(() => {
+    if (!filters.region) return [];
+    return Array.from(new Set(
+      rawAlarms
+        .filter(a => a.Region === filters.region)
+        .map(a => a.Location)
+    ));
+  }, [rawAlarms, filters.region]);
+
   const filteredSummary = useMemo(() => {
     if (!summary) return null;
-
     const fs = { ...summary };
-
     if (filters.region) {
-      // Only keep selected region
       fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
-
-      // Build locationWise for that region + optional location filter
       fs.locationWise = {};
       locationOptions
         .filter(loc => !filters.location || loc === filters.location)
@@ -402,14 +326,15 @@ const Dashboard = () => {
     return fs;
   }, [summary, filters, locationOptions]);
 
-  // 4) Early return if still loading
   if (!summary) {
-    return <div>Loading dashboard…</div>;
+    return <Typography>Loading dashboard…</Typography>;
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Alarm Analysis Dashboard</h1>
+    <Container sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Alarm Analysis Dashboard
+      </Typography>
 
       <Filters
         filters={filters}
@@ -418,18 +343,19 @@ const Dashboard = () => {
         locationOptions={locationOptions}
       />
 
+      <AlarmCard summary={summary} />
+
       <SummaryCards
         summary={filteredSummary}
         filters={filters}
       />
 
-      {/* Detailed table of all raw alarms */}
-      {/* <AlarmsTable alarms={rawAlarms} /> */}
-
-      <AlarmCard />
-    </div>
+      {/* <AlarmsTable data={rawAlarms} /> */}
+    </Container>
   );
-};
+}
 
-export default Dashboard;
+
+
+
 
