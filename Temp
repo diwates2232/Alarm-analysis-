@@ -1,212 +1,62 @@
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = 400
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    if (chartRef.current) chartRef.current.destroy();
-
-    // Build datasets: support multi-series if data.datasets provided
-    let datasets = [];
-    if (Array.isArray(data.datasets)) {
-      datasets = data.datasets.map(ds => ({
-        label: ds.label,
-        data: ds.data,
-        backgroundColor: ds.backgroundColor,
-        borderColor: ds.borderColor,
-        borderWidth: ds.borderWidth ?? 2,
-        fill: ds.fill ?? false,
-        tension: ds.tension ?? 0.4,
-        pointRadius: ds.pointRadius ?? 4
-      }));
-    } else {
-      // single‐series fallback
-      datasets = [{
-        label: data.label || '',
-        data: data.values,
-        backgroundColor: data.bgColors,
-        borderColor: data.borderColor,
-        borderWidth: 2,
-        fill: type === 'line' ? false : true,
-        tension: type === 'line' ? 0.4 : 0,
-        pointRadius: type === 'line' ? 4 : undefined,
-      }];
-    }
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: {
-        labels: data.labels,
-        datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        ...options,
-      }
-    });
-
-    return () => chartRef.current && chartRef.current.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
+I want to modify some files there is There is no need to seprate Rejection Type Wise pie chart.
+use rejection type wise count and percentage When display Global summary display percentage for Every region block.
+ex. when i slect region Global. Then pie chart are spread like .... EMEA, APAC, LACA, NAMER 
+then display percentage for rejection types or display only Priority Wise percentage for specific region
+.
+also When i select specific region  then display Rejection Type Wise count and percentage in Location Wise line chart format.make in your openion 
+i want display more attractive .
 
 
+Adjust files as per my request and give me updated js files carefully.
 
+File 1
+AlarmCards.js
 
 
 
 import React from 'react';
-import './SummaryCards.css';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
 
-// Priority palette
-const PRIORITY_COLORS = {
-  Low: '#90ee90',
-  Medium: '#ffff00',
-  High: '#ff0000',
-};
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
+export default function AlarmCard({ summary }) {
   if (!summary) return null;
 
-  // For Location Wise: build a multi-series dataset of Low/Medium/High percentages
-  const makeLocationPriorityData = () => {
-    const locEntries = Object.entries(summary.locationWise);
-    const labels = locEntries.map(([loc]) => loc);
-    // For each priority, compute counts & percentages
-    const datasets = ['Low', 'Medium', 'High'].map(priority => {
-      const data = locEntries.map(([loc, info]) => {
-        const total = info.count;
-        const count = rawAlarms.filter(a =>
-          a.Location === loc && a['CCURE Incident Priority'] === priority
-        ).length;
-        // percentage
-        return total ? (count / total) * 100 : 0;
-      });
-      return {
-        label: `${priority}`,
-        data,
-        borderColor: PRIORITY_COLORS[priority],
-        backgroundColor: PRIORITY_COLORS[priority].replace(')', ',0.2)'),
-        fill: false,
-        tension: 0.4,
-        pointRadius: 4
-      };
-    });
-    return { labels, datasets };
-  };
-
-  // Standard single-series helper (unused now but here if needed)
-  const makeData = (key, obj) => {
-    const labels = Object.keys(obj);
-    const values = labels.map(lbl => obj[lbl].count);
-    const bg     = labels.map((_, i) => PRIORITY_COLORS[labels[i]] || '#007bff');
-    return { labels, values, bgColors: bg, borderColor: bg };
-  };
-
-  // Configs: drop standalone priorityWise; replace locationWise
-  const configs = [
-    {
-      key: 'locationWise',
-      title: 'Priority Split by Location',
-      type: 'line',
-      customData: makeLocationPriorityData(),
-      options: {
-        scales: {
-          x: { title: { display: true, text: 'Location' } },
-          y: { title: { display: true, text: 'Percentage (%)' } }
-        },
-        plugins: {
-          legend: { position: 'top' }
-        }
-      },
-      fullWidth: true
-    }
-  ];
-
   return (
-    <Grid container spacing={2}>
-      {configs.map(({ key, title, type, customData, options, fullWidth }) => (
-        <Grid item xs={12} md={fullWidth ? 12 : 4} key={key}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {title}
-              </Typography>
-
-              {/* Legend for line colors */}
-              <Box sx={{ display: 'flex', mb: 1 }}>
-                {customData.datasets.map(ds => (
-                  <Box key={ds.label} sx={{ mr: 3, display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{
-                      width: 12, height: 12,
-                      backgroundColor: ds.borderColor,
-                      borderRadius: '50%', mr: 0.5
-                    }} />
-                    <Typography variant="body2">{ds.label}</Typography>
-                  </Box>
-                ))}
-              </Box>
-
-              <MyChart
-                type={type}
-                data={customData}
-                options={options}
-                height={320}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Total Alarms
+            </Typography>
+            <Typography variant="h4">
+              {summary.totalAlarms}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Response Sent %
+            </Typography>
+            <Typography variant="h4">
+              {summary.responseSentPercentage}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
     </Grid>
   );
 }
 
 
 
+File 2
+
+Chart.js
 
 
-
-
-
-
-
-
-
-
-Now combine Priority Wise chart & Location Wise chart 
-there is no need to Display Both chart.
-make a Location Wise Chart big.
-Where Display Location Wise how Many Priority Wise Alarms Occured in percentage. add 3 line
-for display Prority like low mediun , High , also Display Count .
-read below files Carefully and give me Updated js Files.
-
-
-
-
-Now update Location Wise chart ...
-use Line chart for Location wise.
-At the top display Which Colour are use for Which location Adjust X & Y Axis for count and date or month 
-Read below file carefully and update file as per my request.
-
-File 1 Charts.js
 
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
@@ -263,10 +113,72 @@ export default function MyChart({
 }
 
 
+File 3
+Chart.js
 
-File 2
+import React from 'react';
+import { TextField, MenuItem } from '@mui/material';
 
-SummaryCards.js
+const Filters = ({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = []
+}) => {
+  const handleChange = (field) => (e) =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem', marginBottom: 16 }}>
+      <TextField
+        select
+        label="Region"
+        value={filters.region}
+        onChange={handleChange('region')}
+        style={{ minWidth: 150 }}
+      >
+        <MenuItem value="">Global</MenuItem>
+        {regionOptions.map(region => (
+          <MenuItem key={region} value={region}>
+            {region}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {filters.region && (
+        <TextField
+          select
+          label="Location"
+          value={filters.location}
+          onChange={handleChange('location')}
+          style={{ minWidth: 200 }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(loc => (
+            <MenuItem key={loc} value={loc}>
+              {loc}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    </div>
+  );
+};
+
+export default Filters;
+
+
+
+
+File 4
+
+SummaryCard.js
+
+
 
 
 // src/components/SummaryCards.js
@@ -335,11 +247,14 @@ export default function SummaryCards({ summary, filters }) {
   // Chart configs
   const configs = [
     { key: 'partition',        title: !filters.region ? 'Global Partition' : `${filters.region} Partition`, type: 'doughnut', dataObj: partitionObj },
-    { key: 'priorityWise',     title: 'Priority Wise',      type: 'pie',      dataObj: summary.priorityWise },
+    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'line', dataObj: summary.locationWise },
     { key: 'rejectionTypeWise',title: 'Rejection Type Wise', type: 'pie',      dataObj: summary.rejectionTypeWise },
-    { key: 'operatorWise',     title: 'Operator Wise',      type: 'bar',      dataObj: summary.operatorWise },
-    { key: 'monthWise',        title: 'Month Wise',         type: 'line',     dataObj: summary.monthWise },
-    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'line', dataObj: summary.locationWise }
+     { key: 'priorityWise',     title: 'Priority Wise',      type: 'pie',      dataObj: summary.priorityWise },
+     { key: 'operatorWise',     title: 'Operator Wise',      type: 'bar',      dataObj: summary.operatorWise },
+    { key: 'monthWise',        title: 'Month Wise',         type: 'line',     dataObj: summary.monthWise }
+
+    // filters.region && { key: 'locationWise', title: 'Location Wise', type: 'line', dataObj: summary.locationWise }
+
   ].filter(Boolean);
 
   return (
@@ -397,8 +312,12 @@ export default function SummaryCards({ summary, filters }) {
 }
 
 
+File 5
 
-Dashboard.js
+dashboard.js
+
+
+
 
 
 // src/pages/Dashboard.js
@@ -450,8 +369,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!summary) return;   // wait for data
-     
 
+  
     const slides = [{ region: '', location: '' }];
        regionOptions.forEach(region => {
          slides.push({ region, location: '' });
@@ -511,13 +430,11 @@ export default function Dashboard() {
       <SummaryCards
         summary={filteredSummary}
         filters={filters}
+        
       />
     </Container>
   );
 }
-
-
-
 
 
 
