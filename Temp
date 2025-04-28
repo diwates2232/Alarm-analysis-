@@ -1,3 +1,152 @@
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+
+// Colour palette for rejection types
+const REJECTION_COLORS = [
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2'
+];
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  // GLOBAL VIEW: region pie + rejection cards
+  if (!filters.region) {
+    // 1) Region partition pie
+    const regions = Object.entries(summary.regionWise);
+    const regionLabels = regions.map(([r]) => r);
+    const regionValues = regions.map(([_, info]) => info.count);
+    const regionColors = regionLabels.map((_, i) => REJECTION_COLORS[i % REJECTION_COLORS.length]);
+
+    // 2) Rejection cards
+    const rejections = Object.entries(summary.rejectionTypeWise);
+
+    return (
+      <>
+        <Grid container spacing={2} sx={{ mb: 4, justifyContent: 'center' }}>
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Global Region Split
+                </Typography>
+                <MyChart
+                  type="doughnut"
+                  data={{
+                    labels: regionLabels,
+                    values: regionValues,
+                    bgColors: regionColors,
+                    borderColor: regionColors
+                  }}
+                  height={300}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2}>
+          {rejections.map(([type, info], idx) => (
+            <Grid item xs={12} sm={6} md={3} key={type}>
+              <Card>
+                <CardContent>
+                  <Typography variant="subtitle1">
+                    {type}
+                  </Typography>
+                  <Typography variant="h5" color="primary">
+                    {info.count}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {info.percentage}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </>
+    );
+  }
+
+  // REGION VIEW: Location-Wise line chart of rejection counts
+  const locations = Array.from(new Set(
+    rawAlarms
+      .filter(a => a.Region === filters.region)
+      .map(a => a.Location)
+  ));
+
+  const rejectionTypes = Object.keys(summary.rejectionTypeWise);
+
+  // Build one dataset per rejection type
+  const datasets = rejectionTypes.map((type, idx) => {
+    const data = locations.map(loc =>
+      rawAlarms.filter(a =>
+        a.Region === filters.region &&
+        a.Location === loc &&
+        a.Rejection === type
+      ).length
+    );
+    const color = REJECTION_COLORS[idx % REJECTION_COLORS.length];
+    return {
+      label: type,
+      data,
+      borderColor: color,
+      backgroundColor: color.replace(')', ',0.2)'),
+      fill: false,
+      tension: 0.4,
+      pointRadius: 4
+    };
+  });
+
+  return (
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Rejection Types by Location in {filters.region}
+            </Typography>
+
+            {/* Legend */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 2 }}>
+              {datasets.map(ds => (
+                <Box key={ds.label} sx={{ display: 'flex', alignItems: 'center', mr: 3, mb: 1 }}>
+                  <Box sx={{
+                    width: 12, height: 12,
+                    backgroundColor: ds.borderColor,
+                    borderRadius: '50%', mr: 0.5
+                  }} />
+                  <Typography variant="body2">{ds.label}</Typography>
+                </Box>
+              ))}
+            </Box>
+
+            <MyChart
+              type="line"
+              data={{ labels: locations, datasets }}
+              options={{
+                scales: {
+                  x: { title: { display: true, text: 'Location' } },
+                  y: { title: { display: true, text: 'Count of Alarms' } }
+                }
+              }}
+              height={360}
+            />
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
 I want to modify some files there is There is no need to seprate Rejection Type Wise pie chart.
 use rejection type wise count and percentage When display Global summary display percentage for Every region block.
 ex. when i slect region Global. Then pie chart are spread like .... EMEA, APAC, LACA, NAMER 
