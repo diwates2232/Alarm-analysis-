@@ -1,3 +1,203 @@
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+const DEFAULT_COLORS = [
+  '#007bff','#28a745','#ffc107',
+  '#dc3545','#6f42c1','#17a2b8',
+  '#fd7e14','#20c997','#6c757d',
+  '#6610f2'
+];
+
+const PRIORITY_COLORS = {
+  Low: '#90ee90',
+  Medium: '#ffffe0',
+  High: '#ff0000'
+};
+
+export default function SummaryCards({ summary, filters }) {
+  if (!summary) return null;
+
+  // Build data for a given key
+  const makeData = (key, obj) => {
+    // Sort month labels chronologically
+    let labels = Object.keys(obj);
+    if (key === 'monthWise') {
+      labels = labels.sort((a, b) => {
+        const [mA,yA] = a.split('-').map(Number);
+        const [mB,yB] = b.split('-').map(Number);
+        return new Date(yA, mA-1) - new Date(yB, mB-1);
+      });
+    }
+    const values = labels.map(lbl => obj[lbl].count);
+
+    // Determine bg & border colors
+    let bg, borderColor;
+    if (key === 'priorityWise') {
+      bg = labels.map(lbl => PRIORITY_COLORS[lbl] || '#ccc');
+      borderColor = bg;
+    } else if (key === 'monthWise') {
+      bg = labels.map(() => 'rgba(0,123,255,0.2)');
+      borderColor = '#007bff';
+    } else {
+      bg = labels.map((_,i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+      borderColor = bg;
+    }
+
+    return { labels, values, bgColors: bg, borderColor };
+  };
+
+  // Partition data for global vs region
+  const partitionObj = !filters.region
+    ? summary.regionWise
+    : summary.locationWise;
+
+  // Build an array of chart configs in the order you asked
+  const configs = [
+    {
+      key: 'partition',
+      title: !filters.region ? 'Global Partition' : `${filters.region} Partition`,
+      type: 'doughnut',
+      dataObj: partitionObj
+    },
+    { key: 'priorityWise',      title: 'Priority Wise',      type: 'pie',  dataObj: summary.priorityWise },
+    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie',  dataObj: summary.rejectionTypeWise },
+    { key: 'operatorWise',      title: 'Operator Wise',      type: 'bar',  dataObj: summary.operatorWise },
+    { key: 'monthWise',         title: 'Month Wise',         type: 'line', dataObj: summary.monthWise },
+    filters.region && { 
+      key: 'locationWise',
+      title: 'Location Wise',
+      type: 'pie',
+      dataObj: summary.locationWise
+    }
+  ].filter(Boolean);
+
+  return (
+    <Grid container spacing={2}>
+      {configs.map(({ key, title, type, dataObj }) => {
+        if (!dataObj || Object.keys(dataObj).length === 0) return null;
+
+        // Custom options for monthWise line
+        const opts = key === 'monthWise' ? {
+          scales: {
+            x: { title: { display: true, text: 'Month' } },
+            y: { title: { display: true, text: 'Alarm Count' } }
+          }
+        } : {};
+
+        return (
+          <Grid item xs={12} md={4} key={key}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {title}
+                </Typography>
+                <MyChart
+                  type={type}
+                  data={makeData(key, dataObj)}
+                  options={opts}
+                  height={240}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
+}
+
+
+
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Container, Typography, Grid } from '@mui/material';
+import Filters      from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard    from '../components/AlarmCard';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({ region: '', location: '' });
+
+  // Load data once
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [],
+    [summary]
+  );
+
+  const locationOptions = useMemo(() => {
+    if (!filters.region) return [];
+    return Array.from(new Set(
+      rawAlarms
+        .filter(a => a.Region === filters.region)
+        .map(a => a.Location)
+    ));
+  }, [rawAlarms, filters.region]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Container sx={{ py: 4 }}>
+      {/* Header */}
+      <Typography variant="h4" gutterBottom>
+        Alarm Analysis Dashboard
+      </Typography>
+
+      {/* Filters (left) and Alarm Cards (right) */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={3}>
+          <Filters
+            filters={filters}
+            setFilters={setFilters}
+            regionOptions={regionOptions}
+            locationOptions={locationOptions}
+          />
+        </Grid>
+        <Grid item xs={12} md={9}>
+          <AlarmCard summary={summary} />
+        </Grid>
+      </Grid>
+
+      {/* Six charts in two rows of three */}
+      <SummaryCards summary={summary} filters={filters} />
+    </Container>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Now Adjust my Alarm Analysis dashboard UI
 make headline /Header ...Alarm Analysis Dashboard.
 then Add Region , Location Filter for left side of my UI.
