@@ -1,3 +1,196 @@
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = 400
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    // Build datasets: support multi-series if data.datasets provided
+    let datasets = [];
+    if (Array.isArray(data.datasets)) {
+      datasets = data.datasets.map(ds => ({
+        label: ds.label,
+        data: ds.data,
+        backgroundColor: ds.backgroundColor,
+        borderColor: ds.borderColor,
+        borderWidth: ds.borderWidth ?? 2,
+        fill: ds.fill ?? false,
+        tension: ds.tension ?? 0.4,
+        pointRadius: ds.pointRadius ?? 4
+      }));
+    } else {
+      // single‐series fallback
+      datasets = [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: data.bgColors,
+        borderColor: data.borderColor,
+        borderWidth: 2,
+        fill: type === 'line' ? false : true,
+        tension: type === 'line' ? 0.4 : 0,
+        pointRadius: type === 'line' ? 4 : undefined,
+      }];
+    }
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        ...options,
+      }
+    });
+
+    return () => chartRef.current && chartRef.current.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+
+
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+
+// Priority palette
+const PRIORITY_COLORS = {
+  Low: '#90ee90',
+  Medium: '#ffff00',
+  High: '#ff0000',
+};
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  // For Location Wise: build a multi-series dataset of Low/Medium/High percentages
+  const makeLocationPriorityData = () => {
+    const locEntries = Object.entries(summary.locationWise);
+    const labels = locEntries.map(([loc]) => loc);
+    // For each priority, compute counts & percentages
+    const datasets = ['Low', 'Medium', 'High'].map(priority => {
+      const data = locEntries.map(([loc, info]) => {
+        const total = info.count;
+        const count = rawAlarms.filter(a =>
+          a.Location === loc && a['CCURE Incident Priority'] === priority
+        ).length;
+        // percentage
+        return total ? (count / total) * 100 : 0;
+      });
+      return {
+        label: `${priority}`,
+        data,
+        borderColor: PRIORITY_COLORS[priority],
+        backgroundColor: PRIORITY_COLORS[priority].replace(')', ',0.2)'),
+        fill: false,
+        tension: 0.4,
+        pointRadius: 4
+      };
+    });
+    return { labels, datasets };
+  };
+
+  // Standard single-series helper (unused now but here if needed)
+  const makeData = (key, obj) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(lbl => obj[lbl].count);
+    const bg     = labels.map((_, i) => PRIORITY_COLORS[labels[i]] || '#007bff');
+    return { labels, values, bgColors: bg, borderColor: bg };
+  };
+
+  // Configs: drop standalone priorityWise; replace locationWise
+  const configs = [
+    {
+      key: 'locationWise',
+      title: 'Priority Split by Location',
+      type: 'line',
+      customData: makeLocationPriorityData(),
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Location' } },
+          y: { title: { display: true, text: 'Percentage (%)' } }
+        },
+        plugins: {
+          legend: { position: 'top' }
+        }
+      },
+      fullWidth: true
+    }
+  ];
+
+  return (
+    <Grid container spacing={2}>
+      {configs.map(({ key, title, type, customData, options, fullWidth }) => (
+        <Grid item xs={12} md={fullWidth ? 12 : 4} key={key}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {title}
+              </Typography>
+
+              {/* Legend for line colors */}
+              <Box sx={{ display: 'flex', mb: 1 }}>
+                {customData.datasets.map(ds => (
+                  <Box key={ds.label} sx={{ mr: 3, display: 'flex', alignItems: 'center' }}>
+                    <Box sx={{
+                      width: 12, height: 12,
+                      backgroundColor: ds.borderColor,
+                      borderRadius: '50%', mr: 0.5
+                    }} />
+                    <Typography variant="body2">{ds.label}</Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              <MyChart
+                type={type}
+                data={customData}
+                options={options}
+                height={320}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 Now combine Priority Wise chart & Location Wise chart 
 there is no need to Display Both chart.
 make a Location Wise Chart big.
