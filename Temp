@@ -1,3 +1,154 @@
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+
+// A palette for rejection‐type cards
+const REJECTION_COLORS = [
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2',
+];
+
+// Helper to compute stats per rejection type in context
+function getRejectionStats(summary, rawAlarms, filters) {
+  let entries;
+
+  // Global context
+  if (!filters.region) {
+    entries = Object.entries(summary.rejectionTypeWise)
+      .map(([type, info], idx) => ({
+        type,
+        count: info.count,
+        percentage: info.percentage,
+        color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+      }));
+  }
+  // Region context
+  else if (filters.region && !filters.location) {
+    const regionTotal = summary.regionWise[filters.region].count;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count], idx) => ({
+      type,
+      count,
+      percentage: regionTotal ? `${((count / regionTotal) * 100).toFixed(2)}%` : '0%',
+      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+    }));
+  }
+  // Location context
+  else {
+    const locTotal = summary.locationWise[filters.location]?.count || 0;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region && a.Location === filters.location)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count], idx) => ({
+      type,
+      count,
+      percentage: locTotal ? `${((count / locTotal) * 100).toFixed(2)}%` : '0%',
+      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+    }));
+  }
+
+  return entries;
+}
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+
+  // Build the other charts as before, **excluding** rejectionTypeWise
+  const makeData = (key, obj) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(lbl => obj[lbl].count);
+    const bg     = labels.map((_,i) => REJECTION_COLORS[i % REJECTION_COLORS.length]);
+    return { labels, values, bgColors: bg, borderColor: bg };
+  };
+
+  const partitionObj = filters.region
+    ? { [filters.region]: summary.regionWise[filters.region] }
+    : summary.regionWise;
+
+  const configs = [
+    { key: 'partition',    title: !filters.region ? 'Global Partition' : `${filters.region} Partition`, type: 'doughnut', dataObj: partitionObj },
+    { key: 'priorityWise', title: 'Priority Wise', type: 'pie', dataObj: summary.priorityWise },
+    { key: 'operatorWise', title: 'Operator Wise', type: 'bar', dataObj: summary.operatorWise },
+    { key: 'monthWise',    title: 'Month Wise',    type: 'line', dataObj: summary.monthWise },
+    filters.region && filters.location && { key: 'locationWise', title: 'Location Wise', type: 'line', dataObj: summary.locationWise }
+  ].filter(Boolean);
+
+  return (
+    <>
+      {/* Rejection Type Cards */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {rejectionStats.map(({type, count, percentage, color}) => (
+          <Grid item key={type} xs={12} sm={6} md={3}>
+            <Card sx={{ borderLeft: `6px solid ${color}` }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {percentage}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Other Charts */}
+      <Grid container spacing={2}>
+        {configs.map(({key, title, type, dataObj }) => {
+          if (!dataObj || Object.keys(dataObj).length === 0) return null;
+          // Axis titles for line charts
+          const options = (type === 'line') ? {
+            scales: {
+              x: { title: { display: true, text: key === 'monthWise' ? 'Month' : 'Location' } },
+              y: { title: { display: true, text: 'Alarm Count' } }
+            }
+          } : {};
+
+          return (
+            <Grid item xs={12} md={4} key={key}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {title}
+                  </Typography>
+                  <MyChart
+                    type={type}
+                    data={makeData(key, dataObj)}
+                    options={options}
+                    height={260}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+
+
 Read below File Carefully and update Rejection Type Wise section as per request.for rejection Type make samll cards And display this cards 
 on Ui Horizontally or vertically at left or right side.
 in this small cards Display rejection Type name , Percentage & Count for Region Wise and Location Wise .
