@@ -1,119 +1,144 @@
+This is my Previous Files make changes in this file to add above files and give me updated filaes carefully.
+
+SummaryCards.js
+
 import React from 'react';
 import './SummaryCards.css';
 import MyChart from './Chart';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
 
+// Default palette for everything except priorityWise
 const DEFAULT_COLORS = [
-  '#007bff','#28a745','#ffc107',
-  '#dc3545','#6f42c1','#17a2b8',
-  '#fd7e14','#20c997','#6c757d',
-  '#6610f2'
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2',
 ];
 
+// Custom palette for priorityWise
 const PRIORITY_COLORS = {
-  Low: '#90ee90',
-  Medium: '#ffffe0',
-  High: '#ff0000'
+  Low: '#90ee90',      // light green
+  Medium: '#FFFF00',   // light yellow
+  High: '#ff0000',     // red
 };
 
 export default function SummaryCards({ summary, filters }) {
   if (!summary) return null;
 
-  // Build data for a given key
+  // Build chart data, with special handling for monthWise and priorityWise
   const makeData = (key, obj) => {
-    // Sort month labels chronologically
     let labels = Object.keys(obj);
+
+    // Sort month labels chronologically: "MM-YYYY"
     if (key === 'monthWise') {
       labels = labels.sort((a, b) => {
-        const [mA,yA] = a.split('-').map(Number);
-        const [mB,yB] = b.split('-').map(Number);
-        return new Date(yA, mA-1) - new Date(yB, mB-1);
+        const [mA, yA] = a.split('-').map(Number);
+        const [mB, yB] = b.split('-').map(Number);
+        return new Date(yA, mA - 1) - new Date(yB, mB - 1);
       });
     }
+
     const values = labels.map(lbl => obj[lbl].count);
 
-    // Determine bg & border colors
+    // Determine colors
     let bg, borderColor;
     if (key === 'priorityWise') {
       bg = labels.map(lbl => PRIORITY_COLORS[lbl] || '#ccc');
       borderColor = bg;
     } else if (key === 'monthWise') {
-      bg = labels.map(() => 'rgba(0,123,255,0.2)');
+      // single‐color line
       borderColor = '#007bff';
+      bg = labels.map(() => 'rgba(0, 123, 255, 0.2)');
     } else {
-      bg = labels.map((_,i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+      bg = labels.map((_, i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
       borderColor = bg;
     }
 
     return { labels, values, bgColors: bg, borderColor };
   };
 
-  // Partition data for global vs region
   const partitionObj = !filters.region
     ? summary.regionWise
     : summary.locationWise;
 
-  // Build an array of chart configs in the order you asked
-  const configs = [
-    {
-      key: 'partition',
-      title: !filters.region ? 'Global Partition' : `${filters.region} Partition`,
-      type: 'doughnut',
-      dataObj: partitionObj
-    },
-    { key: 'priorityWise',      title: 'Priority Wise',      type: 'pie',  dataObj: summary.priorityWise },
-    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie',  dataObj: summary.rejectionTypeWise },
-    { key: 'operatorWise',      title: 'Operator Wise',      type: 'bar',  dataObj: summary.operatorWise },
-    { key: 'monthWise',         title: 'Month Wise',         type: 'line', dataObj: summary.monthWise },
-    filters.region && { 
-      key: 'locationWise',
-      title: 'Location Wise',
-      type: 'pie',
-      dataObj: summary.locationWise
-    }
+  // monthWise becomes a line chart; priorityWise gets custom colors
+  const charts = [
+    { key: 'priorityWise',      title: 'Priority Wise',      type: 'pie' },
+    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
+    { key: 'operatorWise',      title: 'Operator Wise',      type: 'bar' },
+    { key: 'monthWise',         title: 'Month Wise',         type: 'line' },
+    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'pie' }
   ].filter(Boolean);
 
   return (
-    <Grid container spacing={2}>
-      {configs.map(({ key, title, type, dataObj }) => {
-        if (!dataObj || Object.keys(dataObj).length === 0) return null;
+    <div className="summary-container">
+      {/* Global or Region Partition */}
+      <Grid container spacing={2} sx={{ mb: 4, justifyContent: 'center' }}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
+              </Typography>
+              <MyChart
+                type="doughnut"
+                data={makeData('partition', partitionObj)}
+                height={300}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-        // Custom options for monthWise line
-        const opts = key === 'monthWise' ? {
-          scales: {
-            x: { title: { display: true, text: 'Month' } },
-            y: { title: { display: true, text: 'Alarm Count' } }
-          }
-        } : {};
+      {/* Other summary charts */}
+      <Grid container spacing={2}>
+        {charts.map(({ key, title, type }) => {
+          const obj = summary[key];
+          if (!obj || Object.keys(obj).length === 0) return null;
+          // Custom options for monthWise
+          const opts = key === 'monthWise'
+            ? {
+                scales: {
+                  x: {
+                    title: { display: true, text: 'Month' }
+                  },
+                  y: {
+                    title: { display: true, text: 'Alarm Count' }
+                  }
+                }
+              }
+            : {};
 
-        return (
-          <Grid item xs={12} md={4} key={key}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {title}
-                </Typography>
-                <MyChart
-                  type={type}
-                  data={makeData(key, dataObj)}
-                  options={opts}
-                  height={240}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      })}
-    </Grid>
+          return (
+            <Grid item xs={12} md={6} key={key}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {title}
+                  </Typography>
+                  <MyChart
+                    type={type}
+                    data={makeData(key, obj)}
+                    options={opts}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </div>
   );
 }
 
 
+Dashboard.js
 
 
-
+// src/pages/Dashboard.js
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Container, Typography, Grid } from '@mui/material';
+import { Container, Typography } from '@mui/material';
 import Filters      from '../components/Filters';
 import SummaryCards from '../components/SummaryCards';
 import AlarmCard    from '../components/AlarmCard';
@@ -124,9 +149,9 @@ export default function Dashboard() {
   const [rawAlarms, setRawAlarms] = useState([]);
   const [filters, setFilters]     = useState({ region: '', location: '' });
 
-  // Load data once
+  // 1) Fetch data once
   useEffect(() => {
-    Promise.all([getAlarmSummary(), getRawAlarms()])
+    Promise.all([ getAlarmSummary(), getRawAlarms() ])
       .then(([sumRes, rawRes]) => {
         setSummary(sumRes.data);
         setRawAlarms(rawRes.data);
@@ -134,48 +159,96 @@ export default function Dashboard() {
       .catch(console.error);
   }, []);
 
-  const regionOptions = useMemo(
-    () => summary ? Object.keys(summary.regionWise) : [],
-    [summary]
-  );
+  // 2) Memoize regionOptions so it only changes when summary changes
+  const regionOptions = useMemo(() => {
+    return summary ? Object.keys(summary.regionWise) : [];
+  }, [summary]);
 
-  const locationOptions = useMemo(() => {
-    if (!filters.region) return [];
-    return Array.from(new Set(
-      rawAlarms
-        .filter(a => a.Region === filters.region)
-        .map(a => a.Location)
-    ));
-  }, [rawAlarms, filters.region]);
+  // 3) Build a map of region → [locations], memoized on rawAlarms and regionOptions
+  const regionLocationsMap = useMemo(() => {
+    const map = {};
+    regionOptions.forEach(region => {
+      map[region] = Array.from(
+        new Set(
+          rawAlarms
+            .filter(a => a.Region === region)
+            .map(a => a.Location)
+        )
+      );
+    });
+    return map;
+  }, [rawAlarms, regionOptions]);
 
+  // 4) Build and start slideshow as soon as summary is available
+  const slidesRef = useRef([]);
+  const slideIdx  = useRef(0);
+
+  useEffect(() => {
+    if (!summary) return;   // wait for data
+
+    // Build slides: global → each region → each location
+    const slides = [{ region: '', location: '' }];
+    regionOptions.forEach(region => {
+      slides.push({ region, location: '' });
+      regionLocationsMap[region].forEach(location => {
+        slides.push({ region, location });
+      });
+    });
+    slidesRef.current = slides;
+    slideIdx.current = 0;
+
+    // Immediately show “Global”
+    setFilters(slides[0]);
+
+    // Every 60s, advance to the next slide
+    const intervalId = setInterval(() => {
+      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
+      setFilters(slidesRef.current[slideIdx.current]);
+    }, 30_000);
+
+    return () => clearInterval(intervalId);
+  }, [summary, regionOptions, regionLocationsMap]);
+
+  // 5) Compute filteredSummary exactly as before
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+    if (filters.region) {
+      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      (regionLocationsMap[filters.region] || [])
+        .filter(loc => !filters.location || loc === filters.location)
+        .forEach(loc => {
+          fs.locationWise[loc] = summary.locationWise[loc];
+        });
+    }
+    return fs;
+  }, [summary, filters, regionLocationsMap]);
+
+  // 6) Render
   if (!summary) {
     return <Typography>Loading dashboard…</Typography>;
   }
 
   return (
     <Container sx={{ py: 4 }}>
-      {/* Header */}
       <Typography variant="h4" gutterBottom>
         Alarm Analysis Dashboard
       </Typography>
 
-      {/* Filters (left) and Alarm Cards (right) */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
-          <Filters
-            filters={filters}
-            setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={locationOptions}
-          />
-        </Grid>
-        <Grid item xs={12} md={9}>
-          <AlarmCard summary={summary} />
-        </Grid>
-      </Grid>
+      <Filters
+        filters={filters}
+        setFilters={setFilters}
+        regionOptions={regionOptions}
+        locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
+      />
 
-      {/* Six charts in two rows of three */}
-      <SummaryCards summary={summary} filters={filters} />
+      <AlarmCard summary={summary} />
+
+      <SummaryCards
+        summary={filteredSummary}
+        filters={filters}
+      />
     </Container>
   );
 }
@@ -184,28 +257,4 @@ export default function Dashboard() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Now Adjust my Alarm Analysis dashboard UI
-make headline /Header ...Alarm Analysis Dashboard.
-then Add Region , Location Filter for left side of my UI.
-Total Alarms , Responce sent sectiom for Right side .
-then Adjust 
-Region Partition chart , then Priority Wise , Rejection Type Wise ,Operator Wise,Month Wise
-Location Wise
-like This Adjust this card in 2 line for One like use 3 cards only .
-
-Adjust Ui as per my request.
 
