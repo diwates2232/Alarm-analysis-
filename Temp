@@ -1,3 +1,234 @@
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+// Default palette for everything except priorityWise
+const DEFAULT_COLORS = [
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2',
+];
+
+// Custom palette for priorityWise
+const PRIORITY_COLORS = {
+  Low: '#90ee90',      // light green
+  Medium: '#ffffe0',   // light yellow
+  High: '#ff0000',     // red
+};
+
+export default function SummaryCards({ summary, filters }) {
+  if (!summary) return null;
+
+  // Build chart data, with special-case for priorityWise
+  const makeData = (key, obj) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(lbl => obj[lbl].count);
+
+    let bg;
+    if (key === 'priorityWise') {
+      bg = labels.map(lbl => PRIORITY_COLORS[lbl] || '#ccc');
+    } else {
+      bg = labels.map((_, i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+    }
+
+    return { labels, values, bg };
+  };
+
+  const partitionObj = !filters.region
+    ? summary.regionWise
+    : summary.locationWise;
+
+  // Chart list: monthWise is now a 'line'
+  const charts = [
+    { key: 'priorityWise',      title: 'Priority Wise',      type: 'pie' },
+    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
+    { key: 'operatorWise',      title: 'Operator Wise',      type: 'bar' },
+    { key: 'monthWise',         title: 'Month Wise',         type: 'line' },
+    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'pie' }
+  ].filter(Boolean);
+
+  return (
+    <div className="summary-container">
+      {/* Partition */}
+      <Grid container spacing={2} sx={{ mb: 4, justifyContent: 'center' }}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
+              </Typography>
+              <MyChart
+                type="doughnut"
+                data={makeData('partition', partitionObj)}
+                height={300}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Other charts */}
+      <Grid container spacing={2}>
+        {charts.map(({ key, title, type }) => {
+          const obj = summary[key];
+          if (!obj || Object.keys(obj).length === 0) return null;
+          return (
+            <Grid item xs={12} md={6} key={key}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {title}
+                  </Typography>
+                  <MyChart
+                    type={type}
+                    data={makeData(key, obj)}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Container, Typography } from '@mui/material';
+import Filters      from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard    from '../components/AlarmCard';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({ region: '', location: '' });
+
+  // Slides array: will be [ {region,location}, ... ]
+  const slidesRef = useRef([]);
+  const slideIdx = useRef(0);
+
+  // Fetch data once
+  useEffect(() => {
+    Promise.all([ getAlarmSummary(), getRawAlarms() ])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // Build regionOptions & static region→locations map
+  const regionOptions = summary ? Object.keys(summary.regionWise) : [];
+  const regionLocationsMap = useMemo(() => {
+    if (!summary) return {};
+    const map = {};
+    regionOptions.forEach(region => {
+      map[region] = Array.from(
+        new Set(
+          rawAlarms
+            .filter(a => a.Region === region)
+            .map(a => a.Location)
+        )
+      );
+    });
+    return map;
+  }, [rawAlarms, regionOptions, summary]);
+
+  // Build slides once data is ready
+  useEffect(() => {
+    if (!summary) return;
+    const slides = [];
+
+    // 1) Global
+    slides.push({ region: '', location: '' });
+
+    // 2) Each region
+    regionOptions.forEach(region => {
+      slides.push({ region, location: '' });
+      // 3) Then each location within it
+      regionLocationsMap[region].forEach(location => {
+        slides.push({ region, location });
+      });
+    });
+
+    slidesRef.current = slides;
+    slideIdx.current = 0;
+
+    // Initialize first slide immediately
+    setFilters(slides[0]);
+
+    // Set up interval for cycling every 60s
+    const id = setInterval(() => {
+      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
+      setFilters(slidesRef.current[slideIdx.current]);
+    }, 60000);
+
+    return () => clearInterval(id);
+  }, [summary, regionOptions, regionLocationsMap]);
+
+  // Filtered summary as before
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+    if (filters.region) {
+      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      (regionLocationsMap[filters.region] || [])
+        .filter(loc => !filters.location || loc === filters.location)
+        .forEach(loc => {
+          fs.locationWise[loc] = summary.locationWise[loc];
+        });
+    }
+    return fs;
+  }, [summary, filters, regionLocationsMap]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Container sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Alarm Analysis Dashboard
+      </Typography>
+
+      <Filters
+        filters={filters}
+        setFilters={setFilters}        // still allow manual override
+        regionOptions={regionOptions}
+        locationOptions={regionLocationsMap[filters.region] || []}
+      />
+
+      <AlarmCard summary={summary} />
+
+      <SummaryCards
+        summary={filteredSummary}
+        filters={filters}
+      />
+    </Container>
+  );
+}
+
+
+
+
+
+
+
+
+
+
 Now I am We are displaying Alarm Analysis Dashboard. 
 Now see What i Expected Display Alarm Analysis dashboard like Slide show.
 Initailyy Display alarm Anlaysis dashboard as Globally.
