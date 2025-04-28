@@ -1,3 +1,48 @@
+// craco.config.js
+const webpack = require('webpack');
+
+module.exports = {
+  // ONLY your Babel plugins—no webpack.resolve.fallback here
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+
+  // If you need `process` polyfilled in the browser, you can keep the alias+ProvidePlugin.
+  // Otherwise you can delete this entire `webpack` section.
+  webpack: {
+    configure: (webpackConfig) => {
+      // Make sure resolve.alias exists
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        // Maps any import of "process" to the browser shim:
+        process: require.resolve('process/browser.js')
+      };
+
+      // Provide `process` globally (so code that references process.env doesn’t break)
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return webpackConfig;
+    },
+  },
+};
+
+
+
+
+
+
+
+
+
+
 {
   "name": "alarm-frontend",
   "version": "0.1.0",
