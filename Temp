@@ -1,13 +1,79 @@
-// Build slides: global → each region only
-+   const slides = [{ region: '', location: '' }];
-+   regionOptions.forEach(region => {
-+     slides.push({ region, location: '' });
-+   });
-
-    slides
-
+Now combine Priority Wise chart & Location Wise chart 
+there is no need to Display Both chart.
+make a Location Wise Chart big.
+Where Display Location Wise how Many Priority Wise Alarms Occured in percentage. add 3 line
+for display Prority like low mediun , High , also Display Count .
+read below files Carefully and give me Updated js Files.
 
 
+
+
+Now update Location Wise chart ...
+use Line chart for Location wise.
+At the top display Which Colour are use for Which location Adjust X & Y Axis for count and date or month 
+Read below file carefully and update file as per my request.
+
+File 1 Charts.js
+
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = 400
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    // Build dataset with line-chart specifics if needed
+    const ds = {
+      label: data.label || '',
+      data: data.values,
+      backgroundColor: data.bgColors,
+      borderColor: data.borderColor,
+      borderWidth: 2,
+      fill: type === 'line' ? false : true,
+      tension: type === 'line' ? 0.4 : 0,
+      pointBackgroundColor: data.borderColor,
+      pointRadius: type === 'line' ? 4 : undefined,
+    };
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets: [ds],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        ...options,
+      }
+    });
+
+    return () => chartRef.current && chartRef.current.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+File 2
+
+SummaryCards.js
 
 
 // src/components/SummaryCards.js
@@ -139,189 +205,7 @@ export default function SummaryCards({ summary, filters }) {
 
 
 
-
-
-
-
-
-
-
-
-
-Now update Location Wise chart ...
-use Line chart for Location wise.
-At the top display Which Colour are use for Which location Adjust X & Y Axis for count and date or month 
-Read below file carefully and update file as per my request.
-
-File 1 Charts.js
-
-
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = 400
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    if (chartRef.current) chartRef.current.destroy();
-
-    // Build dataset with line-chart specifics if needed
-    const ds = {
-      label: data.label || '',
-      data: data.values,
-      backgroundColor: data.bgColors,
-      borderColor: data.borderColor,
-      borderWidth: 2,
-      fill: type === 'line' ? false : true,
-      tension: type === 'line' ? 0.4 : 0,
-      pointBackgroundColor: data.borderColor,
-      pointRadius: type === 'line' ? 4 : undefined,
-    };
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: {
-        labels: data.labels,
-        datasets: [ds],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        ...options,
-      }
-    });
-
-    return () => chartRef.current && chartRef.current.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
-
-
-
-File 2
-
-SummaryCards.js
-
-
-import React from 'react';
-import './SummaryCards.css';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-// Default palette for everything except priorityWise
-const DEFAULT_COLORS = [
-  '#007bff', '#28a745', '#ffc107',
-  '#dc3545', '#6f42c1', '#17a2b8',
-  '#fd7e14', '#20c997', '#6c757d',
-  '#6610f2',
-];
-
-// Custom palette for priorityWise
-const PRIORITY_COLORS = {
-  Low: '#90ee90',    // light green
-  Medium: '#ffff00', // yellow
-  High: '#ff0000',   // red
-};
-
-export default function SummaryCards({ summary, filters }) {
-  if (!summary) return null;
-
-  // Build data for any key
-  const makeData = (key, obj) => {
-    // labels, sorted for monthWise
-    let labels = Object.keys(obj);
-    if (key === 'monthWise') {
-      labels = labels.sort((a, b) => {
-        const [mA, yA] = a.split('-').map(Number);
-        const [mB, yB] = b.split('-').map(Number);
-        return new Date(yA, mA - 1) - new Date(yB, mB - 1);
-      });
-    }
-    const values = labels.map(lbl => obj[lbl].count);
-
-    // colors
-    let bg, borderColor;
-    if (key === 'priorityWise') {
-      bg = labels.map(lbl => PRIORITY_COLORS[lbl] || '#ccc');
-      borderColor = bg;
-    } else if (key === 'monthWise') {
-      bg = labels.map(() => 'rgba(0,123,255,0.2)');
-      borderColor = '#007bff';
-    } else {
-      bg = labels.map((_, i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
-      borderColor = bg;
-    }
-
-    return { labels, values, bgColors: bg, borderColor };
-  };
-
-  // Partition: global vs region
-  const partitionObj = filters.region
-    ? { [filters.region]: summary.regionWise[filters.region] }
-    : summary.regionWise;
-
-  // Chart configs in desired order
-  const configs = [
-    { key: 'partition',        title: !filters.region ? 'Global Partition' : `${filters.region} Partition`, type: 'doughnut', dataObj: partitionObj },
-    { key: 'priorityWise',     title: 'Priority Wise',      type: 'pie',      dataObj: summary.priorityWise },
-    { key: 'rejectionTypeWise',title: 'Rejection Type Wise', type: 'pie',      dataObj: summary.rejectionTypeWise },
-    { key: 'operatorWise',     title: 'Operator Wise',      type: 'bar',      dataObj: summary.operatorWise },
-    { key: 'monthWise',        title: 'Month Wise',         type: 'line',     dataObj: summary.monthWise },
-    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'pie', dataObj: summary.locationWise }
-  ].filter(Boolean);
-
-  return (
-    <Grid container spacing={2}>
-      {configs.map(({ key, title, type, dataObj }) => {
-        if (!dataObj || Object.keys(dataObj).length === 0) return null;
-
-        // monthWise axis labels
-        const options = key === 'monthWise' ? {
-          scales: {
-            x: { title: { display: true, text: 'Month' } },
-            y: { title: { display: true, text: 'Alarm Count' } }
-          }
-        } : {};
-
-        return (
-          <Grid item xs={12} md={4} key={key}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {title}
-                </Typography>
-                <MyChart
-                  type={type}
-                  data={makeData(key, dataObj)}
-                  options={options}
-                  height={240}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      })}
-    </Grid>
-  );
-}
-
-
 Dashboard.js
-
 
 
 // src/pages/Dashboard.js
@@ -373,15 +257,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!summary) return;   // wait for data
+     
 
-    // Build slides: global → each region → each location
     const slides = [{ region: '', location: '' }];
-    regionOptions.forEach(region => {
-      slides.push({ region, location: '' });
-      regionLocationsMap[region].forEach(location => {
-        slides.push({ region, location });
-      });
-    });
+       regionOptions.forEach(region => {
+         slides.push({ region, location: '' });
+       });
+
     slidesRef.current = slides;
     slideIdx.current = 0;
 
@@ -440,6 +322,9 @@ export default function Dashboard() {
     </Container>
   );
 }
+
+
+
 
 
 
