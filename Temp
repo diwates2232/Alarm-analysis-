@@ -1,3 +1,141 @@
+// src/components/SummaryCards.js
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+
+// Default palette (for non-priority, non-month, non-location)
+const DEFAULT_COLORS = [
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2',
+];
+
+// Priority palette
+const PRIORITY_COLORS = {
+  Low: '#90ee90',
+  Medium: '#ffff00',
+  High: '#ff0000',
+};
+
+export default function SummaryCards({ summary, filters }) {
+  if (!summary) return null;
+
+  // Build data for any key
+  const makeData = (key, obj) => {
+    let labels = Object.keys(obj);
+
+    // Sort months chronologically
+    if (key === 'monthWise') {
+      labels = labels.sort((a,b) => {
+        const [mA,yA]=a.split('-').map(Number),
+              [mB,yB]=b.split('-').map(Number);
+        return new Date(yA,mA-1) - new Date(yB,mB-1);
+      });
+    }
+
+    const values = labels.map(lbl => obj[lbl].count);
+
+    let bg, borderColor;
+    if (key === 'priorityWise') {
+      bg = labels.map(lbl => PRIORITY_COLORS[lbl] || '#ccc');
+      borderColor = bg;
+    } else if (key === 'monthWise') {
+      bg = labels.map(() => 'rgba(0,123,255,0.2)');
+      borderColor = '#007bff';
+    } else if (key === 'locationWise') {
+      // one colour per location
+      bg = labels.map((_,i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+      borderColor = bg;
+    } else {
+      bg = labels.map((_,i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+      borderColor = bg;
+    }
+
+    return { labels, values, bgColors: bg, borderColor };
+  };
+
+  // Partition data
+  const partitionObj = filters.region
+    ? { [filters.region]: summary.regionWise[filters.region] }
+    : summary.regionWise;
+
+  // Chart configs
+  const configs = [
+    { key: 'partition',        title: !filters.region ? 'Global Partition' : `${filters.region} Partition`, type: 'doughnut', dataObj: partitionObj },
+    { key: 'priorityWise',     title: 'Priority Wise',      type: 'pie',      dataObj: summary.priorityWise },
+    { key: 'rejectionTypeWise',title: 'Rejection Type Wise', type: 'pie',      dataObj: summary.rejectionTypeWise },
+    { key: 'operatorWise',     title: 'Operator Wise',      type: 'bar',      dataObj: summary.operatorWise },
+    { key: 'monthWise',        title: 'Month Wise',         type: 'line',     dataObj: summary.monthWise },
+    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'line', dataObj: summary.locationWise }
+  ].filter(Boolean);
+
+  return (
+    <Grid container spacing={2}>
+      {configs.map(({ key, title, type, dataObj }) => {
+        if (!dataObj || Object.keys(dataObj).length === 0) return null;
+
+        const { labels, values, bgColors, borderColor } = makeData(key, dataObj);
+
+        // Custom options for line charts
+        const options = (key === 'monthWise' || key === 'locationWise') ? {
+          scales: {
+            x: { title: { display: true, text: key === 'monthWise' ? 'Month' : 'Location' } },
+            y: { title: { display: true, text: 'Alarm Count' } }
+          }
+        } : {};
+
+        return (
+          <Grid item xs={12} md={4} key={key}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {title}
+                </Typography>
+
+                {/* Legend for locationWise */}
+                {key === 'locationWise' && (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', mb: 1 }}>
+                    {labels.map((loc, i) => (
+                      <Box key={loc} sx={{ display: 'flex', alignItems: 'center', mr: 2, mb: 1 }}>
+                        <Box sx={{
+                          width: 12, height: 12,
+                          backgroundColor: bgColors[i],
+                          borderRadius: '50%', mr: 0.5
+                        }} />
+                        <Typography variant="body2">{loc}</Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                <MyChart
+                  type={type}
+                  data={{ labels, values, bgColors, borderColor }}
+                  options={options}
+                  height={260}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      })}
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
 Now update Location Wise chart ...
 use Line chart for Location wise.
 At the top display Which Colour are use for Which location Adjust X & Y Axis for count and date or month 
