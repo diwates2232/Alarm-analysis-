@@ -1,3 +1,72 @@
+Now update Location Wise chart ...
+use Line chart for Location wise.
+At the top display Which Colour are use for Which location Adjust X & Y Axis for count and date or month 
+Read below file carefully and update file as per my request.
+
+File 1 Charts.js
+
+
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = 400
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    // Build dataset with line-chart specifics if needed
+    const ds = {
+      label: data.label || '',
+      data: data.values,
+      backgroundColor: data.bgColors,
+      borderColor: data.borderColor,
+      borderWidth: 2,
+      fill: type === 'line' ? false : true,
+      tension: type === 'line' ? 0.4 : 0,
+      pointBackgroundColor: data.borderColor,
+      pointRadius: type === 'line' ? 4 : undefined,
+    };
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets: [ds],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        ...options,
+      }
+    });
+
+    return () => chartRef.current && chartRef.current.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+File 2
+
+SummaryCards.js
+
+
 import React from 'react';
 import './SummaryCards.css';
 import MyChart from './Chart';
@@ -101,237 +170,8 @@ export default function SummaryCards({ summary, filters }) {
 }
 
 
-
-
-
-
-import React, { useEffect, useState, useMemo } from 'react';
-import { Container, Typography, Grid } from '@mui/material';
-import Filters      from '../components/Filters';
-import SummaryCards from '../components/SummaryCards';
-import AlarmCard    from '../components/AlarmCard';
-import { getAlarmSummary, getRawAlarms } from '../services/api';
-
-export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '' });
-
-  useEffect(() => {
-    Promise.all([ getAlarmSummary(), getRawAlarms() ])
-      .then(([sumRes, rawRes]) => {
-        setSummary(sumRes.data);
-        setRawAlarms(rawRes.data);
-      })
-      .catch(console.error);
-  }, []);
-
-  const regionOptions = useMemo(
-    () => (summary ? Object.keys(summary.regionWise) : []),
-    [summary]
-  );
-
-  const locationOptions = useMemo(() => {
-    if (!filters.region) return [];
-    return Array.from(new Set(
-      rawAlarms
-        .filter(a => a.Region === filters.region)
-        .map(a => a.Location)
-    ));
-  }, [rawAlarms, filters.region]);
-
-  if (!summary) {
-    return <Typography>Loading dashboard…</Typography>;
-  }
-
-  return (
-    <Container sx={{ py: 4 }}>
-      {/* Header */}
-      <Typography variant="h4" gutterBottom>
-        Alarm Analysis Dashboard
-      </Typography>
-
-      {/* Filters (left) & Alarm cards (right) */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
-          <Filters
-            filters={filters}
-            setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={locationOptions}
-          />
-        </Grid>
-        <Grid item xs={12} md={9}>
-          <AlarmCard summary={summary} />
-        </Grid>
-      </Grid>
-
-      {/* Six charts in two rows of three */}
-      <SummaryCards
-        summary={filters.region || filters.location
-          ? (() => {
-              const fs = { ...summary };
-              if (filters.region) {
-                fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
-                fs.locationWise = {};
-                locationOptions
-                  .filter(loc => !filters.location || loc === filters.location)
-                  .forEach(loc => {
-                    fs.locationWise[loc] = summary.locationWise[loc];
-                  });
-              }
-              return fs;
-            })()
-          : summary
-        }
-        filters={filters}
-      />
-    </Container>
-  );
-}
-
-
-
-
-
-
-
-This is my Previous Files make changes in this file to add above files and give me updated filaes carefully.
-
-SummaryCards.js
-
-import React from 'react';
-import './SummaryCards.css';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-// Default palette for everything except priorityWise
-const DEFAULT_COLORS = [
-  '#007bff', '#28a745', '#ffc107',
-  '#dc3545', '#6f42c1', '#17a2b8',
-  '#fd7e14', '#20c997', '#6c757d',
-  '#6610f2',
-];
-
-// Custom palette for priorityWise
-const PRIORITY_COLORS = {
-  Low: '#90ee90',      // light green
-  Medium: '#FFFF00',   // light yellow
-  High: '#ff0000',     // red
-};
-
-export default function SummaryCards({ summary, filters }) {
-  if (!summary) return null;
-
-  // Build chart data, with special handling for monthWise and priorityWise
-  const makeData = (key, obj) => {
-    let labels = Object.keys(obj);
-
-    // Sort month labels chronologically: "MM-YYYY"
-    if (key === 'monthWise') {
-      labels = labels.sort((a, b) => {
-        const [mA, yA] = a.split('-').map(Number);
-        const [mB, yB] = b.split('-').map(Number);
-        return new Date(yA, mA - 1) - new Date(yB, mB - 1);
-      });
-    }
-
-    const values = labels.map(lbl => obj[lbl].count);
-
-    // Determine colors
-    let bg, borderColor;
-    if (key === 'priorityWise') {
-      bg = labels.map(lbl => PRIORITY_COLORS[lbl] || '#ccc');
-      borderColor = bg;
-    } else if (key === 'monthWise') {
-      // single‐color line
-      borderColor = '#007bff';
-      bg = labels.map(() => 'rgba(0, 123, 255, 0.2)');
-    } else {
-      bg = labels.map((_, i) => DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
-      borderColor = bg;
-    }
-
-    return { labels, values, bgColors: bg, borderColor };
-  };
-
-  const partitionObj = !filters.region
-    ? summary.regionWise
-    : summary.locationWise;
-
-  // monthWise becomes a line chart; priorityWise gets custom colors
-  const charts = [
-    { key: 'priorityWise',      title: 'Priority Wise',      type: 'pie' },
-    { key: 'rejectionTypeWise', title: 'Rejection Type Wise', type: 'pie' },
-    { key: 'operatorWise',      title: 'Operator Wise',      type: 'bar' },
-    { key: 'monthWise',         title: 'Month Wise',         type: 'line' },
-    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'pie' }
-  ].filter(Boolean);
-
-  return (
-    <div className="summary-container">
-      {/* Global or Region Partition */}
-      <Grid container spacing={2} sx={{ mb: 4, justifyContent: 'center' }}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
-              </Typography>
-              <MyChart
-                type="doughnut"
-                data={makeData('partition', partitionObj)}
-                height={300}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Other summary charts */}
-      <Grid container spacing={2}>
-        {charts.map(({ key, title, type }) => {
-          const obj = summary[key];
-          if (!obj || Object.keys(obj).length === 0) return null;
-          // Custom options for monthWise
-          const opts = key === 'monthWise'
-            ? {
-                scales: {
-                  x: {
-                    title: { display: true, text: 'Month' }
-                  },
-                  y: {
-                    title: { display: true, text: 'Alarm Count' }
-                  }
-                }
-              }
-            : {};
-
-          return (
-            <Grid item xs={12} md={6} key={key}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {title}
-                  </Typography>
-                  <MyChart
-                    type={type}
-                    data={makeData(key, obj)}
-                    options={opts}
-                    height={250}
-                  />
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
-    </div>
-  );
-}
-
-
 Dashboard.js
+
 
 
 // src/pages/Dashboard.js
@@ -450,7 +290,6 @@ export default function Dashboard() {
     </Container>
   );
 }
-
 
 
 
