@@ -1,3 +1,439 @@
+import React from 'react';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters }) {
+  if (!summary) return null;
+
+  // Compute dynamic total:
+  const totalAlarms = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && !a.Date.startsWith(filters.month)) return false;
+    return true;
+  }).length;
+
+  // Compute dynamic responseSentPercentage:
+  const sentCount = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && !a.Date.startsWith(filters.month)) return false;
+    return a['Action Taken'] && a['Action Taken'] !== 'Not Sent';
+  }).length;
+  const responseSentPercentage = totalAlarms
+    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid item xs={12} sm={6} md={4}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Total Alarms
+            </Typography>
+            <Typography variant="h4">{totalAlarms}</Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Response Sent %
+            </Typography>
+            <Typography variant="h4">{responseSentPercentage}</Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+import React from 'react';
+import { TextField, MenuItem, Box } from '@mui/material';
+
+const Filters = ({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions = []
+}) => {
+  const handleChange = field => e =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 2,
+        flexWrap: 'wrap',
+        mb: 3
+      }}
+    >
+      <TextField
+        select
+        label="Region"
+        value={filters.region}
+        onChange={handleChange('region')}
+        size="small"
+      >
+        <MenuItem value="">Global</MenuItem>
+        {regionOptions.map(r => (
+          <MenuItem key={r} value={r}>{r}</MenuItem>
+        ))}
+      </TextField>
+
+      {filters.region && (
+        <TextField
+          select
+          label="Location"
+          value={filters.location}
+          onChange={handleChange('location')}
+          size="small"
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(l => (
+            <MenuItem key={l} value={l}>{l}</MenuItem>
+          ))}
+        </TextField>
+      )}
+
+      <TextField
+        select
+        label="Month"
+        value={filters.month}
+        onChange={handleChange('month')}
+        size="small"
+      >
+        <MenuItem value="">All Months</MenuItem>
+        {monthOptions.map(m => (
+          <MenuItem key={m} value={m}>{m}</MenuItem>
+        ))}
+      </TextField>
+    </Box>
+  );
+};
+
+export default Filters;
+
+
+
+
+
+
+
+
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+const REJECTION_COLORS = [
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2'
+];
+const PRIORITY_COLORS = { Low: '#90ee90', Medium: '#ffff00', High: '#ff0000' };
+
+function getRejectionStats(summary, rawAlarms, filters) {
+  let entries = Object.entries(summary.rejectionTypeWise);
+  if (filters.region && !filters.location) {
+    const total = summary.regionWise[filters.region].count;
+    const byType = rawAlarms.filter(a => a.Region === filters.region)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection]||0)+1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([t,c])=>[t,{count:c,percentage:`${((c/total)*100).toFixed(2)}%`}]);
+  }
+  if (filters.location) {
+    const total = summary.locationWise[filters.location]?.count||0;
+    const byType = rawAlarms.filter(a=>a.Region===filters.region&&a.Location===filters.location)
+      .reduce((acc,a)=>{acc[a.Rejection]=(acc[a.Rejection]||0)+1;return acc;}, {});
+    entries = Object.entries(byType).map(([t,c])=>[t,{count:c,percentage:`${((c/total)*100).toFixed(2)}%`}]);
+  }
+  return entries
+    .map(([type, info], idx) => ({
+      type,
+      count: info.count,
+      percentage: info.percentage,
+      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+    }))
+    .sort((a,b)=>b.count - a.count);
+}
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+
+  // Priority
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region!==filters.region) return false;
+    if (filters.location && a.Location!==filters.location) return false;
+    if (filters.month && !a.Date.startsWith(filters.month)) return false;
+    return true;
+  });
+  const prCounts = filtered.reduce((acc,a)=>{
+    acc[a['CCURE Incident Priority']] = (acc[a['CCURE Incident Priority']]||0)+1;
+    return acc;
+  },{});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l=>prCounts[l]);
+  const prColors = prLabels.map(l=>PRIORITY_COLORS[l]||'#ccc');
+
+  const makeChartData = (obj, palette) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(l => obj[l].count);
+    const colors = labels.map((_,i)=>palette[i%palette.length]);
+    return { labels, values, bgColors:colors, borderColor:colors };
+  };
+
+  const partitionObj = !filters.region
+    ? summary.regionWise
+    : { [filters.region]: summary.regionWise[filters.region] };
+
+  return (
+    <>
+      {/* Rejection Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(({type,count,percentage,color})=>(
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ border:`2px solid ${color}`, backgroundColor:color, color:'#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Three charts per row */}
+      <Grid container spacing={2} sx={{ mb:4 }}>
+        {[partitionObj, summary.locationWise, summary.operatorWise].map((obj, idx) => {
+          const titles = ['Global Partition','Location Wise','Operator Wise'];
+          const types  = ['doughnut','line','bar'];
+          if (!obj || !Object.keys(obj).length) return null;
+          return (
+            <Grid item xs={12} md={4} key={titles[idx]}>
+              <Card sx={{ border:'1px solid #ccc' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {titles[idx]}
+                  </Typography>
+                  <MyChart
+                    type={types[idx]}
+                    data={makeChartData(obj, REJECTION_COLORS)}
+                    options={idx===1?{
+                      scales:{
+                        x:{title:{display:true,text:'Location'}},
+                        y:{title:{display:true,text:'Count'}}
+                      }
+                    }:{}}
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+
+      {/* Last row: Priority & Month & leftover */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ border:'1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+              <MyChart
+                type="pie"
+                data={{ labels:prLabels, values:prValues, bgColors:prColors, borderColor:prColors }}
+                height={250}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ border:'1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Month Wise</Typography>
+              <MyChart
+                type="line"
+                data={makeChartData(summary.monthWise, REJECTION_COLORS)}
+                options={{
+                  scales:{
+                    x:{title:{display:true,text:'Month'}},
+                    y:{title:{display:true,text:'Count'}}
+                  }
+                }}
+                height={250}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+        {/* If you have a 6th chart, insert it here in the third md=4 slot */}
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Container, Typography } from '@mui/material';
+import Filters from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard from '../components/AlarmCard';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+
+export default function Dashboard() {
+  const [summary, setSummary] = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters] = useState({ region:'', location:'', month:'' });
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  },[]);
+
+  const regionOptions = useMemo(() =>
+    summary ? Object.keys(summary.regionWise) : []
+  ,[summary]);
+
+  const locationOptions = useMemo(() => {
+    if (!filters.region) return [];
+    return Array.from(new Set(
+      rawAlarms.filter(a=>a.Region===filters.region).map(a=>a.Location)
+    ));
+  },[rawAlarms, filters.region]);
+
+  const monthOptions = useMemo(() => {
+    // extract unique "MM-YYYY" from Date field like "01-Apr-25"
+    const set = new Set(rawAlarms.map(a=>{
+      const [d,mon,yy] = a.Date.split('-');
+      const m = ("JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(mon)/3+1).toString().padStart(2,'0');
+      return `${m}-${'20'+yy}`;
+    }));
+    return Array.from(set);
+  },[rawAlarms]);
+
+  // slideshow code unchanged…
+
+  if (!summary) return <Typography>Loading…</Typography>;
+
+  return (
+    <Box sx={{ width:'100vw', height:'100vh', p:0, m:0, bgcolor:'#fafafa' }}>
+      <Container maxWidth={false} sx={{ py:2 }}>
+        <Typography
+          variant="h3"
+          sx={{
+            display:'flex',
+            alignItems:'center',
+            mb:3,
+            background:'#1976d2',
+            color:'#fff',
+            px:2,
+            py:1,
+            borderRadius:1
+          }}
+        >
+          <span style={{marginRight:8}}>🔔</span>
+          Alarm Analysis Dashboard
+        </Typography>
+
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+        />
+
+        <AlarmCard
+          summary={summary}
+          rawAlarms={rawAlarms}
+          filters={filters}
+        />
+
+        <SummaryCards
+          summary={summary}
+          filters={filters}
+          rawAlarms={rawAlarms}
+        />
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+
+
+
+
+
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button } from '@mui/material';
+import Dashboard from './pages/Dashboard';
+import RawAlarms from './pages/RawAlarms';
+
+export default function App() {
+  return (
+    <Router>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow:1 }}>
+            Alarm🔔 Dashboard
+          </Typography>
+          <Button color="inherit" component={Link} to="/">Dashboard</Button>
+          <Button color="inherit" component={Link} to="/alarms">Raw Alarms</Button>
+        </Toolbar>
+      </AppBar>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/alarms" element={<RawAlarms />} />
+      </Routes>
+    </Router>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 read Bwlow js file Crefully there is 6 files for my Alarm Analysis dashboard.
 Now I want to move forward into Ui make dynamic and Display Interactively
 Alarm Analysis Dashboard - make this as Heading and add backgound fot this add Alarm Symbol for Alarm analysis Dashboard.
