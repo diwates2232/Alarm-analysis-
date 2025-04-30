@@ -1,3 +1,62 @@
+<Grid container spacing={2} sx={{ mb: 4 }}>
+  <Grid item xs={12} sm={6} md={4}>
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+        <MyChart ... />
+      </CardContent>
+    </Card>
+  </Grid>
+  
+  <Grid item xs={12} sm={6} md={4}>
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>Global Partition</Typography>
+        <MyChart ... />
+      </CardContent>
+    </Card>
+  </Grid>
+  
+  <Grid item xs={12} sm={6} md={4}>
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>Month Wise</Typography>
+        <MyChart ... />
+      </CardContent>
+    </Card>
+  </Grid>
+</Grid>
+
+
+
+
+
+
+<Grid item xs={12} sm={6} md={4}>
+  <Card>
+    <CardContent>
+      <Typography variant="h6" gutterBottom>Month Wise</Typography>
+      <MyChart ... />
+    </CardContent>
+  </Card>
+</Grid>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React from 'react';
 import './SummaryCards.css';
 import MyChart from './Chart';
