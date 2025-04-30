@@ -1,3 +1,148 @@
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Container, Typography, Link as MuiLink } from '@mui/material';
+import { Link } from 'react-router-dom';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
+
+  // Fetch data once
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // Region options
+  const regionOptions = useMemo(() =>
+    summary ? Object.keys(summary.regionWise) : []
+  , [summary]);
+
+  // Location options
+  const locationOptions = useMemo(() => {
+    if (!filters.region) return [];
+    return Array.from(new Set(
+      rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+    ));
+  }, [rawAlarms, filters.region]);
+
+  // Month options
+  const monthOptions = useMemo(() => {
+    const months = new Set(rawAlarms.map(a => {
+      const [d,mon,yy] = a.Date.split('-');
+      const m = String("JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(mon)/3+1).padStart(2,'0');
+      return `${m}-20${yy}`;
+    }));
+    return [...months];
+  }, [rawAlarms]);
+
+  // Build slideshow slides: global + region
+  const slidesRef = useRef([]);
+  const slideIdx  = useRef(0);
+  useEffect(() => {
+    if (!summary) return;
+    const slides = [{ region:'', location:'', month:'' }];
+    regionOptions.forEach(r => slides.push({ region:r, location:'', month:'' }));
+    slidesRef.current = slides;
+    slideIdx.current    = 0;
+    setFilters(slides[0]);
+
+    const id = setInterval(() => {
+      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
+      setFilters(slidesRef.current[slideIdx.current]);
+    }, 30000);
+
+    return () => clearInterval(id);
+  }, [summary, regionOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width:'100vw', height:'100vh', bgcolor:'#fafafa', p:0, m:0 }}>
+      <Container maxWidth={false} disableGutters>
+        {/* Heading Bar */}
+        <Box
+          sx={{
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            borderBottom:'2px solid #000',
+            py:2,
+            mb:3,
+            position:'relative'
+          }}
+        >
+          <Typography variant="h3" component="h1" sx={{ mx:4 }}>
+            🔔 Alarm Analysis Dashboard
+          </Typography>
+          <Box sx={{ position:'absolute', left:16 }}>
+            <MuiLink component={Link} to="/" sx={{ mx:1 }}>Dashboard</MuiLink>
+            <MuiLink component={Link} to="/alarms" sx={{ mx:1 }}>Raw Alarms</MuiLink>
+          </Box>
+        </Box>
+
+        {/* Filters */}
+        <Box sx={{ px:2 }}>
+          <Filters
+            filters={filters}
+            setFilters={setFilters}
+            regionOptions={regionOptions}
+            locationOptions={locationOptions}
+            monthOptions={monthOptions}
+          />
+        </Box>
+
+        {/* Summary Cards */}
+        <Box sx={{ px:2 }}>
+          <AlarmCard summary={summary} rawAlarms={rawAlarms} filters={filters} />
+        </Box>
+
+        {/* Charts */}
+        <Box sx={{ flex:1, overflowY:'auto', px:2, pb:4 }}>
+          <SummaryCards summary={summary} filters={filters} rawAlarms={rawAlarms} />
+        </Box>
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import RawAlarms from './pages/RawAlarms';
+
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/alarms" element={<RawAlarms />} />
+      </Routes>
+    </Router>
+  );
+}
+
+
+
+
+
+
+
+
+
 import React from 'react';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
 
