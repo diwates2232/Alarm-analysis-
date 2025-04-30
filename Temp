@@ -1,3 +1,29 @@
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  // ← Add the guard block here
+  if (
+    !summary ||
+    typeof summary !== 'object' ||
+    !Array.isArray(rawAlarms) ||
+    !summary.rejectionTypeWise ||
+    !summary.regionWise ||
+    !summary.locationWise
+  ) {
+    return null;
+  }
+
+  // …the rest of your component logic follows…
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+  // …
+}
+
+
+
+
+
+
+
+
+
 import React from 'react';
 import './SummaryCards.css';
 import MyChart from './Chart';
