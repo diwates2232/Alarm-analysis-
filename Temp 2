@@ -1,3 +1,207 @@
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+const REJECTION_COLORS = [
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2'
+];
+
+const PRIORITY_COLORS = {
+  Low: '#90ee90',
+  Medium: '#ffff00',
+  High: '#ff0000'
+};
+
+function getRejectionStats(summary, rawAlarms, filters) {
+  let entries;
+  if (!filters.region) {
+    entries = Object.entries(summary.rejectionTypeWise);
+  } else if (filters.region && !filters.location) {
+    const total = summary.regionWise[filters.region].count;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
+  } else {
+    const total = summary.locationWise[filters.location]?.count || 0;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region && a.Location === filters.location)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
+  }
+  return entries.map(([type, info], idx) => ({
+    type,
+    count: info.count,
+    percentage: info.percentage,
+    color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+  }));
+}
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    return true;
+  });
+  const prTotal = filtered.length;
+  const prCounts = filtered.reduce((acc, a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l => prCounts[l]);
+  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
+
+  const makeChartData = (key, obj) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(l => obj[l].count);
+    const cols = labels.map((_, i) => REJECTION_COLORS[i % REJECTION_COLORS.length]);
+    return { labels, values, bgColors: cols, borderColor: cols };
+  };
+
+  const partitionObj = !filters.region
+    ? summary.regionWise
+    : { [filters.region]: summary.regionWise[filters.region] };
+
+  return (
+    <>
+      {/* Rejection-Type Cards */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {rejectionStats.map(({ type, count, percentage, color }) => (
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ borderLeft: `6px solid ${color}` }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2" color="textSecondary">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Group Charts Horizontally */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {/* Global Partition */}
+        {partitionObj && Object.keys(partitionObj).length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
+                </Typography>
+                <MyChart
+                  type="doughnut"
+                  data={makeChartData('partition', partitionObj)}
+                  height={240}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {/* Priority Wise */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+              <MyChart
+                type="pie"
+                data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
+                height={240}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Location Wise & Month Wise (Grouped Horizontally) */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {summary.locationWise && Object.keys(summary.locationWise).length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Location Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={makeChartData('locationWise', summary.locationWise)}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Location' } },
+                      y: { title: { display: true, text: 'Alarm Count' } }
+                    }
+                  }}
+                  height={240}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {summary.monthWise && Object.keys(summary.monthWise).length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Month Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={makeChartData('monthWise', summary.monthWise)}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Month' } },
+                      y: { title: { display: true, text: 'Alarm Count' } }
+                    }
+                  }}
+                  height={240}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* Operator Wise */}
+      {summary.operatorWise && Object.keys(summary.operatorWise).length > 0 && (
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+                <MyChart
+                  type="bar"
+                  data={makeChartData('operatorWise', summary.operatorWise)}
+                  height={240}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+    </>
+  );
+}
+
+
+
+
+
+
+
+
 <Grid container spacing={2} sx={{ mb: 4 }}>
   <Grid item xs={12} sm={6} md={4}>
     <Card>
