@@ -1,3 +1,510 @@
+import React from 'react';
+import { Card, CardContent, Typography, Grid, TextField, MenuItem } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters, setFilters }) {
+  if (!summary) return null;
+
+  // derive dynamic months from summary.monthWise
+  const monthOptions = summary.monthWise ? Object.keys(summary.monthWise) : [];
+
+  // Compute dynamic total:
+  const totalAlarms = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month) {
+      // assume a.Month field in 'YYYY-MM' format
+      if (a.Month !== filters.month) return false;
+    }
+    return true;
+  }).length;
+
+  // Compute dynamic responseSentPercentage:
+  const sentCount = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && a.Month !== filters.month) return false;
+    return a['Action Taken'] && a['Action Taken'] !== 'Not Sent';
+  }).length;
+  const responseSentPercentage = totalAlarms
+    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Total Alarms */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Total Alarms
+            </Typography>
+            <Typography variant="h4">
+              {totalAlarms}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* Response Sent % */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Response Sent %
+            </Typography>
+            <Typography variant="h4">
+              {responseSentPercentage}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* Month Filter */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <TextField
+              select
+              fullWidth
+              label="Month"
+              value={filters.month || ''}
+              onChange={e => setFilters(prev => ({ ...prev, month: e.target.value }))}
+              variant="outlined"
+            >
+              <MenuItem value="">All Months</MenuItem>
+              {monthOptions.map(m => (
+                <MenuItem key={m} value={m}>
+                  {m}
+                </MenuItem>
+              ))}
+            </TextField>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+
+const defaultColors = [
+  '#8884d8', '#82ca9d', '#ffc658', '#ff7f50',
+  '#a29bfe', '#20c997', '#fd7e14', '#6c757d',
+  '#90ee90', '#ffffe0', '#ff0000'
+];
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  // use percentages so it flexibly fills parent container
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    const chartData = {
+      labels: data.labels,
+      datasets: [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: data.bgColors || defaultColors.slice(0, data.values.length),
+        borderWidth: 1,
+      }],
+    };
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        ...options,
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) },
+        },
+      },
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+import React from 'react';
+import { TextField, MenuItem } from '@mui/material';
+
+const Filters = ({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = []
+}) => {
+  const handleChange = (field) => (e) =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem', marginBottom: 16 }}>
+      <TextField
+        select
+        label="Region"
+        value={filters.region}
+        onChange={handleChange('region')}
+        style={{ minWidth: 150 }}
+      >
+        <MenuItem value="">Global</MenuItem>
+        {regionOptions.map(region => (
+          <MenuItem key={region} value={region}>
+            {region}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {filters.region && (
+        <TextField
+          select
+          label="Location"
+          value={filters.location}
+          onChange={handleChange('location')}
+          style={{ minWidth: 200 }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(loc => (
+            <MenuItem key={loc} value={loc}>
+              {loc}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    </div>
+  );
+};
+
+export default Filters;
+
+
+
+
+
+
+
+
+
+
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+const REJECTION_COLORS = [ /* unchanged */ ];
+const PRIORITY_COLORS = { /* unchanged */ };
+
+function getRejectionStats(summary, rawAlarms, filters) {
+  // unchanged
+}
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+
+  // filtered & priority logic unchanged...
+
+  const makeChartData = (key, obj) => {
+    // unchanged...
+  };
+
+  const partitionObj = !filters.region
+    ? summary.regionWise
+    : { [filters.region]: summary.regionWise[filters.region] };
+
+  return (
+    <>
+      {/* Rejection-Type Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(({ type, count, percentage, color }) => (
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Charts */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {partitionObj && (
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>
+                  {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
+                </Typography>
+                <div style={{ flex: 1 }}>
+                  <MyChart
+                    type="doughnut"
+                    data={makeChartData('partition', partitionObj)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+              <div style={{ flex: 1 }}>
+                <MyChart
+                  type="pie"
+                  data={{ labels: prLabels, values: prValues, bgColors: prColors }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {summary.locationWise && (
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>Location Wise</Typography>
+                <div style={{ flex: 1 }}>
+                  <MyChart
+                    type="line"
+                    data={makeChartData('locationWise', summary.locationWise)}
+                    options={{
+                      scales: {
+                        x: { title: { display: true, text: 'Location' } },
+                        y: { title: { display: true, text: 'Alarm Count' } }
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* Month & Operator Charts */}
+      <Grid container spacing={2}>
+        {summary.monthWise && (
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>Month Wise</Typography>
+                <div style={{ flex: 1 }}>
+                  <MyChart
+                    type="line"
+                    data={makeChartData('monthWise', summary.monthWise)}
+                    options={{
+                      scales: {
+                        x: { title: { display: true, text: 'Month' } },
+                        y: { title: { display: true, text: 'Alarm Count' } }
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+        {summary.operatorWise && (
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+                <div style={{ flex: 1 }}>
+                  <MyChart
+                    type="bar"
+                    data={makeChartData('operatorWise', summary.operatorWise)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters      from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard    from '../components/AlarmCard';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  // added month
+  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
+
+  useEffect(() => {
+    Promise.all([ getAlarmSummary(), getRawAlarms() ])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  const regionOptions = useMemo(
+    () => (summary ? Object.keys(summary.regionWise) : []),
+    [summary]
+  );
+
+  const regionLocationsMap = useMemo(() => {
+    const map = {};
+    regionOptions.forEach(region => {
+      map[region] = Array.from(
+        new Set(rawAlarms.filter(a => a.Region === region).map(a => a.Location))
+      );
+    });
+    return map;
+  }, [rawAlarms, regionOptions]);
+
+  // slideshow logic unchanged…
+  // filteredSummary logic unchanged…
+
+  if (!summary) return <Typography>Loading dashboard…</Typography>;
+
+  return (
+    <Box
+      sx={{
+        width: '100vw',
+        minHeight: '100vh',
+        p: 0,
+        m: 0,
+        overflowX: 'hidden'
+      }}
+    >
+      {/* Full-width bordered heading */}
+      <Box
+        component="header"
+        sx={{
+          width: '100%',
+          borderBottom: '3px solid #1976d2',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          py: 2,
+          px: 4,
+          bgcolor: '#e3f2fd'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py: 4 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
+        />
+
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={rawAlarms}
+          filters={filters}
+          setFilters={setFilters}
+        />
+
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={rawAlarms}
+        />
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import RawAlarms from './pages/RawAlarms';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/alarms" element={<RawAlarms />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+
+
+
+
+
+
+
+
+
+
 Raed below File carefully .
 Read Each Code Line by line .
 Make Changes as per My requirnment.
