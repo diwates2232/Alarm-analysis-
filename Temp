@@ -1,3 +1,176 @@
+import React from 'react';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters }) {
+  if (!summary) return null;
+
+  // Compute dynamic total:
+  const totalAlarms = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    return true;
+  }).length;
+
+  // Compute dynamic responseSentPercentage:
+  const sentCount = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    return a['Action Taken'] && a['Action Taken'] !== 'Not Sent';
+  }).length;
+  const responseSentPercentage = totalAlarms
+    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Total Alarms
+            </Typography>
+            <Typography variant="h4">
+              {totalAlarms}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Response Sent %
+            </Typography>
+            <Typography variant="h4">
+              {responseSentPercentage}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+
+// Priority palette
+const PRIORITY_COLORS = {
+  Low: '#90ee90',
+  Medium: '#ffff00',
+  High: '#ff0000'
+};
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  // === Build dynamic priority data ===
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    return true;
+  });
+  const total = filtered.length;
+  const counts = filtered.reduce((acc, a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {});
+  const labels = Object.keys(counts);
+  const values = labels.map(l => counts[l]);
+  const bg = labels.map(l => PRIORITY_COLORS[l] || '#ccc');
+
+  // === Prepare the rest of your charts as before ===
+  const makeChartData = (key, obj) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(l => obj[l].count);
+    const colors = labels.map(() => '#8884d8');
+    return { labels, values, bgColors: colors, borderColor: colors };
+  };
+
+  const partitionObj = !filters.region
+    ? summary.regionWise
+    : { [filters.region]: summary.regionWise[filters.region] };
+
+  const configs = [
+    { key: 'partition',    title: !filters.region ? 'Global Partition' : `${filters.region} Partition`, type: 'doughnut', dataObj: partitionObj },
+    filters.region && { key: 'locationWise', title: 'Location Wise', type: 'line', dataObj: summary.locationWise },
+    { key: 'operatorWise', title: 'Operator Wise',      type: 'bar',  dataObj: summary.operatorWise },
+    { key: 'monthWise',    title: 'Month Wise',         type: 'line', dataObj: summary.monthWise }
+  ].filter(Boolean);
+
+  return (
+    <>
+      {/* Priority Wise Pie */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Priority Wise
+              </Typography>
+              <MyChart
+                type="pie"
+                data={{ labels, values, bgColors: bg, borderColor: bg }}
+                height={250}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Other Charts */}
+      <Grid container spacing={2}>
+        {configs.map(({ key, title, type, dataObj }) => {
+          if (!dataObj || Object.keys(dataObj).length === 0) return null;
+          const options = type === 'line' ? {
+            scales: {
+              x: { title: { display: true, text: key==='monthWise'? 'Month':'Location' } },
+              y: { title: { display: true, text: 'Alarm Count' } }
+            }
+          } : {};
+
+          return (
+            <Grid item xs={12} md={key==='partition'?6:4} key={key}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {title}
+                  </Typography>
+                  <MyChart
+                    type={type}
+                    data={makeChartData(key, dataObj)}
+                    options={options}
+                    height={240}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+
+
 read Carefully Blow js file .
 
 issue is there Total Alarm Count , Responce Sent, & Priority Wise chart are not Update Count When region is change.it only read Count Globally.
