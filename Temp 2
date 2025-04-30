@@ -1,178 +1,160 @@
-rmdir /s /q node_modules
-del package-lock.json
-npm install
+Read Below SummaryCards.js file and make changes as per my request and give me updated file. dont make changes on another file.
 
+// src/components/SummaryCards.js
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
 
+// Palette for rejection-type cards & partition
+const REJECTION_COLORS = [
+  '#007bff','#28a745','#ffc107',
+  '#dc3545','#6f42c1','#17a2b8',
+  '#fd7e14','#20c997','#6c757d',
+  '#6610f2'
+];
 
-
-// craco.config.js
-const webpack = require('webpack');
-
-module.exports = {
-  // ONLY your Babel plugins—no webpack.resolve.fallback here
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-
-  // If you need `process` polyfilled in the browser, you can keep the alias+ProvidePlugin.
-  // Otherwise you can delete this entire `webpack` section.
-  webpack: {
-    configure: (webpackConfig) => {
-      // Make sure resolve.alias exists
-      webpackConfig.resolve = webpackConfig.resolve || {};
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        // Maps any import of "process" to the browser shim:
-        process: require.resolve('process/browser.js')
-      };
-
-      // Provide `process` globally (so code that references process.env doesn’t break)
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return webpackConfig;
-    },
-  },
+// Priority palette
+const PRIORITY_COLORS = {
+  Low:    '#90ee90',
+  Medium: '#ffff00',
+  High:   '#ff0000'
 };
 
-
-
-
-
-
-
-
-
-
-{
-  "name": "alarm-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject"
-  },
-  "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^7.0.2",
-    "@mui/material": "^7.0.2",
-    "@mui/x-data-grid": "^7.28.3",
-    "axios": "^1.8.4",
-    "chart.js": "^4.4.9",
-    "react-chartjs-2": "^5.3.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^7.5.0",
-    "recharts": "^2.15.3",
-    "web-vitals": "^2.1.4",
-    "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "@craco/craco": "^7.0.0",
-    "craco": "^0.0.3",
-    "process": "^0.11.10",
-    "react-scripts": "^5.0.1"
-  },
-  "babel": {
-    "plugins": [
-      "@babel/plugin-proposal-optional-chaining",
-      "@babel/plugin-proposal-nullish-coalescing-operator"
-    ]
+function getRejectionStats(summary, rawAlarms, filters) {
+  let entries;
+  if (!filters.region) {
+    entries = Object.entries(summary.rejectionTypeWise);
+  } else if (filters.region && !filters.location) {
+    const total = summary.regionWise[filters.region].count;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count/total)*100).toFixed(2)}%` }]);
+  } else {
+    const total = summary.locationWise[filters.location]?.count || 0;
+    const byType = rawAlarms
+      .filter(a => a.Region===filters.region && a.Location===filters.location)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection]||0)+1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count/total)*100).toFixed(2)}%` }]);
   }
+  return entries.map(([type, info], idx) => ({
+    type,
+    count: info.count,
+    percentage: info.percentage,
+    color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+  }));
+}
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+
+  // Build dynamic Priority-Wise pie data
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region   && a.Region   !== filters.region)   return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    return true;
+  });
+  const prTotal = filtered.length;
+  const prCounts = filtered.reduce((acc,a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p]||0)+1;
+    return acc;
+  }, {});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l => prCounts[l]);
+  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
+
+  // Other charts pulled from summary
+  const makeChartData = (key,obj) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(l=>obj[l].count);
+    const cols   = labels.map((_,i)=>REJECTION_COLORS[i%REJECTION_COLORS.length]);
+    return { labels, values, bgColors: cols, borderColor: cols };
+  };
+
+  const partitionObj = !filters.region
+    ? summary.regionWise
+    : { [filters.region]: summary.regionWise[filters.region] };
+
+  // configs WITHOUT 'priorityWise'
+  const configs = [
+    { key:'partition',    title:!filters.region?'Global Partition':`${filters.region} Partition`, type:'doughnut', dataObj:partitionObj },
+    filters.region && { key:'locationWise', title:'Location Wise', type:'line', dataObj:summary.locationWise },
+    { key:'operatorWise', title:'Operator Wise', type:'bar', dataObj:summary.operatorWise },
+    { key:'monthWise',    title:'Month Wise',    type:'line', dataObj:summary.monthWise }
+  ].filter(Boolean);
+
+  return (
+    <>
+      {/* Rejection-Type Cards */}
+      <Grid container spacing={2} sx={{ mb:4 }}>
+        {rejectionStats.map(({type,count,percentage,color})=>(
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ borderLeft:`6px solid ${color}` }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2" color="textSecondary">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Single Priority-Wise Pie */}
+      <Grid container spacing={2} sx={{ mb:4 }}>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+              <MyChart
+                type="pie"
+                data={{ labels:prLabels, values:prValues, bgColors:prColors, borderColor:prColors }}
+                height={250}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Other Charts */}
+      <Grid container spacing={2}>
+        {configs.map(({key,title,type,dataObj})=>{
+          if(!dataObj||!Object.keys(dataObj).length) return null;
+          const opts = type==='line'?{
+            scales:{
+              x:{ title:{display:true,text:key==='monthWise'?'Month':'Location'} },
+              y:{ title:{display:true,text:'Alarm Count'} }
+            }
+          }:{};
+          return (
+            <Grid item xs={12} md={key==='partition'?6:4} key={key}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>{title}</Typography>
+                  <MyChart
+                    type={type}
+                    data={makeChartData(key,dataObj)}
+                    options={opts}
+                    height={240}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    </>
+  );
 }
 
 
 
-
-
-
-rmdir /s /q node_modules
-del package-lock.json
-
-
-"eslint": "...",
-"eslint-loader": "..."
-
-
-
-
-
-
-
-rm -rf node_modules package-lock.json
-
-
-
-"devDependencies": {
-  "react-scripts": "^5.0.0",
-  "craco": "...",
-  "process": "^0.11.10"
-  // (no eslint or eslint-loader here)
-}
-
-
-
-
-
-
-
-
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
-
-> alarm-frontend@0.1.0 start
-> craco start
-
-
-There might be a problem with the project dependency tree.
-It is likely not a bug in Create React App, but something you need to fix locally.
-
-The react-scripts package provided by Create React App requires a dependency:
-
-  "eslint": "^5.16.0"
-
-Don't try to install it manually: your package manager does it automatically.
-However, a different version of eslint was detected higher up in the tree:
-
-  C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\eslint (version: 7.32.0)
-
-Manually installing incompatible versions is known to cause hard-to-debug issues.
-
-If you would prefer to ignore this check, add SKIP_PREFLIGHT_CHECK=true to an .env file in your project.
-That will permanently disable this message but you might encounter other issues.
-
-To fix the dependency tree, try following the steps below in the exact order:
-
-  1. Delete package-lock.json (not package.json!) and/or yarn.lock in your project folder.
-  2. Delete node_modules in your project folder.
-  3. Remove "eslint" from dependencies and/or devDependencies in the package.json file in your project folder.
-  4. Run npm install or yarn, depending on the package manager you use.
-
-In most cases, this should be enough to fix the problem.
-If this has not helped, there are a few other things you can try:
-
-  5. If you used npm, install yarn (http://yarnpkg.com/) and repeat the above steps with it instead.
-     This may help because npm has known issues with package hoisting which may get resolved in future versions.
-
-  6. Check if C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\eslint is outside your project directory.
-     For example, you might have accidentally installed something in your home folder.
-
-  7. Try running npm ls eslint in your project folder.
-     This will tell you which other package (apart from the expected react-scripts) installed eslint.
-
-If nothing else helps, add SKIP_PREFLIGHT_CHECK=true to an .env file in your project.
-That would permanently disable this preflight check in case you want to proceed anyway.
-
-P.S. We know this message is long but please read the steps above :-) We hope you find them helpful!
-
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>
