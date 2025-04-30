@@ -1,145 +1,13 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Box, Container, Typography, Link as MuiLink } from '@mui/material';
-import { Link } from 'react-router-dom';
-import Filters from '../components/Filters';
-import AlarmCard from '../components/AlarmCard';
-import SummaryCards from '../components/SummaryCards';
-import { getAlarmSummary, getRawAlarms } from '../services/api';
+read Once File carefully .also check how my Dashbaord Looks Like,
+issue is 1) cahrets are not update as per Filtered Region
+Issue 2) see how looks this charts are not Spreded on full Screen .
+see heading Section still not A s per my rewuinment.
 
-export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
+Kindly read each file carefully and make changes and give me Updated js file carefully.
 
-  // Fetch data once
-  useEffect(() => {
-    Promise.all([getAlarmSummary(), getRawAlarms()])
-      .then(([sumRes, rawRes]) => {
-        setSummary(sumRes.data);
-        setRawAlarms(rawRes.data);
-      })
-      .catch(console.error);
-  }, []);
+File 1 
 
-  // Region options
-  const regionOptions = useMemo(() =>
-    summary ? Object.keys(summary.regionWise) : []
-  , [summary]);
-
-  // Location options
-  const locationOptions = useMemo(() => {
-    if (!filters.region) return [];
-    return Array.from(new Set(
-      rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
-    ));
-  }, [rawAlarms, filters.region]);
-
-  // Month options
-  const monthOptions = useMemo(() => {
-    const months = new Set(rawAlarms.map(a => {
-      const [d,mon,yy] = a.Date.split('-');
-      const m = String("JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(mon)/3+1).padStart(2,'0');
-      return `${m}-20${yy}`;
-    }));
-    return [...months];
-  }, [rawAlarms]);
-
-  // Build slideshow slides: global + region
-  const slidesRef = useRef([]);
-  const slideIdx  = useRef(0);
-  useEffect(() => {
-    if (!summary) return;
-    const slides = [{ region:'', location:'', month:'' }];
-    regionOptions.forEach(r => slides.push({ region:r, location:'', month:'' }));
-    slidesRef.current = slides;
-    slideIdx.current    = 0;
-    setFilters(slides[0]);
-
-    const id = setInterval(() => {
-      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
-      setFilters(slidesRef.current[slideIdx.current]);
-    }, 30000);
-
-    return () => clearInterval(id);
-  }, [summary, regionOptions]);
-
-  if (!summary) {
-    return <Typography>Loading dashboard…</Typography>;
-  }
-
-  return (
-    <Box sx={{ width:'100vw', height:'100vh', bgcolor:'#fafafa', p:0, m:0 }}>
-      <Container maxWidth={false} disableGutters>
-        {/* Heading Bar */}
-        <Box
-          sx={{
-            display:'flex',
-            alignItems:'center',
-            justifyContent:'center',
-            borderBottom:'2px solid #000',
-            py:2,
-            mb:3,
-            position:'relative'
-          }}
-        >
-          <Typography variant="h3" component="h1" sx={{ mx:4 }}>
-            🔔 Alarm Analysis Dashboard
-          </Typography>
-          <Box sx={{ position:'absolute', left:16 }}>
-            <MuiLink component={Link} to="/" sx={{ mx:1 }}>Dashboard</MuiLink>
-            <MuiLink component={Link} to="/alarms" sx={{ mx:1 }}>Raw Alarms</MuiLink>
-          </Box>
-        </Box>
-
-        {/* Filters */}
-        <Box sx={{ px:2 }}>
-          <Filters
-            filters={filters}
-            setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={locationOptions}
-            monthOptions={monthOptions}
-          />
-        </Box>
-
-        {/* Summary Cards */}
-        <Box sx={{ px:2 }}>
-          <AlarmCard summary={summary} rawAlarms={rawAlarms} filters={filters} />
-        </Box>
-
-        {/* Charts */}
-        <Box sx={{ flex:1, overflowY:'auto', px:2, pb:4 }}>
-          <SummaryCards summary={summary} filters={filters} rawAlarms={rawAlarms} />
-        </Box>
-      </Container>
-    </Box>
-  );
-}
-
-
-
-
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import RawAlarms from './pages/RawAlarms';
-
-export default function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/alarms" element={<RawAlarms />} />
-      </Routes>
-    </Router>
-  );
-}
-
-
-
-
-
-
+AlarmCard.js
 
 
 
@@ -197,7 +65,71 @@ export default function AlarmCard({ summary, rawAlarms, filters }) {
 
 
 
+file 2
 
+Charts.js
+
+
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = 400
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    // Build dataset with line-chart specifics if needed
+    const ds = {
+      label: data.label || '',
+      data: data.values,
+      backgroundColor: data.bgColors,
+      borderColor: data.borderColor,
+      borderWidth: 2,
+      fill: type === 'line' ? false : true,
+      tension: type === 'line' ? 0.4 : 0,
+      pointBackgroundColor: data.borderColor,
+      pointRadius: type === 'line' ? 4 : undefined,
+    };
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets: [ds],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        ...options,
+      }
+    });
+
+    return () => chartRef.current && chartRef.current.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+File 3
+
+Filters.js
 
 
 import React from 'react';
@@ -274,8 +206,9 @@ export default Filters;
 
 
 
+File 4
 
-
+SummaryCards.js
 
 
 
@@ -439,20 +372,27 @@ export default function SummaryCards({ summary, filters, rawAlarms }) {
 
 
 
+file 5
+
+
+dashboard.js
+
 
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, Typography, Link as MuiLink } from '@mui/material';
+import { Link } from 'react-router-dom';
 import Filters from '../components/Filters';
-import SummaryCards from '../components/SummaryCards';
 import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
 import { getAlarmSummary, getRawAlarms } from '../services/api';
 
 export default function Dashboard() {
-  const [summary, setSummary] = useState(null);
+  const [summary, setSummary]     = useState(null);
   const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters] = useState({ region:'', location:'', month:'' });
+  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
 
+  // Fetch data once
   useEffect(() => {
     Promise.all([getAlarmSummary(), getRawAlarms()])
       .then(([sumRes, rawRes]) => {
@@ -460,72 +400,98 @@ export default function Dashboard() {
         setRawAlarms(rawRes.data);
       })
       .catch(console.error);
-  },[]);
+  }, []);
 
+  // Region options
   const regionOptions = useMemo(() =>
     summary ? Object.keys(summary.regionWise) : []
-  ,[summary]);
+  , [summary]);
 
+  // Location options
   const locationOptions = useMemo(() => {
     if (!filters.region) return [];
     return Array.from(new Set(
-      rawAlarms.filter(a=>a.Region===filters.region).map(a=>a.Location)
+      rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
     ));
-  },[rawAlarms, filters.region]);
+  }, [rawAlarms, filters.region]);
 
+  // Month options
   const monthOptions = useMemo(() => {
-    // extract unique "MM-YYYY" from Date field like "01-Apr-25"
-    const set = new Set(rawAlarms.map(a=>{
+    const months = new Set(rawAlarms.map(a => {
       const [d,mon,yy] = a.Date.split('-');
-      const m = ("JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(mon)/3+1).toString().padStart(2,'0');
-      return `${m}-${'20'+yy}`;
+      const m = String("JanFebMarAprMayJunJulAugSepOctNovDec".indexOf(mon)/3+1).padStart(2,'0');
+      return `${m}-20${yy}`;
     }));
-    return Array.from(set);
-  },[rawAlarms]);
+    return [...months];
+  }, [rawAlarms]);
 
-  // slideshow code unchanged…
+  // Build slideshow slides: global + region
+  const slidesRef = useRef([]);
+  const slideIdx  = useRef(0);
+  useEffect(() => {
+    if (!summary) return;
+    const slides = [{ region:'', location:'', month:'' }];
+    regionOptions.forEach(r => slides.push({ region:r, location:'', month:'' }));
+    slidesRef.current = slides;
+    slideIdx.current    = 0;
+    setFilters(slides[0]);
 
-  if (!summary) return <Typography>Loading…</Typography>;
+    const id = setInterval(() => {
+      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
+      setFilters(slidesRef.current[slideIdx.current]);
+    }, 30000);
+
+    return () => clearInterval(id);
+  }, [summary, regionOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
 
   return (
-    <Box sx={{ width:'100vw', height:'100vh', p:0, m:0, bgcolor:'#fafafa' }}>
-      <Container maxWidth={false} sx={{ py:2 }}>
-        <Typography
-          variant="h3"
+    <Box sx={{ width:'100vw', height:'100vh', bgcolor:'#fafafa', p:0, m:0 }}>
+      <Container maxWidth={false} disableGutters>
+        {/* Heading Bar */}
+        <Box
           sx={{
             display:'flex',
             alignItems:'center',
+            justifyContent:'center',
+            borderBottom:'2px solid #000',
+            py:2,
             mb:3,
-            background:'#1976d2',
-            color:'#fff',
-            px:2,
-            py:1,
-            borderRadius:1
+            position:'relative'
           }}
         >
-          <span style={{marginRight:8}}>🔔</span>
-          Alarm Analysis Dashboard
-        </Typography>
+          <Typography variant="h3" component="h1" sx={{ mx:4 }}>
+            🔔 Alarm Analysis Dashboard
+          </Typography>
+          <Box sx={{ position:'absolute', left:16 }}>
+            <MuiLink component={Link} to="/" sx={{ mx:1 }}>Dashboard</MuiLink>
+            <MuiLink component={Link} to="/alarms" sx={{ mx:1 }}>Raw Alarms</MuiLink>
+          </Box>
+        </Box>
 
-        <Filters
-          filters={filters}
-          setFilters={setFilters}
-          regionOptions={regionOptions}
-          locationOptions={locationOptions}
-          monthOptions={monthOptions}
-        />
+        {/* Filters */}
+        <Box sx={{ px:2 }}>
+          <Filters
+            filters={filters}
+            setFilters={setFilters}
+            regionOptions={regionOptions}
+            locationOptions={locationOptions}
+            monthOptions={monthOptions}
+          />
+        </Box>
 
-        <AlarmCard
-          summary={summary}
-          rawAlarms={rawAlarms}
-          filters={filters}
-        />
+        {/* Summary Cards */}
+        <Box sx={{ px:2 }}>
+          <AlarmCard summary={summary} rawAlarms={rawAlarms} filters={filters} />
+        </Box>
 
-        <SummaryCards
-          summary={summary}
-          filters={filters}
-          rawAlarms={rawAlarms}
-        />
+        {/* Charts */}
+        <Box sx={{ flex:1, overflowY:'auto', px:2, pb:4 }}>
+          <SummaryCards summary={summary} filters={filters} rawAlarms={rawAlarms} />
+        </Box>
       </Container>
     </Box>
   );
@@ -535,7 +501,10 @@ export default function Dashboard() {
 
 
 
+File 6
 
+
+App.js
 
 
 
@@ -564,600 +533,4 @@ export default function App() {
     </Router>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-read Bwlow js file Crefully there is 6 files for my Alarm Analysis dashboard.
-Now I want to move forward into Ui make dynamic and Display Interactively
-Alarm Analysis Dashboard - make this as Heading and add backgound fot this add Alarm Symbol for Alarm analysis Dashboard.
-then there is two link buttons 
-1 is Dashboard & 2 nd is raw Alarms
- Add this Link in Alarm Analysis Dashboard heading section on left.
-then region dropdown, & Location dropdown. Also Add 1 more dropdown for Month add 12 month innthis dropdown.
-also fill unique colors for all section 
-
-
-main Important thing is make a dashboard Full Screen , Currently Ui Shows data on Middle of the Scrren 
-i want Display Data on full Screen and show Adjusted Cards as per Screen (Big/Small).
-
-Make a changes as per my requirnment and give me Updatede js files carrefully.
-
-
-
-File 1
-
-AlarmCard.js
-
-
-import React from 'react';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters }) {
-  if (!summary) return null;
-
-  // Compute dynamic total:
-  const totalAlarms = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    return true;
-  }).length;
-
-  // Compute dynamic responseSentPercentage:
-  const sentCount = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    return a['Action Taken'] && a['Action Taken'] !== 'Not Sent';
-  }).length;
-  const responseSentPercentage = totalAlarms
-    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Total Alarms
-            </Typography>
-            <Typography variant="h4">
-              {totalAlarms}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent %
-            </Typography>
-            <Typography variant="h4">
-              {responseSentPercentage}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-File 2 
-
-Chart.js
-
-
-
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = 400
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    if (chartRef.current) chartRef.current.destroy();
-
-    // Build dataset with line-chart specifics if needed
-    const ds = {
-      label: data.label || '',
-      data: data.values,
-      backgroundColor: data.bgColors,
-      borderColor: data.borderColor,
-      borderWidth: 2,
-      fill: type === 'line' ? false : true,
-      tension: type === 'line' ? 0.4 : 0,
-      pointBackgroundColor: data.borderColor,
-      pointRadius: type === 'line' ? 4 : undefined,
-    };
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: {
-        labels: data.labels,
-        datasets: [ds],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        ...options,
-      }
-    });
-
-    return () => chartRef.current && chartRef.current.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
-
-
-
-File 3
-
-Filters.js
-
-
-
-import React from 'react';
-import { TextField, MenuItem } from '@mui/material';
-
-const Filters = ({
-  filters,
-  setFilters,
-  regionOptions = [],
-  locationOptions = []
-}) => {
-  const handleChange = (field) => (e) =>
-    setFilters(prev => ({
-      ...prev,
-      [field]: e.target.value,
-      ...(field === 'region' && { location: '' })
-    }));
-
-  return (
-    <div style={{ display: 'flex', gap: '1rem', marginBottom: 16 }}>
-      <TextField
-        select
-        label="Region"
-        value={filters.region}
-        onChange={handleChange('region')}
-        style={{ minWidth: 150 }}
-      >
-        <MenuItem value="">Global</MenuItem>
-        {regionOptions.map(region => (
-          <MenuItem key={region} value={region}>
-            {region}
-          </MenuItem>
-        ))}
-      </TextField>
-
-      {filters.region && (
-        <TextField
-          select
-          label="Location"
-          value={filters.location}
-          onChange={handleChange('location')}
-          style={{ minWidth: 200 }}
-        >
-          <MenuItem value="">All Locations</MenuItem>
-          {locationOptions.map(loc => (
-            <MenuItem key={loc} value={loc}>
-              {loc}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-    </div>
-  );
-};
-
-export default Filters;
-
-
-
-
-File 4
-
-Summarycards.js
-
-
-import React from 'react';
-import './SummaryCards.css';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const REJECTION_COLORS = [
-  '#007bff', '#28a745', '#ffc107',
-  '#dc3545', '#6f42c1', '#17a2b8',
-  '#fd7e14', '#20c997', '#6c757d',
-  '#6610f2'
-];
-
-const PRIORITY_COLORS = {
-  Low: '#90ee90',
-  Medium: '#ffff00',
-  High: '#ff0000'
-};
-
-function getRejectionStats(summary, rawAlarms, filters) {
-  let entries;
-  if (!filters.region) {
-    entries = Object.entries(summary.rejectionTypeWise);
-  } else if (filters.region && !filters.location) {
-    const total = summary.regionWise[filters.region].count;
-    const byType = rawAlarms
-      .filter(a => a.Region === filters.region)
-      .reduce((acc, a) => {
-        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-        return acc;
-      }, {});
-    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-  } else {
-    const total = summary.locationWise[filters.location]?.count || 0;
-    const byType = rawAlarms
-      .filter(a => a.Region === filters.region && a.Location === filters.location)
-      .reduce((acc, a) => {
-        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-        return acc;
-      }, {});
-    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-  }
-
-  return entries
-    .map(([type, info], idx) => ({
-      type,
-      count: info.count,
-      percentage: info.percentage,
-      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
-    }))
-    .sort((a, b) => b.count - a.count); // Descending order
-}
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
-
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    return true;
-  });
-  const prTotal = filtered.length;
-  const prCounts = filtered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
-
-  const makeChartData = (key, obj) => {
-    const labels = Object.keys(obj);
-    const values = labels.map(l => obj[l].count);
-    const cols = labels.map((_, i) => REJECTION_COLORS[i % REJECTION_COLORS.length]);
-    return { labels, values, bgColors: cols, borderColor: cols };
-  };
-
-  const partitionObj = !filters.region
-    ? summary.regionWise
-    : { [filters.region]: summary.regionWise[filters.region] };
-
-  return (
-    <>
-      {/* Rejection-Type Cards */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={12} sm={6} md={3} key={type}>
-            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-              <CardContent>
-                <Typography variant="subtitle2">{type}</Typography>
-                <Typography variant="h6">{count}</Typography>
-                <Typography variant="body2">{percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Three Charts in One Row */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
-        {/* Partition Chart */}
-        {partitionObj && Object.keys(partitionObj).length > 0 && (
-          <Grid item xs={12} md={4}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
-                </Typography>
-                <MyChart
-                  type="doughnut"
-                  data={makeChartData('partition', partitionObj)}
-                  height={240}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* Priority Wise */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ border: '1px solid #ccc' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-              <MyChart
-                type="pie"
-                data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                height={240}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Location Wise */}
-        {summary.locationWise && Object.keys(summary.locationWise).length > 0 && (
-          <Grid item xs={12} md={4}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Location Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={makeChartData('locationWise', summary.locationWise)}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={240}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-
-      {/* Month Wise & Operator Wise */}
-      <Grid container spacing={2}>
-        {summary.monthWise && Object.keys(summary.monthWise).length > 0 && (
-          <Grid item xs={12} md={6}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={makeChartData('monthWise', summary.monthWise)}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Month' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={240}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {summary.operatorWise && Object.keys(summary.operatorWise).length > 0 && (
-          <Grid item xs={12} md={6}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-                <MyChart
-                  type="bar"
-                  data={makeChartData('operatorWise', summary.operatorWise)}
-                  height={240}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </>
-  );
-}
-
-
-
-
-
-
-file 5
-
-Dashboard.js
-
-
-// src/pages/Dashboard.js
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Container, Typography } from '@mui/material';
-import Filters      from '../components/Filters';
-import SummaryCards from '../components/SummaryCards';
-import AlarmCard    from '../components/AlarmCard';
-import { getAlarmSummary, getRawAlarms } from '../services/api';
-
-export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '' });
-
-  // 1) Fetch data once
-  useEffect(() => {
-    Promise.all([ getAlarmSummary(), getRawAlarms() ])
-      .then(([sumRes, rawRes]) => {
-        setSummary(sumRes.data);
-        setRawAlarms(rawRes.data);
-      })
-      .catch(console.error);
-  }, []);
-
-  // 2) Memoize regionOptions so it only changes when summary changes
-  const regionOptions = useMemo(() => {
-    return summary ? Object.keys(summary.regionWise) : [];
-  }, [summary]);
-
-  // 3) Build a map of region → [locations], memoized on rawAlarms and regionOptions
-  const regionLocationsMap = useMemo(() => {
-    const map = {};
-    regionOptions.forEach(region => {
-      map[region] = Array.from(
-        new Set(
-          rawAlarms
-            .filter(a => a.Region === region)
-            .map(a => a.Location)
-        )
-      );
-    });
-    return map;
-  }, [rawAlarms, regionOptions]);
-
-  // 4) Build and start slideshow as soon as summary is available
-  const slidesRef = useRef([]);
-  const slideIdx  = useRef(0);
-
-  useEffect(() => {
-    if (!summary) return;   // wait for data
-
-    // Build slides: global → each region → each location
-    // const slides = [{ region: '', location: '' }];
-    // regionOptions.forEach(region => {
-    //   slides.push({ region, location: '' });
-    //   regionLocationsMap[region].forEach(location => {
-    //     slides.push({ region, location });
-    //   });
-    // });
-
-    const slides = [{ region: '', location: '' }];
-       regionOptions.forEach(region => {
-         slides.push({ region, location: '' });
-       });
-
-    slidesRef.current = slides;
-    slideIdx.current = 0;
-
-    // Immediately show “Global”
-    setFilters(slides[0]);
-
-    // Every 60s, advance to the next slide
-    const intervalId = setInterval(() => {
-      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
-      setFilters(slidesRef.current[slideIdx.current]);
-    }, 30_000);
-
-    return () => clearInterval(intervalId);
-  }, [summary, regionOptions, regionLocationsMap]);
-
-  // 5) Compute filteredSummary exactly as before
-  const filteredSummary = useMemo(() => {
-    if (!summary) return null;
-    const fs = { ...summary };
-    if (filters.region) {
-      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
-      fs.locationWise = {};
-      (regionLocationsMap[filters.region] || [])
-        .filter(loc => !filters.location || loc === filters.location)
-        .forEach(loc => {
-          fs.locationWise[loc] = summary.locationWise[loc];
-        });
-    }
-    return fs;
-  }, [summary, filters, regionLocationsMap]);
-
-  // 6) Render
-  if (!summary) {
-    return <Typography>Loading dashboard…</Typography>;
-  }
-
-  return (
-    <Container sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Alarm Analysis Dashboard
-      </Typography>
-
-      <Filters
-        filters={filters}
-        setFilters={setFilters}
-        regionOptions={regionOptions}
-        locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
-      />
-
-      {/* <AlarmCard summary={summary} /> */}
-      <AlarmCard
-      summary={filteredSummary}
-      rawAlarms={rawAlarms}
-      filters={filters}
-      />
-
-      <SummaryCards
-        summary={filteredSummary}
-        filters={filters}
-        rawAlarms={rawAlarms}
-      
-      />
-    </Container>
-  );
-}
-
-
-
-File 6
-
-App.js
-
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import RawAlarms from './pages/RawAlarms';
-
-
-function App() {
-  return (
-    <Router>
-      <div>
-        <nav style={{ padding: '10px', background: '#f0f0f0' }}>
-          <Link to="/" style={{ marginRight: '10px' }}>Dashboard</Link>
-          <Link to="/alarms">Raw Alarms</Link>
-          
-        </nav>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/alarms" element={<RawAlarms />} />
-          
-          
-
-        </Routes>
-      </div>
-    </Router>
-  );
-}
-
-export default App;
-
 
