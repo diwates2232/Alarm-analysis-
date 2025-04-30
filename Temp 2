@@ -1,3 +1,156 @@
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Container, Typography, Link as MuiLink } from '@mui/material';
+import { Link } from 'react-router-dom';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
+
+  // 1) Fetch on mount
+  useEffect(() => {
+    Promise.all([ getAlarmSummary(), getRawAlarms() ])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // 2) Build dropdown options
+  const regionOptions = useMemo(() =>
+    summary ? Object.keys(summary.regionWise) : []
+  , [summary]);
+
+  const locationOptions = useMemo(() => {
+    if (!filters.region) return [];
+    return Array.from(new Set(
+      rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+    ));
+  }, [rawAlarms, filters.region]);
+
+  const monthOptions = useMemo(() => {
+    const set = new Set(rawAlarms.map(a => {
+      // convert "01-Apr-25" to "04-2025"
+      const [d,m,yy] = a.Date.split('-');
+      const mo = ('JanFebMarAprMayJunJulAugSepOctNovDec'.indexOf(m)/3 + 1).toString().padStart(2,'0');
+      return `${mo}-20${yy}`;
+    }));
+    return [...set];
+  }, [rawAlarms]);
+
+  // 3) Build filteredSummary for charts & cards
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    // clone top-level
+    const fs = { ...summary };
+    // filter down region
+    if (filters.region) {
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
+      // build locationWise for that region & month
+      fs.locationWise = {};
+      Object.keys(summary.locationWise)
+        .filter(loc => {
+          if (!loc.startsWith(filters.region + '.')) return false;
+          if (filters.location && !loc.endsWith(filters.location)) return false;
+          return true;
+        })
+        .forEach(loc => {
+          fs.locationWise[loc] = summary.locationWise[loc];
+        });
+    }
+    // for monthWise & priorityWise & operatorWise & rejectionTypeWise, we keep entire summary
+    // (AlarmCard and SummaryCards both re-calc off rawAlarms & filters)
+    return fs;
+  }, [summary, filters]);
+
+  // 4) Slideshow
+  const slides = useRef([]);
+  const idx    = useRef(0);
+  useEffect(() => {
+    if (!summary) return;
+    slides.current = [{ region:'', location:'', month:'' }, ...regionOptions.map(r=>({region:r,location:'',month:''}))];
+    idx.current = 0;
+    setFilters(slides.current[0]);
+    const h = setInterval(() => {
+      idx.current = (idx.current + 1) % slides.current.length;
+      setFilters(slides.current[idx.current]);
+    }, 30000);
+    return () => clearInterval(h);
+  }, [summary, regionOptions]);
+
+  if (!summary) {
+    return <Typography>Loading…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width:'100vw', height:'100vh', bgcolor:'#fafafa', overflow:'hidden' }}>
+      <Container maxWidth={false} disableGutters sx={{ px:2, py:2 }}>
+        {/** * Header **/}
+        <Box
+          sx={{
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            borderBottom:'2px solid #000',
+            mb:3,
+            position:'relative',
+            py:1
+          }}
+        >
+          <Typography variant="h3" component="h1">
+            🔔 Alarm Analysis Dashboard
+          </Typography>
+          <Box sx={{ position:'absolute', left:16 }}>
+            <MuiLink component={Link} to="/" sx={{ mr:2 }}>Dashboard</MuiLink>
+            <MuiLink component={Link} to="/alarms">Raw Alarms</MuiLink>
+          </Box>
+        </Box>
+
+        {/** * Filters **/}
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+        />
+
+        {/** * Top cards **/}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={rawAlarms}
+          filters={filters}
+        />
+
+        {/** * Charts **/}
+        <Box sx={{ height:'calc(100vh - 220px)', overflowY:'auto', pr:1 }}>
+          <SummaryCards
+            summary={filteredSummary}
+            filters={filters}
+            rawAlarms={rawAlarms}
+          />
+        </Box>
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
 read Once File carefully .also check how my Dashbaord Looks Like,
 issue is 1) cahrets are not update as per Filtered Region
 Issue 2) see how looks this charts are not Spreded on full Screen .
