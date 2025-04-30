@@ -1,3 +1,126 @@
+// src/components/SummaryCards.js
+@@
+-export default function SummaryCards({ summary, filters, rawAlarms }) {
++export default function SummaryCards({ summary, filters, rawAlarms }) {
+   if (!summary) return null;
+   const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+@@
+   // Priority
+   const filtered = rawAlarms.filter(a => {
+@@
+   // build dynamic partition (was static summary.regionWise)
+-  const partitionObj = !filters.region
+-    ? summary.regionWise
+-    : { [filters.region]: summary.regionWise[filters.region] };
++  // Re-compute region counts honoring month & location filters
++  const dynamicRegionCounts = rawAlarms
++    .filter(a => {
++      if (filters.location && a.Location !== filters.location) return false;
++      if (filters.month && !a.Date.startsWith(filters.month)) return false;
++      return true;
++    })
++    .reduce((acc, a) => {
++      acc[a.Region] = (acc[a.Region] || 0) + 1;
++      return acc;
++    }, {});
++
++  const partitionObj = filters.region
++    ? { [filters.region]: { count: dynamicRegionCounts[filters.region] || 0 } }
++    : Object.entries(dynamicRegionCounts).reduce((acc, [r, c]) => {
++        acc[r] = { count: c };
++        return acc;
++      }, {});
+@@
+       {[partitionObj, summary.locationWise, summary.operatorWise].map((obj, idx) => {
+         const titles = ['Global Partition','Location Wise','Operator Wise'];
+         const types  = ['doughnut','line','bar'];
+-        if (!obj || !Object.keys(obj).length) return null;
++        if (!obj || !Object.keys(obj).length) return null;
+         return (
+           <Grid item xs={12} md={4} key={titles[idx]}>
+             <Card sx={{ border:'1px solid #ccc' }}>
+               <CardContent>
+-                <Typography variant="h6" gutterBottom>
++                <Typography variant="h6" gutterBottom>
+                   {titles[idx]}
+                 </Typography>
+-                <MyChart
++                <MyChart
+                   type={types[idx]}
+-                  data={makeChartData(obj, REJECTION_COLORS)}
++                  data={makeChartData(obj, REJECTION_COLORS)}
+                   options={idx===1?{
+                     scales:{
+                       x:{title:{display:true,text:'Location'}},
+                       y:{title:{display:true,text:'Count'}}
+
+
+
+
+
+
+// src/pages/Dashboard.js
+@@ export default function Dashboard() {
+-  useEffect(() => {
++  useEffect(() => {
+     if (!summary) return;
+     const slides = [{ region:'', location:'', month:'' }];
+@@
+     return () => clearInterval(id);
+   }, [summary, regionOptions]);
+
++  // Manual advance on header click:
++  const handleTitleClick = () => {
++    slideIdx.current =
++      (slideIdx.current + 1) % slidesRef.current.length;
++    setFilters(slidesRef.current[slideIdx.current]);
++  };
+
+   if (!summary) {
+     return <Typography>Loading dashboard…</Typography>;
+   }
+
+   return (
+@@
+-        {/* Heading Bar */}
++        {/* Heading Bar (click title to manually advance region) */}
+         <Box
+           sx={{
+             display:'flex',
+             alignItems:'center',
+             justifyContent:'center',
+             borderBottom:'2px solid #000',
+             py:2,
+             mb:3,
+             position:'relative'
+           }}
+         >
+-          <Typography variant="h3" component="h1" sx={{ mx:4 }}>
++          <Typography
++            variant="h3"
++            component="h1"
++            onClick={handleTitleClick}
++            sx={{ mx:4, cursor:'pointer', userSelect:'none' }}
++            title="Click to advance region"
++          >
+             🔔 Alarm Analysis Dashboard
+           </Typography>
+           <Box sx={{ position:'absolute', left:16 }}>
+@@
+-        {/* Charts */}
+-        <Box sx={{ flex:1, overflowY:'auto', px:2, pb:4 }}>
+-          <SummaryCards summary={summary} filters={filters} rawAlarms={rawAlarms} />
+-        </Box>
++        {/* Charts (edge-to-edge) */}
++        <Box sx={{ flex:1, overflowY:'auto', width:'100vw', p:0, m:0 }}>
++          <SummaryCards summary={summary} filters={filters} rawAlarms={rawAlarms} />
++        </Box>
+
+
+
+
+
+
 read Once File carefully .
 issue is 1) charts are not update as per Filtered Region
 Issue 2) charts Layout Are not Spread On Full Scrren .Display Charta On full Screen.
