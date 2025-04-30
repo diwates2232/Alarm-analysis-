@@ -1,3 +1,227 @@
+// src/components/SummaryCards.js
+
+import React from 'react';
+import './SummaryCards.css';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+const REJECTION_COLORS = [
+  '#007bff', '#28a745', '#ffc107',
+  '#dc3545', '#6f42c1', '#17a2b8',
+  '#fd7e14', '#20c997', '#6c757d',
+  '#6610f2'
+];
+const PRIORITY_COLORS = { Low: '#90ee90', Medium: '#ffff00', High: '#ff0000' };
+
+function getRejectionStats(summary, rawAlarms, filters) {
+  let entries = Object.entries(summary.rejectionTypeWise);
+
+  if (filters.region && !filters.location) {
+    const total = summary.regionWise[filters.region]?.count || 0;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(
+      ([t, c]) => [t, { count: c, percentage: `${((c / total) * 100).toFixed(2)}%` }]
+    );
+  }
+
+  if (filters.location) {
+    const total = rawAlarms.filter(a =>
+      a.Region === filters.region &&
+      a.Location === filters.location &&
+      (!filters.month || a.Date.startsWith(filters.month))
+    ).length;
+    const byType = rawAlarms
+      .filter(a =>
+        a.Region === filters.region &&
+        a.Location === filters.location &&
+        (!filters.month || a.Date.startsWith(filters.month))
+      )
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(
+      ([t, c]) => [t, { count: c, percentage: `${((c / total) * 100).toFixed(2)}%` }]
+    );
+  }
+
+  return entries
+    .map(([type, info], idx) => ({
+      type,
+      count: info.count,
+      percentage: info.percentage,
+      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+
+  // Priority stats
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && !a.Date.startsWith(filters.month)) return false;
+    return true;
+  });
+  const prCounts = filtered.reduce((acc, a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l => prCounts[l]);
+  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
+
+  const makeChartData = (obj, palette) => {
+    const labels = Object.keys(obj);
+    const values = labels.map(l => obj[l].count);
+    const colors = labels.map((_, i) => palette[i % palette.length]);
+    return { labels, values, bgColors: colors, borderColor: colors };
+  };
+
+  // --- Dynamic Region Counts (First chart) ---
+  const dynamicRegionCounts = rawAlarms
+    .filter(a => {
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.month && !a.Date.startsWith(filters.month)) return false;
+      return true;
+    })
+    .reduce((acc, a) => {
+      acc[a.Region] = (acc[a.Region] || 0) + 1;
+      return acc;
+    }, {});
+
+  const partitionObj = filters.region
+    ? { [filters.region]: { count: dynamicRegionCounts[filters.region] || 0 } }
+    : Object.entries(dynamicRegionCounts).reduce((acc, [r, c]) => {
+        acc[r] = { count: c };
+        return acc;
+      }, {});
+
+  // --- Dynamic Location Counts (Second chart) ---
+  const dynamicLocationCounts = rawAlarms
+    .filter(a => {
+      if (filters.region && a.Region !== filters.region) return false;
+      if (filters.month && !a.Date.startsWith(filters.month)) return false;
+      return true;
+    })
+    .reduce((acc, a) => {
+      acc[a.Location] = (acc[a.Location] || 0) + 1;
+      return acc;
+    }, {});
+
+  return (
+    <>
+      {/* Rejection Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(({ type, count, percentage, color }) => (
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Three charts per row */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {[
+          { data: partitionObj, title: 'Global Partition', type: 'doughnut' },
+          { data: dynamicLocationCounts, title: 'Location Wise', type: 'line' },
+          { data: summary.operatorWise, title: 'Operator Wise', type: 'bar' }
+        ].map(({ data, title, type }, idx) => {
+          if (!data || !Object.keys(data).length) return null;
+          return (
+            <Grid item xs={12} md={4} key={title}>
+              <Card sx={{ border: '1px solid #ccc' }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    {title}
+                  </Typography>
+                  <MyChart
+                    type={type}
+                    data={makeChartData(data, REJECTION_COLORS)}
+                    options={
+                      title === 'Location Wise'
+                        ? {
+                            scales: {
+                              x: { title: { display: true, text: 'Location' } },
+                              y: { title: { display: true, text: 'Count' } }
+                            }
+                          }
+                        : {}
+                    }
+                    height={250}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+
+      {/* Last row: Priority & Month */}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <Card sx={{ border: '1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Priority Wise
+              </Typography>
+              <MyChart
+                type="pie"
+                data={{
+                  labels: prLabels,
+                  values: prValues,
+                  bgColors: prColors,
+                  borderColor: prColors
+                }}
+                height={250}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Card sx={{ border: '1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Month Wise
+              </Typography>
+              <MyChart
+                type="line"
+                data={makeChartData(summary.monthWise, REJECTION_COLORS)}
+                options={{
+                  scales: {
+                    x: { title: { display: true, text: 'Month' } },
+                    y: { title: { display: true, text: 'Count' } }
+                  }
+                }}
+                height={250}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </>
+  );
+}
+
+
+
+
 
 
 
