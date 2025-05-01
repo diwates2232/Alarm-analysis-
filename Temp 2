@@ -1,3 +1,37 @@
+const partitionObj = !filters.region
+  ? Object.fromEntries(
+      Object.entries(summary.regionWise).map(([r, info]) => [r, info.count])
+    )
+  : rawAlarms
+      .filter(a => a.Region === filters.region)
+      .reduce((acc, a) => {
+        acc[a.Location] = (acc[a.Location] || 0) + 1;
+        return acc;
+      }, {});
+
+
+
+
+
+const uniformBlue = '#007bff';
+const partitionData = {
+  labels: partitionLabels,
+  values: partitionValues,
+  bgColors: partitionLabels.map(() => uniformBlue),
+  borderColor: partitionLabels.map(() => uniformBlue)
+};
+
+
+
+
+
+
+
+
+
+
+
+
 import React from 'react';
 import MyChart from './Chart';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
