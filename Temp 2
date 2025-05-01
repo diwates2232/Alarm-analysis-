@@ -1,3 +1,395 @@
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment,
+  Typography
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import SendIcon from '@mui/icons-material/Send';
+
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  totalAlarms,
+  responseSentPercentage
+}) {
+  const handleChange = field => e =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          id="region-select"
+          label="Region"
+          select
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">Global</MenuItem>
+          {regionOptions.map(region => (
+            <MenuItem key={region} value={region}>
+              {region}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item>
+        <TextField
+          id="location-select"
+          label="Location"
+          select
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LocationOnIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(loc => (
+            <MenuItem key={loc} value={loc}>
+              {loc}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      {/* Month */}
+      <Grid item>
+        <TextField
+          id="month-select"
+          label="Month"
+          select
+          value={filters.month}
+          onChange={handleChange('month')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <CalendarMonthIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Months</MenuItem>
+          {locationOptions.length > 0
+            ? Array.from(new Set(locationOptions.map(l => l))).sort().map(m => (
+                <MenuItem key={m} value={m}>
+                  {m}
+                </MenuItem>
+              ))
+            : null}
+        </TextField>
+      </Grid>
+
+      {/* Total Alarms */}
+      <Grid item>
+        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: .5 }}>
+          <AlarmIcon /> Total: {totalAlarms ?? '-'}
+        </Typography>
+      </Grid>
+
+      {/* Response % */}
+      <Grid item>
+        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: .5 }}>
+          <SendIcon /> Sent: {responseSentPercentage ?? '-'}
+        </Typography>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+import React from 'react';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+// unified color palette for all charts
+const defaultColors = [
+  '#8884d8', '#82ca9d', '#ffc658', '#ff7f50',
+  '#a29bfe', '#20c997', '#fd7e14', '#6c757d',
+  '#90ee90', '#ffffe0', '#ff0000'
+];
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  // --- 1. Rejection Stats (unchanged logic) ---
+  function getRejectionStats() {
+    let entries;
+    if (!filters.region) {
+      entries = Object.entries(summary.rejectionTypeWise);
+    } else if (filters.region && !filters.location) {
+      const total = summary.regionWise[filters.region].count;
+      const byType = rawAlarms
+        .filter(a => a.Region === filters.region)
+        .reduce((acc, a) => {
+          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+          return acc;
+        }, {});
+      entries = Object.entries(byType).map(
+        ([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]
+      );
+    } else {
+      const total = summary.locationWise[filters.location]?.count || 0;
+      const byType = rawAlarms
+        .filter(a => a.Region === filters.region && a.Location === filters.location)
+        .reduce((acc, a) => {
+          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+          return acc;
+        }, {});
+      entries = Object.entries(byType).map(
+        ([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]
+      );
+    }
+
+    return entries
+      .map(([type, info], idx) => ({
+        type,
+        count: info.count,
+        percentage: info.percentage,
+        color: defaultColors[idx % defaultColors.length]
+      }))
+      .sort((a, b) => b.count - a.count);
+  }
+  const rejectionStats = getRejectionStats();
+
+  // --- 2. Filter rawAlarms by region, location, month ---
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && a.Month !== filters.month) return false;
+    return true;
+  });
+
+  // --- 3. Priority Wise ---
+  const prCounts = filtered.reduce((acc, a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l => prCounts[l]);
+  const prColors = defaultColors.slice(0, prLabels.length);
+
+  // --- 4. Operator Wise (fully dynamic) ---
+  const opCounts = filtered.reduce((acc, a) => {
+    const op = a.Operator || 'Unknown';
+    acc[op] = (acc[op] || 0) + 1;
+    return acc;
+  }, {});
+  const opLabels = Object.keys(opCounts);
+  const opValues = opLabels.map(l => opCounts[l]);
+  const opColors = defaultColors.slice(prLabels.length, prLabels.length + opLabels.length);
+
+  // --- 5. Partition: region→count or location→count ---
+  const partObj = !filters.region
+    ? Object.fromEntries(
+        Object.entries(summary.regionWise).map(([r, info]) => [r, info.count])
+      )
+    : filtered.reduce((acc, a) => {
+        acc[a.Location] = (acc[a.Location] || 0) + 1;
+        return acc;
+      }, {});
+  const partLabels = Object.keys(partObj);
+  const partValues = partLabels.map(l => partObj[l]);
+  const partColors = defaultColors.slice(opLabels.length + prLabels.length,
+                                         opLabels.length + prLabels.length + partLabels.length);
+
+  // --- 6. Month Wise ---
+  const monthObj = summary.monthWise || {};
+  const monthLabels = Object.keys(monthObj);
+  const monthValues = monthLabels.map(m => monthObj[m].count);
+  const monthColors = defaultColors.slice(0, monthLabels.length);
+
+  // --- 7. Location Wise ---
+  const locObj = summary.locationWise || {};
+  const locLabels = Object.keys(locObj);
+  const locValues = locLabels.map(l => locObj[l].count);
+  const locColors = defaultColors.slice(0, locLabels.length);
+
+  return (
+    <>
+      {/* Rejection-Type Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(({ type, count, percentage, color }) => (
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Partition, Priority, Location */}
+      <Grid container spacing={5} sx={{ mb: 4 }}>
+        {/* Global / Region Partition */}
+        <Grid item xs={400} md={200}>
+          <Card sx={{ border: '1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
+              </Typography>
+              <MyChart
+                type="doughnut"
+                data={{
+                  labels: partLabels,
+                  values: partValues,
+                  bgColors: partColors,
+                  borderColor: partColors
+                }}
+                height={600}
+                width={650}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Priority Wise */}
+        <Grid item xs={400} md={200}>
+          <Card sx={{ border: '1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+              <MyChart
+                type="pie"
+                data={{
+                  labels: prLabels,
+                  values: prValues,
+                  bgColors: prColors,
+                  borderColor: prColors
+                }}
+                height={600}
+                width={650}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Location Wise */}
+        <Grid item xs={400} md={200}>
+          <Card sx={{ border: '1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Location Wise</Typography>
+              <MyChart
+                type="line"
+                data={{
+                  labels: locLabels,
+                  values: locValues,
+                  bgColors: locColors,
+                  borderColor: locColors
+                }}
+                options={{
+                  scales: {
+                    x: { title: { display: true, text: 'Location' } },
+                    y: { title: { display: true, text: 'Alarm Count' } }
+                  }
+                }}
+                height={600}
+                width={900}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Month & Operator */}
+      <Grid container spacing={5}>
+        {/* Month Wise */}
+        <Grid item xs={400} md={200}>
+          <Card sx={{ border: '1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Month Wise</Typography>
+              <MyChart
+                type="line"
+                data={{
+                  labels: monthLabels,
+                  values: monthValues,
+                  bgColors: monthColors,
+                  borderColor: monthColors
+                }}
+                options={{
+                  scales: {
+                    x: { title: { display: true, text: 'Month' } },
+                    y: { title: { display: true, text: 'Alarm Count' } }
+                  }
+                }}
+                height={600}
+                width={600}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Operator Wise */}
+        <Grid item xs={400} md={200}>
+          <Card sx={{ border: '1px solid #ccc' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+              <MyChart
+                type="bar"
+                data={{
+                  labels: opLabels,
+                  values: opValues,
+                  bgColors: opColors,
+                  borderColor: opColors
+                }}
+                height={600}
+                width={800}
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Read carefully below js files 
 Now update operator Wise chart are not Update Whwn Region , Location is Changes. make This Changes It neeed to update as per region and location.
 Rearrange Region select Option , Location Select Option, Total Alarms , Responce sent , Month 
