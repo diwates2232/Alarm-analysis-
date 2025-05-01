@@ -1,3 +1,134 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+import { Typography, Container, Grid, TextField, MenuItem } from '@mui/material';
+
+const RawAlarms = () => {
+  const [alarms, setAlarms] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [filters, setFilters] = useState({
+    region: '',
+    location: '',
+    employee: '',
+    door: '',
+    priority: '',
+    rejection: ''
+  });
+
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(err => {
+        console.error(err);
+        setAlarms([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const regionFiltered = useMemo(() => {
+    return filters.region
+      ? alarms.filter(a => a.Region === filters.region)
+      : alarms;
+  }, [alarms, filters.region]);
+
+  const locationFiltered = useMemo(() => {
+    return filters.location
+      ? regionFiltered.filter(a => a.Location === filters.location)
+      : regionFiltered;
+  }, [regionFiltered, filters.location]);
+
+  const regionOptions = useMemo(() => [...new Set(alarms.map(a => a.Region))], [alarms]);
+  const locationOptions = useMemo(() => [...new Set(regionFiltered.map(a => a.Location))], [regionFiltered]);
+  const employeeOptions = useMemo(() => [...new Set(locationFiltered.map(a => a['Employee Name']))], [locationFiltered]);
+  const doorOptions = useMemo(() => [...new Set(locationFiltered.map(a => a.Door))], [locationFiltered]);
+  const priorityOptions = useMemo(() => [...new Set(locationFiltered.map(a => a['CCURE Incident Priority']))], [locationFiltered]);
+  const rejectionOptions = useMemo(() => [...new Set(locationFiltered.map(a => a.Rejection))], [locationFiltered]);
+
+  const filteredAlarms = useMemo(() => {
+    return alarms.filter(a => {
+      if (filters.region && a.Region !== filters.region) return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.employee && a['Employee Name'] !== filters.employee) return false;
+      if (filters.door && a.Door !== filters.door) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      if (filters.rejection && a.Rejection !== filters.rejection) return false;
+      return true;
+    });
+  }, [alarms, filters]);
+
+  if (loading) {
+    return (
+      <Container maxWidth={false} style={{ marginTop: 24, width: '100%' }}>
+        <Typography variant="h4">Raw Alarms</Typography>
+        <Typography>Loading alarms…</Typography>
+      </Container>
+    );
+  }
+
+  return (
+    <Container
+      maxWidth={false}
+      style={{
+        margin: 0,
+        padding: 0,
+        width: '100%',
+        height: '100vh',
+        overflow: 'auto'
+      }}
+    >
+      <div style={{ padding: '16px' }}>
+        <Typography variant="h4" gutterBottom>
+          Raw Alarms
+        </Typography>
+
+        <Grid container spacing={2} style={{ marginBottom: 16 }}>
+          {[
+            { label: 'Region', field: 'region', options: regionOptions },
+            { label: 'Location', field: 'location', options: locationOptions },
+            { label: 'Employee', field: 'employee', options: employeeOptions },
+            { label: 'Door', field: 'door', options: doorOptions },
+            { label: 'Priority', field: 'priority', options: priorityOptions },
+            { label: 'Rejection', field: 'rejection', options: rejectionOptions },
+          ].map(({ label, field, options }) => (
+            <Grid item xs={12} sm={6} md={4} lg={2} key={field}>
+              <TextField
+                select
+                label={label}
+                fullWidth
+                value={filters[field]}
+                onChange={e => setFilters(f => ({ ...f, [field]: e.target.value }))}
+              >
+                <MenuItem value="">All</MenuItem>
+                {options.map(opt => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          ))}
+        </Grid>
+
+        <AlarmsTable alarms={filteredAlarms} maxRows={50} />
+      </div>
+    </Container>
+  );
+};
+
+export default RawAlarms;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Read Below raw alarms .js File carefully.
 
 I want to make changes in this file .
