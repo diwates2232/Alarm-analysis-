@@ -1,3 +1,197 @@
+import React from 'react';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+// fixed priority colors
+const PRIORITY_COLORS = {
+  High: '#DC3912',
+  Medium: '#FF9900',
+  Low: '#109618'
+};
+
+// strong default palette for other charts
+const defaultColors = [
+  '#3366CC', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#990099', '#316395', '#FF9900'
+];
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  // Rejection stats (unchanged)
+  function getRejectionStats() { /* ... your existing logic ... */ }
+  const rejectionStats = getRejectionStats();
+
+  // Apply all filters
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && a.Month !== filters.month) return false;
+    return true;
+  });
+
+  // Priority Wise (fixed colors)
+  const prCounts = filtered.reduce((acc, a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l => prCounts[l]);
+  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#999');
+
+  // Operator Wise (from summary, not raw!)
+  const opObj = summary.operatorWise || {};
+  const opLabels = Object.keys(opObj);
+  const opValues = opLabels.map(l => opObj[l].count);
+  const opColors = defaultColors.slice(0, opLabels.length);
+
+  // Partition: region→count or location→count
+  const partObj = !filters.region
+    ? Object.fromEntries(Object.entries(summary.regionWise).map(([r, info]) => [r, info.count]))
+    : filtered.reduce((acc, a) => {
+        acc[a.Location] = (acc[a.Location] || 0) + 1;
+        return acc;
+      }, {});
+  const partLabels = Object.keys(partObj);
+  const partValues = partLabels.map(l => partObj[l]);
+  const partColors = defaultColors.slice(opLabels.length, opLabels.length + partLabels.length);
+
+  // Month Wise
+  const monthObj = summary.monthWise || {};
+  const monthLabels = Object.keys(monthObj);
+  const monthValues = monthLabels.map(m => monthObj[m].count);
+  const monthColors = defaultColors.slice(0, monthLabels.length);
+
+  // Location Wise
+  const locObj = summary.locationWise || {};
+  const locLabels = Object.keys(locObj);
+  const locValues = locLabels.map(l => locObj[l].count);
+  const locColors = defaultColors.slice(0, locLabels.length);
+
+  return (
+    <>
+      {/* Rejection-Type Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(({ type, count, percentage, color }) => (
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Partition / Priority / Location */}
+      <Grid container spacing={5} sx={{ mb: 4 }}>
+        <Grid item xs={400} md={200}>
+          <Card><CardContent>
+            <Typography variant="h6" gutterBottom>
+              {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
+            </Typography>
+            <MyChart
+              type="doughnut"
+              data={{ labels: partLabels, values: partValues, bgColors: partColors, borderColor: partColors }}
+              height={600}
+              width={650}
+            />
+          </CardContent></Card>
+        </Grid>
+
+        <Grid item xs={400} md={200}>
+          <Card><CardContent>
+            <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+            <MyChart
+              type="pie"
+              data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
+              height={600}
+              width={650}
+            />
+          </CardContent></Card>
+        </Grid>
+
+        <Grid item xs={400} md={200}>
+          <Card><CardContent>
+            <Typography variant="h6" gutterBottom>Location Wise</Typography>
+            <MyChart
+              type="line"
+              data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
+              options={{
+                scales: {
+                  x: { title: { display: true, text: 'Location' } },
+                  y: { title: { display: true, text: 'Alarm Count' } }
+                }
+              }}
+              height={600}
+              width={900}
+            />
+          </CardContent></Card>
+        </Grid>
+      </Grid>
+
+      {/* Month / Operator */}
+      <Grid container spacing={5}>
+        <Grid item xs={400} md={200}>
+          <Card><CardContent>
+            <Typography variant="h6" gutterBottom>Month Wise</Typography>
+            <MyChart
+              type="line"
+              data={{ labels: monthLabels, values: monthValues, bgColors: monthColors, borderColor: monthColors }}
+              options={{
+                scales: {
+                  x: { title: { display: true, text: 'Month' } },
+                  y: { title: { display: true, text: 'Alarm Count' } }
+                }
+              }}
+              height={600}
+              width={600}
+            />
+          </CardContent></Card>
+        </Grid>
+
+        <Grid item xs={400} md={200}>
+          <Card><CardContent>
+            <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+            <MyChart
+              type="bar"
+              data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
+              height={600}
+              width={800}
+            />
+          </CardContent></Card>
+        </Grid>
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 
