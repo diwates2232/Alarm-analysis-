@@ -1,3 +1,17 @@
+<Filters
+  filters={filters}
+  setFilters={setFilters}
+  regionOptions={regionOptions}
+  locationOptions={regionLocationsMap[filters.region] || []}
+  totalAlarms={computedTotalAlarms}
+  responseSentPercentage={computedResponsePct}
+/>
+
+
+
+
+
+
 import React from 'react';
 import {
   TextField,
