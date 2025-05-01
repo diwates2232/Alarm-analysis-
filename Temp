@@ -1,4 +1,346 @@
+// src/components/Filters.js
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import SearchIcon from '@mui/icons-material/Search';
 
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions,        // Dashboard provides this
+  employeeOptions,     // RawAlarms provides these
+  doorOptions,
+  priorityOptions,
+  rejectionOptions
+}) {
+  const handleChange = field => e =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          select label="Region" fullWidth
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{ startAdornment: <InputAdornment position="start"><PublicIcon/></InputAdornment> }}
+        >
+          <MenuItem value="">All Regions</MenuItem>
+          {regionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item>
+        <TextField
+          select label="Location" fullWidth
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{ startAdornment: <InputAdornment position="start"><LocationOnIcon/></InputAdornment> }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Month (only on Dashboard) */}
+      {monthOptions && (
+        <Grid item>
+          <TextField
+            select label="Month" fullWidth
+            value={filters.month}
+            onChange={handleChange('month')}
+            InputProps={{ startAdornment: <InputAdornment position="start"><CalendarMonthIcon/></InputAdornment> }}
+          >
+            <MenuItem value="">All Months</MenuItem>
+            {monthOptions.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Employee search (only on RawAlarms) */}
+      {employeeOptions && (
+        <Grid item>
+          <TextField
+            select label="Employee" fullWidth
+            value={filters.employee}
+            onChange={handleChange('employee')}
+            InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon/></InputAdornment> }}
+          >
+            <MenuItem value="">All Employees</MenuItem>
+            {employeeOptions.map(e => <MenuItem key={e} value={e}>{e}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Door */}
+      {doorOptions && (
+        <Grid item>
+          <TextField
+            select label="Door" fullWidth
+            value={filters.door}
+            onChange={handleChange('door')}
+          >
+            <MenuItem value="">All Doors</MenuItem>
+            {doorOptions.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Priority */}
+      {priorityOptions && (
+        <Grid item>
+          <TextField
+            select label="Priority" fullWidth
+            value={filters.priority}
+            onChange={handleChange('priority')}
+          >
+            <MenuItem value="">All Priorities</MenuItem>
+            {priorityOptions.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Rejection */}
+      {rejectionOptions && (
+        <Grid item>
+          <TextField
+            select label="Rejection" fullWidth
+            value={filters.rejection}
+            onChange={handleChange('rejection')}
+          >
+            <MenuItem value="">All Rejections</MenuItem>
+            {rejectionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Date */}
+      {filters.hasOwnProperty('date') && (
+        <Grid item>
+          <TextField
+            label="Date"
+            type="date"
+            fullWidth
+            value={filters.date}
+            onChange={handleChange('date')}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+      )}
+    </Grid>
+  );
+}
+
+
+
+
+
+// src/components/AlarmsTable.js
+import React, { useMemo } from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button, Typography } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+const AlarmsTable = ({
+  alarms = [],
+  maxRows = 10,
+  tableType = 'employee'
+}) => {
+  // Excel export
+  const exportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(alarms);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Alarms');
+    XLSX.writeFile(wb, 'alarms.xlsx');
+  };
+
+  // 1) Employee stats with lastAction
+  const employeeStats = useMemo(() => {
+    const stats = {};
+    alarms.forEach(a => {
+      const emp = a['Employee Name'] || 'Unknown';
+      const dt = a.Date + ' ' + a['Time of  Alarm (Local time)'];
+      if (!stats[emp]) {
+        stats[emp] = {
+          total: 0,
+          types: new Set(),
+          doorRej: {},
+          lastDt: dt,
+          lastRegion: a.Region,
+          lastLocation: a.Location,
+          lastAction: a['Action Taken']
+        };
+      }
+      const e = stats[emp];
+      e.total += 1;
+      e.types.add(a.Rejection);
+      const drKey = `${a.Door}::${a.Rejection}`;
+      e.doorRej[drKey] = (e.doorRej[drKey] || 0) + 1;
+      if (dt > e.lastDt) {
+        e.lastDt = dt;
+        e.lastRegion = a.Region;
+        e.lastLocation = a.Location;
+        e.lastAction = a['Action Taken'];
+      }
+    });
+
+    return Object.entries(stats).map(([emp, s], idx) => {
+      const repeats = Object.entries(s.doorRej).filter(([, c]) => c > 1);
+      let topDoor = '', topCount = 0;
+      if (repeats.length) {
+        const [key, cnt] = repeats.reduce((a, b) => a[1] > b[1] ? a : b);
+        [topDoor] = key.split('::');
+        topCount = cnt;
+      }
+      const [lastDate, lastTime] = s.lastDt.split(' ');
+      return {
+        id: idx,
+        srNo: idx + 1,
+        lastDate,
+        lastTime,
+        location: s.lastLocation,
+        region: s.lastRegion,
+        employee: emp,
+        lastAction: s.lastAction,
+        total: s.total,
+        repeatedDoor: topDoor,
+        repeatCount: topCount,
+        rejectionTypes: Array.from(s.types).join(', ')
+      };
+    });
+  }, [alarms]);
+
+  // 2) Door stats
+  const doorStats = useMemo(() => {
+    const d = {};
+    alarms.forEach(a => {
+      const door = a.Door || 'Unknown';
+      if (!d[door]) d[door] = { total: 0, rejections: {} };
+      d[door].total += 1;
+      d[door].rejections[a.Rejection] = (d[door].rejections[a.Rejection]||0) + 1;
+    });
+    return Object.entries(d)
+      .filter(([, s]) => s.total > 1)
+      .map(([door, s], idx) => ({
+        id: idx,
+        door,
+        total: s.total,
+        rejectionCounts: Object.entries(s.rejections)
+          .map(([t,c]) => `${t}:${c}`)
+          .join(', ')
+      }));
+  }, [alarms]);
+
+  // 3) Detailed raw rows
+  const rawRows = useMemo(() => alarms.map((a,i) => ({ id: i, ...a })), [alarms]);
+
+  if (!alarms.length) {
+    return (
+      <Typography variant="h6" align="center" sx={{ mt: 4 }}>
+        No alarm records to display.
+      </Typography>
+    );
+  }
+
+  // Columns for each table
+  const empColumns = [
+    { field: 'srNo', headerName: 'Sr. No', width: 80 },
+    { field: 'lastDate', headerName: 'Date', width: 120 },
+    { field: 'lastTime', headerName: 'Time', width: 120 },
+    { field: 'location', headerName: 'Location', width: 150 },
+    { field: 'region', headerName: 'Region', width: 120 },
+    { field: 'employee', headerName: 'Operator', width: 180 },
+    { field: 'lastAction', headerName: 'Action Taken', width: 180 },
+    { field: 'total', headerName: 'Total Alarms', width: 130 },
+    { field: 'repeatedDoor', headerName: 'Repeated Door', width: 200 },
+    { field: 'repeatCount', headerName: 'Repeat Count', width: 130 },
+    { field: 'rejectionTypes', headerName: 'Types of Rejection', width: 300 },
+  ];
+
+  const doorColumns = [
+    { field: 'door', headerName: 'Door', width: 300 },
+    { field: 'total', headerName: 'Total Alarms', width: 150 },
+    { field: 'rejectionCounts', headerName: 'Rejection Counts', width: 400 }
+  ];
+
+  const rawColumns = [
+    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
+    { field: 'Date', headerName: 'Date', width: 120 },
+    { field: 'Time of  Alarm (Local time)', headerName: 'Time', width: 150 },
+    { field: 'Type of Alarm', headerName: 'Type', width: 150 },
+    { field: 'Door', headerName: 'Door', width: 250 },
+    { field: 'Location', headerName: 'Location', width: 150 },
+    { field: 'Region', headerName: 'Region', width: 120 },
+    { field: 'Rejection', headerName: 'Rejection', width: 180 },
+    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
+    {
+      field: 'Name of Person Attending Alarms (First, Last Name)',
+      headerName: 'Operator', width: 200
+    },
+    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
+    { field: ' Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 }
+  ];
+
+  return (
+    <div style={{ width: '100%', height: '100%' }}>
+      {tableType === 'employee' && (
+        <DataGrid
+          rows={employeeStats}
+          columns={empColumns}
+          pageSize={maxRows}
+          rowsPerPageOptions={[maxRows]}
+          autoHeight={false}
+        />
+      )}
+
+      {tableType === 'door' && (
+        <DataGrid
+          rows={doorStats}
+          columns={doorColumns}
+          pageSize={Math.min(5, maxRows)}
+          rowsPerPageOptions={[Math.min(5, maxRows)]}
+          autoHeight={false}
+        />
+      )}
+
+      {tableType === 'detailed' && (
+        <>
+          <Button variant="contained" color="primary" onClick={exportToExcel} sx={{ mb: 2 }}>
+            Export to Excel
+          </Button>
+          <DataGrid
+            rows={rawRows}
+            columns={rawColumns}
+            getRowClassName={params =>
+              params.row[' Time Taken (Min)'] > 0 ? 'sla-breach' : ''
+            }
+            pageSize={maxRows}
+            rowsPerPageOptions={[10, 20, 50].filter(x => x <= rawRows.length)}
+            autoHeight={false}
+          />
+        </>
+      )}
+    </div>
+  );
+};
+
+export default AlarmsTable;
 
 
 
