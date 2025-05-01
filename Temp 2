@@ -1,15 +1,21 @@
-<Filters
-  filters={filters}
-  setFilters={setFilters}
-  regionOptions={regionOptions}
-  locationOptions={regionLocationsMap[filters.region] || []}
-  totalAlarms={computedTotalAlarms}
-  responseSentPercentage={computedResponsePct}
-/>
+Read Below Updated Fils as You give me .
+issue 1) Icons Are Perfectly added for Regio and Location Only.
+Icons for Month again added for location. responce Sent Icon and total Alarms icon are not Added correctly.
+
+Alao Colors added for site code cream colors change this Colors .this is very light colors .
+
+use fix Colours for Priority Wise chart red for high, Green for Low, yellow foe Medium.
+
+Operator list are not Visible it show Unkmown only.
+
+Kindly make changes as per my request and give me Updated js files.
 
 
 
 
+
+file 1
+Filters.js
 
 
 import React from 'react';
@@ -140,6 +146,202 @@ export default function Filters({
 
 
 
+
+file 2
+
+AlarmCard.js
+
+
+
+import React from 'react';
+import { Card, CardContent, Typography, Grid, TextField, MenuItem } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters, setFilters }) {
+  if (!summary) return null;
+
+  // Filtered alarms for month dropdown and counts
+  const baseFiltered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    return true;
+  });
+
+  const monthOptions = Array.from(
+    new Set(baseFiltered.map(a => a.Month))
+  ).sort();
+
+  const monthFiltered = filters.month
+    ? baseFiltered.filter(a => a.Month === filters.month)
+    : baseFiltered;
+
+  const totalAlarms = monthFiltered.length;
+
+  const sentCount = monthFiltered.filter(a =>
+    a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
+  ).length;
+
+  const responseSentPercentage = totalAlarms
+    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Total Alarms */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Total Alarms
+            </Typography>
+            <Typography variant="h4">{totalAlarms}</Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* Response Sent % */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Response Sent %
+            </Typography>
+            <Typography variant="h4">{responseSentPercentage}</Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* Month Filter */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <TextField
+              id="month-select"
+              label="Month"
+              select
+              fullWidth
+              value={filters.month || ''}
+              onChange={e => setFilters(prev => ({ ...prev, month: e.target.value }))}
+              variant="outlined"
+              autoComplete="off"
+              InputLabelProps={{ htmlFor: 'month-select' }}
+              inputProps={{ autoComplete: 'new-password' }}
+            >
+              <MenuItem value="">All Months</MenuItem>
+              {monthOptions.map(m => (
+                <MenuItem key={m} value={m}>
+                  {m}
+                </MenuItem>
+              ))}
+            </TextField>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+File 3 
+
+Chart.js
+
+
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+
+const defaultColors = [
+  '#8884d8', '#82ca9d', '#ffc658', '#ff7f50',
+  '#a29bfe', '#20c997', '#fd7e14', '#6c757d',
+  '#90ee90', '#ffffe0', '#ff0000'
+];
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+    const border = data.borderColor || bg;
+
+    const chartData = {
+      labels: data.labels,
+      datasets: [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 2,
+        ...(type === 'line' && {
+          tension: 0.3,
+          pointRadius: 6
+        })
+      }],
+    };
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        animation: {
+          duration: 800
+        },
+
+        plugins: {
+          legend: {
+            labels: {
+              font: {
+                size: 14
+              }
+            }
+          }
+        },
+
+        scales: {
+          x: {
+            beginAtZero: true,
+            ...(options.scales?.x || {})
+          },
+          y: {
+            beginAtZero: true,
+            ...(options.scales?.y || {})
+          }
+        },
+
+        ...options
+      },
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+File 4
+
+SummaryCards.js
 
 
 import React from 'react';
@@ -389,664 +591,6 @@ export default function SummaryCards({ summary, filters, rawAlarms }) {
     </>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Read carefully below js files 
-Now update operator Wise chart are not Update Whwn Region , Location is Changes. make This Changes It neeed to update as per region and location.
-Rearrange Region select Option , Location Select Option, Total Alarms , Responce sent , Month 
-Option on one Row ,also Add Icnos for make More Interactive.
-
-Alos main in alll charts Only Blue colors are use more time Kindly use Multiple Colors ,
-
-make Changes Smothly and give me Updated js files Carefully.
-
-
-File.1 
-
-Filters.js
-
-
-
-import React from 'react';
-import { TextField, MenuItem } from '@mui/material';
-
-const Filters = ({
-  filters,
-  setFilters,
-  regionOptions = [],
-  locationOptions = []
-}) => {
-  const handleChange = (field) => (e) =>
-    setFilters(prev => ({
-      ...prev,
-      [field]: e.target.value,
-      ...(field === 'region' && { location: '' })
-    }));
-
-  return (
-    <div style={{ display: 'flex', gap: '1rem', marginBottom: 16 }}>
-      <TextField
-        id="region-select"
-        label="Region"
-        select
-        value={filters.region}
-        onChange={handleChange('region')}
-        style={{ minWidth: 150 }}
-        autoComplete="off"
-        InputLabelProps={{ htmlFor: 'region-select' }}
-        inputProps={{ autoComplete: 'new-password' }}
-      >
-        <MenuItem value="">Global</MenuItem>
-        {regionOptions.map(region => (
-          <MenuItem key={region} value={region}>
-            {region}
-          </MenuItem>
-        ))}
-      </TextField>
-
-      {filters.region && (
-        <TextField
-          id="location-select"
-          label="Location"
-          select
-          value={filters.location}
-          onChange={handleChange('location')}
-          style={{ minWidth: 200 }}
-          autoComplete="off"
-          InputLabelProps={{ htmlFor: 'location-select' }}
-          inputProps={{ autoComplete: 'new-password' }}
-        >
-          <MenuItem value="">All Locations</MenuItem>
-          {locationOptions.map(loc => (
-            <MenuItem key={loc} value={loc}>
-              {loc}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-    </div>
-  );
-};
-
-export default Filters;
-
-
-
-File 2
-
-SummaryCard.js
-
-import React from 'react';
-import './SummaryCards.css';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const REJECTION_COLORS = [
-  '#007bff', '#28a745', '#ffc107',
-  '#dc3545', '#6f42c1', '#17a2b8',
-  '#fd7e14', '#20c997', '#6c757d',
-  '#6610f2'
-];
-
-const PRIORITY_COLORS = {
-  Low: '#90ee90',
-  Medium: '#ffff00',
-  High: '#ff0000'
-};
-
-function getRejectionStats(summary, rawAlarms, filters) {
-  let entries;
-  if (!filters.region) {
-    entries = Object.entries(summary.rejectionTypeWise);
-  } else if (filters.region && !filters.location) {
-    const total = summary.regionWise[filters.region].count;
-    const byType = rawAlarms
-      .filter(a => a.Region === filters.region)
-      .reduce((acc, a) => {
-        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-        return acc;
-      }, {});
-    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-  } else {
-    const total = summary.locationWise[filters.location]?.count || 0;
-    const byType = rawAlarms
-      .filter(a => a.Region === filters.region && a.Location === filters.location)
-      .reduce((acc, a) => {
-        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-        return acc;
-      }, {});
-    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-  }
-
-  return entries
-    .map(([type, info], idx) => ({
-      type,
-      count: info.count,
-      percentage: info.percentage,
-      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
-    }))
-    .sort((a, b) => b.count - a.count); // Descending order
-}
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
-
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    return true;
-  });
-  const prTotal = filtered.length;
-  const prCounts = filtered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
-
-  const makeChartData = (key, obj) => {
-    const labels = Object.keys(obj);
-    const values = labels.map(l => obj[l].count);
-    const cols = labels.map((_, i) => REJECTION_COLORS[i % REJECTION_COLORS.length]);
-    return { labels, values, bgColors: cols, borderColor: cols };
-  };
-
-  const partitionObj = !filters.region
-
-    ? summary.regionWise
-    : { [filters.region]: summary.regionWise[filters.region] };
-
-
-  // const partitionObj = !filters.region
-  // ? Object.fromEntries(
-  //     Object.entries(summary.regionWise).map(([r, info]) => [r, info.count])
-  //   )
-  // : rawAlarms
-  //     .filter(a => a.Region === filters.region)
-  //     .reduce((acc, a) => {
-  //       acc[a.Location] = (acc[a.Location] || 0) + 1;
-  //       return acc;
-  //     }, {});
-
-
-  return (
-    <>
-      {/* Rejection-Type Cards */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={50} sm={10} md={3} key={type}>
-            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-              <CardContent>
-                <Typography variant="subtitle2">{type}</Typography>
-                <Typography variant="h6">{count}</Typography>
-                <Typography variant="body2">{percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Three Charts in One Row */}
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {/* Partition Chart */}
-        {partitionObj && Object.keys(partitionObj).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
-                </Typography>
-                <MyChart
-                  type="doughnut"
-                  data={makeChartData('partition', partitionObj)}
-                  height={600}
-                  width={650}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* Priority Wise */}
-        <Grid item xs={400} md={200}>
-          <Card sx={{ border: '1px solid #ccc' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-              <MyChart
-                type="pie"
-                data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                height={600}
-                width={650}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Location Wise */}
-        {summary.locationWise && Object.keys(summary.locationWise).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Location Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={makeChartData('locationWise', summary.locationWise)}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={900}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-
-      {/* Month Wise & Operator Wise */}
-      <Grid container spacing={5}>
-        {summary.monthWise && Object.keys(summary.monthWise).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={makeChartData('monthWise', summary.monthWise)}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Month' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {summary.operatorWise && Object.keys(summary.operatorWise).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-                <MyChart
-                  type="bar"
-                  data={makeChartData('operatorWise', summary.operatorWise)}
-                  height={600}
-                  width={800}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </>
-  );
-}
-
-
-
-File 3
-
-Chart.js
-
-
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-
-const defaultColors = [
-  '#8884d8', '#82ca9d', '#ffc658', '#ff7f50',
-  '#a29bfe', '#20c997', '#fd7e14', '#6c757d',
-  '#90ee90', '#ffffe0', '#ff0000'
-];
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = '100%'
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    if (chartRef.current) chartRef.current.destroy();
-
-    const bg = data.bgColors || defaultColors.slice(0, data.values.length);
-    const border = data.borderColor || bg;
-
-    const chartData = {
-      labels: data.labels,
-      datasets: [{
-        label: data.label || '',
-        data: data.values,
-        backgroundColor: bg,
-        borderColor: border,
-        borderWidth: 2,
-        ...(type === 'line' && {
-          tension: 0.3,
-          pointRadius: 6
-        })
-      }],
-    };
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-
-        animation: {
-          duration: 800
-        },
-
-        plugins: {
-          legend: {
-            labels: {
-              font: {
-                size: 14
-              }
-            }
-          }
-        },
-
-        scales: {
-          x: {
-            beginAtZero: true,
-            ...(options.scales?.x || {})
-          },
-          y: {
-            beginAtZero: true,
-            ...(options.scales?.y || {})
-          }
-        },
-
-        ...options
-      },
-    });
-
-    return () => chartRef.current?.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
-
-
-
-
-
-File 4 
-AlarmCard.js
-
-
-
-
-import React from 'react';
-import { Card, CardContent, Typography, Grid, TextField, MenuItem } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters, setFilters }) {
-  if (!summary) return null;
-
-  // Filtered alarms for month dropdown and counts
-  const baseFiltered = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    return true;
-  });
-
-  const monthOptions = Array.from(
-    new Set(baseFiltered.map(a => a.Month))
-  ).sort();
-
-  const monthFiltered = filters.month
-    ? baseFiltered.filter(a => a.Month === filters.month)
-    : baseFiltered;
-
-  const totalAlarms = monthFiltered.length;
-
-  const sentCount = monthFiltered.filter(a =>
-    a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
-  ).length;
-
-  const responseSentPercentage = totalAlarms
-    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Total Alarms
-            </Typography>
-            <Typography variant="h4">{totalAlarms}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent %
-            </Typography>
-            <Typography variant="h4">{responseSentPercentage}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Month Filter */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <TextField
-              id="month-select"
-              label="Month"
-              select
-              fullWidth
-              value={filters.month || ''}
-              onChange={e => setFilters(prev => ({ ...prev, month: e.target.value }))}
-              variant="outlined"
-              autoComplete="off"
-              InputLabelProps={{ htmlFor: 'month-select' }}
-              inputProps={{ autoComplete: 'new-password' }}
-            >
-              <MenuItem value="">All Months</MenuItem>
-              {monthOptions.map(m => (
-                <MenuItem key={m} value={m}>
-                  {m}
-                </MenuItem>
-              ))}
-            </TextField>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-File 5 
-
-Dashboard.js
-
-
-
-
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Box, Typography, Container } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import Filters      from '../components/Filters';
-import SummaryCards from '../components/SummaryCards';
-import AlarmCard    from '../components/AlarmCard';
-import { getAlarmSummary, getRawAlarms } from '../services/api';
-import { Link } from 'react-router-dom';
-
-export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
-
-  useEffect(() => {
-    Promise.all([getAlarmSummary(), getRawAlarms()])
-      .then(([sumRes, rawRes]) => {
-        setSummary(sumRes.data);
-        setRawAlarms(rawRes.data);
-      })
-      .catch(console.error);
-  }, []);
-
-  const regionOptions = useMemo(
-    () => (summary ? Object.keys(summary.regionWise) : []),
-    [summary]
-  );
-
-  const regionLocationsMap = useMemo(() => {
-    const map = {};
-    regionOptions.forEach(region => {
-      map[region] = Array.from(
-        new Set(rawAlarms.filter(a => a.Region === region).map(a => a.Location))
-      );
-    });
-    return map;
-  }, [rawAlarms, regionOptions]);
-
-  const slidesRef = useRef([]);
-  const slideIdx  = useRef(0);
-  useEffect(() => {
-    if (!summary) return;
-    const slides = [{ region: '', location: '' }];
-    regionOptions.forEach(region => slides.push({ region, location: '' }));
-    slidesRef.current = slides;
-    slideIdx.current   = 0;
-    setFilters(slides[0]);
-    const id = setInterval(() => {
-      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
-      setFilters(slidesRef.current[slideIdx.current]);
-    }, 30000);
-    return () => clearInterval(id);
-  }, [summary, regionOptions]);
-
-  const filteredSummary = useMemo(() => {
-    if (!summary) return null;
-    const fs = { ...summary };
-    if (filters.region) {
-      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
-      fs.locationWise = {};
-      (regionLocationsMap[filters.region] || [])
-        .filter(loc => !filters.location || loc === filters.location)
-        .forEach(loc => {
-          fs.locationWise[loc] = summary.locationWise[loc];
-        });
-    }
-    return fs;
-  }, [summary, filters, regionLocationsMap]);
-
-  if (!summary) {
-    return <Typography>Loading dashboard…</Typography>;
-  }
-
-  return (
-    <Box sx={{ width: '100vw', minHeight: '100vh', p: 0, m: 0, overflowX: 'hidden' }}>
-      {/* Header */}
-      <Box
-        component="header"
-        sx={{
-          width: '100%',
-          borderBottom: '3px solid #1976d2',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          py: 2,
-          px: 4,
-          bgcolor: '#e3f2fd'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <DashboardIcon fontSize="large" />
-          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Link to="/">➤ Dashboard</Link>
-          <Link to="/alarms">➤ Raw Alarms</Link>
-        </Box>
-      </Box>
-
-      <Container maxWidth={false} sx={{ py: 4 }}>
-        <form autoComplete="off" noValidate>
-          {/* Hidden dummy fields to absorb autofill */}
-          <input
-            type="text"
-            name="username"
-            style={{ display: 'none' }}
-            autoComplete="username"
-          />
-          <input
-            type="password"
-            name="password"
-            style={{ display: 'none' }}
-            autoComplete="new-password"
-          />
-
-          <Filters
-            filters={filters}
-            setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
-          />
-
-          <AlarmCard
-            summary={filteredSummary}
-            rawAlarms={rawAlarms}
-            filters={filters}
-            setFilters={setFilters}
-          />
-        </form>
-
-        <SummaryCards
-          summary={filteredSummary}
-          filters={filters}
-          rawAlarms={rawAlarms}
-        />
-      </Container>
-    </Box>
-  );
-}
-
 
 
 
