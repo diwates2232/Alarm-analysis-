@@ -1,3 +1,137 @@
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment,
+  Typography
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import SendIcon from '@mui/icons-material/Send';
+
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions = [],
+  totalAlarms,
+  responseSentPercentage
+}) {
+  const handleChange = field => e =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          id="region-select"
+          label="Region"
+          select
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">Global</MenuItem>
+          {regionOptions.map(region => (
+            <MenuItem key={region} value={region}>
+              {region}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item>
+        <TextField
+          id="location-select"
+          label="Location"
+          select
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LocationOnIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(loc => (
+            <MenuItem key={loc} value={loc}>
+              {loc}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      {/* Month */}
+      <Grid item>
+        <TextField
+          id="month-select"
+          label="Month"
+          select
+          value={filters.month}
+          onChange={handleChange('month')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <CalendarMonthIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Months</MenuItem>
+          {monthOptions.map(m => (
+            <MenuItem key={m} value={m}>
+              {m}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      {/* Total Alarms */}
+      <Grid item>
+        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: .5 }}>
+          <AlarmIcon /> Total: {totalAlarms ?? '-'}
+        </Typography>
+      </Grid>
+
+      {/* Response % */}
+      <Grid item>
+        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: .5 }}>
+          <SendIcon /> Sent: {responseSentPercentage ?? '-'}
+        </Typography>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+
+
 Read Below Updated Fils as You give me .
 issue 1) Icons Are Perfectly added for Regio and Location Only.
 Icons for Month again added for location. responce Sent Icon and total Alarms icon are not Added correctly.
