@@ -1,3 +1,310 @@
+// src/components/Filters.js
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import SearchIcon from '@mui/icons-material/Search';
+
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  employeeOptions = [],
+  doorOptions = [],
+  priorityOptions = [],
+  rejectionOptions = []
+}) {
+  const handleChange = field => e =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item xs={12} sm={6} md={4} lg={2}>
+        <TextField
+          id="region-select"
+          label="Region"
+          select
+          fullWidth
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><PublicIcon /></InputAdornment>
+          }}
+        >
+          <MenuItem value="">All Regions</MenuItem>
+          {regionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item xs={12} sm={6} md={4} lg={2}>
+        <TextField
+          id="location-select"
+          label="Location"
+          select
+          fullWidth
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><LocationOnIcon /></InputAdornment>
+          }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Door */}
+      <Grid item xs={12} sm={6} md={4} lg={2}>
+        <TextField
+          id="door-select"
+          label="Door"
+          select
+          fullWidth
+          value={filters.door}
+          onChange={handleChange('door')}
+        >
+          <MenuItem value="">All Doors</MenuItem>
+          {doorOptions.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Employee search */}
+      <Grid item xs={12} sm={6} md={4} lg={2}>
+        <TextField
+          id="employee-search"
+          label="Employee"
+          select
+          fullWidth
+          value={filters.employee}
+          onChange={handleChange('employee')}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>
+          }}
+        >
+          <MenuItem value="">All Employees</MenuItem>
+          {employeeOptions.map(emp => <MenuItem key={emp} value={emp}>{emp}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Priority */}
+      <Grid item xs={12} sm={6} md={4} lg={2}>
+        <TextField
+          id="priority-select"
+          label="Priority"
+          select
+          fullWidth
+          value={filters.priority}
+          onChange={handleChange('priority')}
+        >
+          <MenuItem value="">All Priorities</MenuItem>
+          {priorityOptions.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Rejection */}
+      <Grid item xs={12} sm={6} md={4} lg={2}>
+        <TextField
+          id="rejection-select"
+          label="Rejection"
+          select
+          fullWidth
+          value={filters.rejection}
+          onChange={handleChange('rejection')}
+        >
+          <MenuItem value="">All Rejections</MenuItem>
+          {rejectionOptions.map(rj => <MenuItem key={rj} value={rj}>{rj}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Date Picker */}
+      <Grid item xs={12} sm={6} md={4} lg={2}>
+        <TextField
+          id="date-select"
+          label="Date"
+          type="date"
+          fullWidth
+          value={filters.date}
+          onChange={handleChange('date')}
+          InputLabelProps={{ shrink: true }}
+        />
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+// src/pages/RawAlarms.js
+import React, { useEffect, useState, useMemo } from 'react';
+import { Typography, Container, Grid, TextField, MenuItem, Box, Button, Link } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import Filters from '../components/Filters';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+
+export default function RawAlarms() {
+  const [alarms, setAlarms]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', door: '', employee: '',
+    priority: '', rejection: '', date: ''
+  });
+
+  const [view, setView] = useState('employee'); // 'employee' | 'door' | 'detailed'
+
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(() => setAlarms([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // derive filter options...
+  const regionOptions   = useMemo(() => [...new Set(alarms.map(a => a.Region))], [alarms]);
+  const locationOptions = useMemo(() => [...new Set(alarms
+    .filter(a => !filters.region || a.Region === filters.region)
+    .map(a => a.Location))], [alarms, filters.region]);
+  const doorOptions     = useMemo(() => [...new Set(alarms
+    .filter(a => (!filters.region || a.Region === filters.region) && (!filters.location || a.Location === filters.location))
+    .map(a => a.Door))], [alarms, filters.region, filters.location]);
+  const employeeOptions = useMemo(() => [...new Set(alarms.map(a => a['Employee Name']))], [alarms]);
+  const priorityOptions = useMemo(() => [...new Set(alarms.map(a => a['CCURE Incident Priority']))], [alarms]);
+  const rejectionOptions= useMemo(() => [...new Set(alarms.map(a => a.Rejection))], [alarms]);
+
+  // filtered alarms by all fields
+  const filtered = useMemo(() => {
+    return alarms.filter(a => {
+      if (filters.region     && a.Region !== filters.region)                 return false;
+      if (filters.location   && a.Location !== filters.location)             return false;
+      if (filters.door       && a.Door !== filters.door)                     return false;
+      if (filters.employee   && a['Employee Name'] !== filters.employee)     return false;
+      if (filters.priority   && a['CCURE Incident Priority'] !== filters.priority) return false;
+      if (filters.rejection  && a.Rejection !== filters.rejection)           return false;
+      if (filters.date       && a.Date !== filters.date)                     return false;
+      return true;
+    });
+  }, [alarms, filters]);
+
+  if (loading) return (
+    <Container maxWidth={false} sx={{ pt: 4 }}>
+      <Typography variant="h4">Raw Alarms</Typography>
+      <Typography>Loading…</Typography>
+    </Container>
+  );
+
+  return (
+    <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          bgcolor: 'background.paper', p: 2, borderBottom: 1, borderColor: 'divider'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TableChartIcon fontSize="large" />
+          <Typography variant="h4">Raw Alarms Analysis</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link href="/"><DashboardIcon /> Dashboard</Link>
+          <Link href="/alarms"><TableChartIcon /> Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      {/* Filters */}
+      <Box sx={{ p: 2 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          doorOptions={doorOptions}
+          employeeOptions={employeeOptions}
+          priorityOptions={priorityOptions}
+          rejectionOptions={rejectionOptions}
+        />
+      </Box>
+
+      {/* View buttons */}
+      <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+        <Button
+          variant={view === 'employee' ? 'contained' : 'outlined'}
+          onClick={() => setView('employee')}
+        >
+          Employee Analysis
+        </Button>
+        <Button
+          variant={view === 'door' ? 'contained' : 'outlined'}
+          onClick={() => setView('door')}
+        >
+          Door Analysis
+        </Button>
+        <Button
+          variant={view === 'detailed' ? 'contained' : 'outlined'}
+          onClick={() => setView('detailed')}
+        >
+          Detailed Records
+        </Button>
+      </Box>
+
+      {/* Table */}
+      <Box sx={{ p: 2 }}>
+        {view === 'employee' && (
+          <AlarmsTable
+            alarms={filtered}
+            maxRows={100}
+            tableType="employee"
+          />
+        )}
+        {view === 'door' && (
+          <AlarmsTable
+            alarms={filtered}
+            maxRows={100}
+            tableType="door"
+          />
+        )}
+        {view === 'detailed' && (
+          <AlarmsTable
+            alarms={filtered}
+            maxRows={100}
+            tableType="detailed"
+          />
+        )}
+      </Box>
+    </Container>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
 read below js file carefully.
 i want to make some Changes on Ui.
 
