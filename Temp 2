@@ -1,42 +1,94 @@
-const partitionObj = !filters.region
-  ? Object.fromEntries(
-      Object.entries(summary.regionWise).map(([r, info]) => [r, info.count])
-    )
-  : rawAlarms
-      .filter(a => a.Region === filters.region)
-      .reduce((acc, a) => {
-        acc[a.Location] = (acc[a.Location] || 0) + 1;
-        return acc;
-      }, {});
+Read carefully below js files 
+Now update operator Wise chart are not Update Whwn Region , Location is Changes. make This Changes It neeed to update as per region and location.
+Rearrange Region select Option , Location Select Option, Total Alarms , Responce sent , Month 
+Option on one Row ,also Add Icnos for make More Interactive.
+
+Alos main in alll charts Only Blue colors are use more time Kindly use Multiple Colors ,
+
+make Changes Smothly and give me Updated js files Carefully.
 
 
+File.1 
 
-
-
-const uniformBlue = '#007bff';
-const partitionData = {
-  labels: partitionLabels,
-  values: partitionValues,
-  bgColors: partitionLabels.map(() => uniformBlue),
-  borderColor: partitionLabels.map(() => uniformBlue)
-};
-
-
-
-
-
-
-
-
-
+Filters.js
 
 
 
 import React from 'react';
+import { TextField, MenuItem } from '@mui/material';
+
+const Filters = ({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = []
+}) => {
+  const handleChange = (field) => (e) =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <div style={{ display: 'flex', gap: '1rem', marginBottom: 16 }}>
+      <TextField
+        id="region-select"
+        label="Region"
+        select
+        value={filters.region}
+        onChange={handleChange('region')}
+        style={{ minWidth: 150 }}
+        autoComplete="off"
+        InputLabelProps={{ htmlFor: 'region-select' }}
+        inputProps={{ autoComplete: 'new-password' }}
+      >
+        <MenuItem value="">Global</MenuItem>
+        {regionOptions.map(region => (
+          <MenuItem key={region} value={region}>
+            {region}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {filters.region && (
+        <TextField
+          id="location-select"
+          label="Location"
+          select
+          value={filters.location}
+          onChange={handleChange('location')}
+          style={{ minWidth: 200 }}
+          autoComplete="off"
+          InputLabelProps={{ htmlFor: 'location-select' }}
+          inputProps={{ autoComplete: 'new-password' }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(loc => (
+            <MenuItem key={loc} value={loc}>
+              {loc}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    </div>
+  );
+};
+
+export default Filters;
+
+
+
+File 2
+
+SummaryCard.js
+
+import React from 'react';
+import './SummaryCards.css';
 import MyChart from './Chart';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
 
-const REGION_COLORS = [
+const REJECTION_COLORS = [
   '#007bff', '#28a745', '#ffc107',
   '#dc3545', '#6f42c1', '#17a2b8',
   '#fd7e14', '#20c997', '#6c757d',
@@ -49,54 +101,51 @@ const PRIORITY_COLORS = {
   High: '#ff0000'
 };
 
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-
-  // --- Rejection Stats (unchanged) ---
-  function getRejectionStats() {
-    let entries;
-    if (!filters.region) {
-      entries = Object.entries(summary.rejectionTypeWise);
-    } else if (filters.region && !filters.location) {
-      const total = summary.regionWise[filters.region].count;
-      const byType = rawAlarms
-        .filter(a => a.Region === filters.region)
-        .reduce((acc, a) => {
-          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-          return acc;
-        }, {});
-      entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-    } else {
-      const total = summary.locationWise[filters.location]?.count || 0;
-      const byType = rawAlarms
-        .filter(a => a.Region === filters.region && a.Location === filters.location)
-        .reduce((acc, a) => {
-          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-          return acc;
-        }, {});
-      entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-    }
-
-    return entries
-      .map(([type, info], idx) => ({
-        type,
-        count: info.count,
-        percentage: info.percentage,
-        color: REGION_COLORS[idx % REGION_COLORS.length]
-      }))
-      .sort((a, b) => b.count - a.count);
+function getRejectionStats(summary, rawAlarms, filters) {
+  let entries;
+  if (!filters.region) {
+    entries = Object.entries(summary.rejectionTypeWise);
+  } else if (filters.region && !filters.location) {
+    const total = summary.regionWise[filters.region].count;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
+  } else {
+    const total = summary.locationWise[filters.location]?.count || 0;
+    const byType = rawAlarms
+      .filter(a => a.Region === filters.region && a.Location === filters.location)
+      .reduce((acc, a) => {
+        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+        return acc;
+      }, {});
+    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
   }
 
-  const rejectionStats = getRejectionStats();
+  return entries
+    .map(([type, info], idx) => ({
+      type,
+      count: info.count,
+      percentage: info.percentage,
+      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
+    }))
+    .sort((a, b) => b.count - a.count); // Descending order
+}
 
-  // --- Priority Wise (respecting all filters) ---
-  const priFiltered = rawAlarms.filter(a => {
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
+
+  const filtered = rawAlarms.filter(a => {
     if (filters.region && a.Region !== filters.region) return false;
     if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month && a.Month !== filters.month) return false;
     return true;
   });
-  const prCounts = priFiltered.reduce((acc, a) => {
+  const prTotal = filtered.length;
+  const prCounts = filtered.reduce((acc, a) => {
     const p = a['CCURE Incident Priority'];
     acc[p] = (acc[p] || 0) + 1;
     return acc;
@@ -105,55 +154,37 @@ export default function SummaryCards({ summary, filters, rawAlarms }) {
   const prValues = prLabels.map(l => prCounts[l]);
   const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
 
-  // --- Operator Wise (respecting all filters) ---
-  const opCounts = priFiltered.reduce((acc, a) => {
-    const op = a.Operator || 'Unknown';
-    acc[op] = (acc[op] || 0) + 1;
-    return acc;
-  }, {});
-  const opLabels = Object.keys(opCounts);
-  const opValues = opLabels.map(l => opCounts[l]);
-  const opColors = REGION_COLORS.slice(0, opLabels.length);
-
-  // --- Partition Data: global=by region, region=by location ---
-  const partitionObj = !filters.region
-    ? // use the summary counts you already have
-      Object.fromEntries(
-        Object.entries(summary.regionWise).map(([r, info]) => [r, info.count])
-      )
-    : // when a region is selected, count per Location
-      rawAlarms
-        .filter(a => a.Region === filters.region)
-        .reduce((acc, a) => {
-          acc[a.Location] = (acc[a.Location] || 0) + 1;
-          return acc;
-        }, {});
-
-  // --- build chart data helper ---
-  const makeChartData = obj => {
+  const makeChartData = (key, obj) => {
     const labels = Object.keys(obj);
-    const values = labels.map(l => obj[l]);
-    const cols = labels.map((_, i) => REGION_COLORS[i % REGION_COLORS.length]);
+    const values = labels.map(l => obj[l].count);
+    const cols = labels.map((_, i) => REJECTION_COLORS[i % REJECTION_COLORS.length]);
     return { labels, values, bgColors: cols, borderColor: cols };
   };
 
-  // --- forced uniform blue for partition slices ---
-  const partitionLabels = Object.keys(partitionObj);
-  const partitionValues = partitionLabels.map(l => partitionObj[l]);
-  const uniformBlue = '#007bff';
-  const partitionData = {
-    labels: partitionLabels,
-    values: partitionValues,
-    bgColors: partitionLabels.map(() => uniformBlue),
-    borderColor: partitionLabels.map(() => uniformBlue)
-  };
+  const partitionObj = !filters.region
+
+    ? summary.regionWise
+    : { [filters.region]: summary.regionWise[filters.region] };
+
+
+  // const partitionObj = !filters.region
+  // ? Object.fromEntries(
+  //     Object.entries(summary.regionWise).map(([r, info]) => [r, info.count])
+  //   )
+  // : rawAlarms
+  //     .filter(a => a.Region === filters.region)
+  //     .reduce((acc, a) => {
+  //       acc[a.Location] = (acc[a.Location] || 0) + 1;
+  //       return acc;
+  //     }, {});
+
 
   return (
     <>
       {/* Rejection-Type Cards */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={12} sm={6} md={3} key={type}>
+          <Grid item xs={50} sm={10} md={3} key={type}>
             <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
               <CardContent>
                 <Typography variant="subtitle2">{type}</Typography>
@@ -165,32 +196,32 @@ export default function SummaryCards({ summary, filters, rawAlarms }) {
         ))}
       </Grid>
 
-      {/* Partition, Priority, Location */}
+      {/* Three Charts in One Row */}
       <Grid container spacing={5} sx={{ mb: 4 }}>
-        {/* Partition */}
-        <Grid item xs={400} md={200}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
-              </Typography>
-              <MyChart
-                type="doughnut"
-                data={partitionData}
-                height={600}
-                width={650}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+        {/* Partition Chart */}
+        {partitionObj && Object.keys(partitionObj).length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
+                </Typography>
+                <MyChart
+                  type="doughnut"
+                  data={makeChartData('partition', partitionObj)}
+                  height={600}
+                  width={650}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
         {/* Priority Wise */}
         <Grid item xs={400} md={200}>
-          <Card>
+          <Card sx={{ border: '1px solid #ccc' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Priority Wise
-              </Typography>
+              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
               <MyChart
                 type="pie"
                 data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
@@ -202,70 +233,68 @@ export default function SummaryCards({ summary, filters, rawAlarms }) {
         </Grid>
 
         {/* Location Wise */}
-        <Grid item xs={400} md={200}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Location Wise
-              </Typography>
-              <MyChart
-                type="line"
-                data={makeChartData(summary.locationWise)}
-                options={{
-                  scales: {
-                    x: { title: { display: true, text: 'Location' } },
-                    y: { title: { display: true, text: 'Alarm Count' } }
-                  }
-                }}
-                height={600}
-                width={1000}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+        {summary.locationWise && Object.keys(summary.locationWise).length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Location Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={makeChartData('locationWise', summary.locationWise)}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Location' } },
+                      y: { title: { display: true, text: 'Alarm Count' } }
+                    }
+                  }}
+                  height={600}
+                  width={900}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
       {/* Month Wise & Operator Wise */}
       <Grid container spacing={5}>
-        {/* Month Wise */}
-        <Grid item xs={400} md={200}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Month Wise
-              </Typography>
-              <MyChart
-                type="line"
-                data={makeChartData(summary.monthWise)}
-                options={{
-                  scales: {
-                    x: { title: { display: true, text: 'Month' } },
-                    y: { title: { display: true, text: 'Alarm Count' } }
-                  }
-                }}
-                height={600}
-                width={600}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+        {summary.monthWise && Object.keys(summary.monthWise).length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Month Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={makeChartData('monthWise', summary.monthWise)}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Month' } },
+                      y: { title: { display: true, text: 'Alarm Count' } }
+                    }
+                  }}
+                  height={600}
+                  width={600}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
-        {/* Operator Wise */}
-        <Grid item xs={400} md={200}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Operator Wise
-              </Typography>
-              <MyChart
-                type="bar"
-                data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
-                height={600}
-                width={800}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+        {summary.operatorWise && Object.keys(summary.operatorWise).length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+                <MyChart
+                  type="bar"
+                  data={makeChartData('operatorWise', summary.operatorWise)}
+                  height={600}
+                  width={800}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
     </>
   );
@@ -273,106 +302,9 @@ export default function SummaryCards({ summary, filters, rawAlarms }) {
 
 
 
+File 3
 
-
-
-
-
-
-
-
-import React from 'react';
-import { Card, CardContent, Typography, Grid, TextField, MenuItem } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters, setFilters }) {
-  if (!summary) return null;
-
-  // Filtered alarms for month dropdown and counts
-  const baseFiltered = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    return true;
-  });
-
-  const monthOptions = Array.from(
-    new Set(baseFiltered.map(a => a.Month))
-  ).sort();
-
-  const monthFiltered = filters.month
-    ? baseFiltered.filter(a => a.Month === filters.month)
-    : baseFiltered;
-
-  const totalAlarms = monthFiltered.length;
-
-  const sentCount = monthFiltered.filter(a =>
-    a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
-  ).length;
-
-  const responseSentPercentage = totalAlarms
-    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Total Alarms
-            </Typography>
-            <Typography variant="h4">{totalAlarms}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent %
-            </Typography>
-            <Typography variant="h4">{responseSentPercentage}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Month Filter */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <TextField
-              id="month-select"
-              label="Month"
-              select
-              fullWidth
-              value={filters.month || ''}
-              onChange={e => setFilters(prev => ({ ...prev, month: e.target.value }))}
-              variant="outlined"
-              autoComplete="off"
-              InputLabelProps={{ htmlFor: 'month-select' }}
-              inputProps={{ autoComplete: 'new-password' }}
-            >
-              <MenuItem value="">All Months</MenuItem>
-              {monthOptions.map(m => (
-                <MenuItem key={m} value={m}>
-                  {m}
-                </MenuItem>
-              ))}
-            </TextField>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-
-
-
+Chart.js
 
 
 import React, { useEffect, useRef } from 'react';
@@ -467,279 +399,10 @@ export default function MyChart({
 
 
 
-
-
-
-
-import React from 'react';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const REGION_COLORS = [
-  '#007bff', '#28a745', '#ffc107',
-  '#dc3545', '#6f42c1', '#17a2b8',
-  '#fd7e14', '#20c997', '#6c757d',
-  '#6610f2'
-];
-
-const PRIORITY_COLORS = {
-  Low: '#90ee90',
-  Medium: '#ffff00',
-  High: '#ff0000'
-};
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-
-  // --- Rejection Stats (unchanged) ---
-  function getRejectionStats() {
-    let entries;
-    if (!filters.region) {
-      entries = Object.entries(summary.rejectionTypeWise);
-    } else if (filters.region && !filters.location) {
-      const total = summary.regionWise[filters.region].count;
-      const byType = rawAlarms
-        .filter(a => a.Region === filters.region)
-        .reduce((acc, a) => {
-          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-          return acc;
-        }, {});
-      entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-    } else {
-      const total = summary.locationWise[filters.location]?.count || 0;
-      const byType = rawAlarms
-        .filter(a => a.Region === filters.region && a.Location === filters.location)
-        .reduce((acc, a) => {
-          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-          return acc;
-        }, {});
-      entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-    }
-
-    return entries
-      .map(([type, info], idx) => ({
-        type,
-        count: info.count,
-        percentage: info.percentage,
-        color: REGION_COLORS[idx % REGION_COLORS.length]
-      }))
-      .sort((a, b) => b.count - a.count);
-  }
-
-  const rejectionStats = getRejectionStats();
-
-  // --- Priority Wise (recomputed from filters) ---
-  const priFiltered = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month && a.Month !== filters.month) return false;
-    return true;
-  });
-  const prCounts = priFiltered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
-
-  // --- Operator Wise (recomputed) ---
-  const opCounts = priFiltered.reduce((acc, a) => {
-    const op = a.Operator || 'Unknown';
-    acc[op] = (acc[op] || 0) + 1;
-    return acc;
-  }, {});
-  const opLabels = Object.keys(opCounts);
-  const opValues = opLabels.map(l => opCounts[l]);
-  const opColors = REGION_COLORS.slice(0, opLabels.length);
-
-  // --- Partition Data: global=by region, region=by location ---
-  const partitionObj = !filters.region
-    ? summary.regionWise
-    : Object.fromEntries(
-        (rawAlarms
-          .filter(a => a.Region === filters.region)
-          .reduce((acc, a) => {
-            acc[a.Location] = (acc[a.Location] || 0) + 1;
-            return acc;
-          }, {}))
-      );
-
-  const makeChartData = obj => {
-    const labels = Object.keys(obj);
-    const values = labels.map(l => obj[l].count ?? obj[l]);
-    const cols = labels.map((_, i) => REGION_COLORS[i % REGION_COLORS.length]);
-    return { labels, values, bgColors: cols, borderColor: cols };
-  };
-
-  return (
-    <>
-      {/* Rejection-Type Cards */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={12} sm={6} md={3} key={type}>
-            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-              <CardContent>
-                <Typography variant="subtitle2">{type}</Typography>
-                <Typography variant="h6">{count}</Typography>
-                <Typography variant="body2">{percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Partition, Priority, Location */}
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {/* Partition */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
-              </Typography>
-              <MyChart
-                type="doughnut"
-                data={makeChartData(partitionObj)}
-                height={300}
-                width={300}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Priority Wise */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Priority Wise
-              </Typography>
-              <MyChart
-                type="pie"
-                data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                height={300}
-                width={300}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Location Wise */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Location Wise
-              </Typography>
-              <MyChart
-                type="line"
-                data={makeChartData(summary.locationWise)}
-                options={{
-                  scales: {
-                    x: { title: { display: true, text: 'Location' } },
-                    y: { title: { display: true, text: 'Alarm Count' } }
-                  }
-                }}
-                height={300}
-                width={400}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Month Wise & Operator Wise */}
-      <Grid container spacing={5}>
-        {/* Month Wise */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Month Wise
-              </Typography>
-              <MyChart
-                type="line"
-                data={makeChartData(summary.monthWise)}
-                options={{
-                  scales: {
-                    x: { title: { display: true, text: 'Month' } },
-                    y: { title: { display: true, text: 'Alarm Count' } }
-                  }
-                }}
-                height={300}
-                width={400}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Operator Wise */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Operator Wise
-              </Typography>
-              <MyChart
-                type="bar"
-                data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
-                height={300}
-                width={400}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-read Below React file carefully.and I want to make Some Improvment on my Dashboard so We can 
-Display Ui interactive.
-1)  Filters Month is not Working properly .When i select Month Total Alarms & Responce Sent 
-count Precentage not Update. solve this issue.
-
-2) Talking about 1 st chart Global partation , Whwn Region is Global it shows Multilpe colours 
-But for Specific region APAC, EMEA, LACA, NAMER   it shows only one colour. I want Display 
-Diffrent colours for Diffrent Region .Also use Unique colours.
-Add Bordres for All chart.
-
-
-3) Our 2nd chart is Priority Wise above Mention Priority Yelllow for medium , high for red green for Low.
-Increase font size add Borders .
-
-
-4) Our 4th chart is Location Wise Chart Increase Location dot size , Also Lines are dispay more 
-faint Display dark Line use Colours for this Line.Same for Month Wise chart.
-
-
-5)our fifth Chart is Operator Wise are not Filtered When Region , Location are chages.
-Kindly make above changes and display More Interactive Ui.
-
-
-6) Also Add Some Animation , for all Charts & Cards As per Your Openion .
-
-
-Make All above Changs as per my request and give me Updated js files . Dont make Another changes .
-Fi;le function Remain same,
-
-
-
-
-File 1
-
+File 4 
 AlarmCard.js
+
+
 
 
 import React from 'react';
@@ -748,21 +411,26 @@ import { Card, CardContent, Typography, Grid, TextField, MenuItem } from '@mui/m
 export default function AlarmCard({ summary, rawAlarms, filters, setFilters }) {
   if (!summary) return null;
 
-  const monthOptions = summary.monthWise ? Object.keys(summary.monthWise) : [];
-
-  const totalAlarms = rawAlarms.filter(a => {
+  // Filtered alarms for month dropdown and counts
+  const baseFiltered = rawAlarms.filter(a => {
     if (filters.region && a.Region !== filters.region) return false;
     if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month && a.Month !== filters.month) return false;
     return true;
-  }).length;
+  });
 
-  const sentCount = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month && a.Month !== filters.month) return false;
-    return a['Action Taken'] && a['Action Taken'] !== 'Not Sent';
-  }).length;
+  const monthOptions = Array.from(
+    new Set(baseFiltered.map(a => a.Month))
+  ).sort();
+
+  const monthFiltered = filters.month
+    ? baseFiltered.filter(a => a.Month === filters.month)
+    : baseFiltered;
+
+  const totalAlarms = monthFiltered.length;
+
+  const sentCount = monthFiltered.filter(a =>
+    a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
+  ).length;
 
   const responseSentPercentage = totalAlarms
     ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
@@ -826,357 +494,11 @@ export default function AlarmCard({ summary, rawAlarms, filters, setFilters }) {
 
 
 
-
-File 2
-
-Chart.js
-
-
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-
-const defaultColors = [
-  '#8884d8', '#82ca9d', '#ffc658', '#ff7f50',
-  '#a29bfe', '#20c997', '#fd7e14', '#6c757d',
-  '#90ee90', '#ffffe0', '#ff0000'
-];
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  // use percentages so it flexibly fills parent container
-  width = '100%',
-  height = '100%'
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    if (chartRef.current) chartRef.current.destroy();
-
-    const chartData = {
-      labels: data.labels,
-      datasets: [{
-        label: data.label || '',
-        data: data.values,
-        backgroundColor: data.bgColors || defaultColors.slice(0, data.values.length),
-        borderWidth: 1,
-      }],
-    };
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: chartData,
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        ...options,
-        scales: {
-          x: { beginAtZero: true, ...(options.scales?.x || {}) },
-          y: { beginAtZero: true, ...(options.scales?.y || {}) },
-        },
-      },
-    });
-
-    return () => chartRef.current?.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
-
-
-
-
-
-File 3
-
-Filters.js
-
-
-import React from 'react';
-import { TextField, MenuItem } from '@mui/material';
-
-const Filters = ({
-  filters,
-  setFilters,
-  regionOptions = [],
-  locationOptions = []
-}) => {
-  const handleChange = (field) => (e) =>
-    setFilters(prev => ({
-      ...prev,
-      [field]: e.target.value,
-      ...(field === 'region' && { location: '' })
-    }));
-
-  return (
-    <div style={{ display: 'flex', gap: '1rem', marginBottom: 16 }}>
-      <TextField
-        id="region-select"
-        label="Region"
-        select
-        value={filters.region}
-        onChange={handleChange('region')}
-        style={{ minWidth: 150 }}
-        autoComplete="off"
-        InputLabelProps={{ htmlFor: 'region-select' }}
-        inputProps={{ autoComplete: 'new-password' }}
-      >
-        <MenuItem value="">Global</MenuItem>
-        {regionOptions.map(region => (
-          <MenuItem key={region} value={region}>
-            {region}
-          </MenuItem>
-        ))}
-      </TextField>
-
-      {filters.region && (
-        <TextField
-          id="location-select"
-          label="Location"
-          select
-          value={filters.location}
-          onChange={handleChange('location')}
-          style={{ minWidth: 200 }}
-          autoComplete="off"
-          InputLabelProps={{ htmlFor: 'location-select' }}
-          inputProps={{ autoComplete: 'new-password' }}
-        >
-          <MenuItem value="">All Locations</MenuItem>
-          {locationOptions.map(loc => (
-            <MenuItem key={loc} value={loc}>
-              {loc}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-    </div>
-  );
-};
-
-export default Filters;
-
-
-
-File 4
-
-SummaryCards.js
-
-import React from 'react';
-import './SummaryCards.css';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const REJECTION_COLORS = [
-  '#007bff', '#28a745', '#ffc107',
-  '#dc3545', '#6f42c1', '#17a2b8',
-  '#fd7e14', '#20c997', '#6c757d',
-  '#6610f2'
-];
-
-const PRIORITY_COLORS = {
-  Low: '#90ee90',
-  Medium: '#ffff00',
-  High: '#ff0000'
-};
-
-function getRejectionStats(summary, rawAlarms, filters) {
-  let entries;
-  if (!filters.region) {
-    entries = Object.entries(summary.rejectionTypeWise);
-  } else if (filters.region && !filters.location) {
-    const total = summary.regionWise[filters.region].count;
-    const byType = rawAlarms
-      .filter(a => a.Region === filters.region)
-      .reduce((acc, a) => {
-        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-        return acc;
-      }, {});
-    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-  } else {
-    const total = summary.locationWise[filters.location]?.count || 0;
-    const byType = rawAlarms
-      .filter(a => a.Region === filters.region && a.Location === filters.location)
-      .reduce((acc, a) => {
-        acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-        return acc;
-      }, {});
-    entries = Object.entries(byType).map(([type, count]) => [type, { count, percentage: `${((count / total) * 100).toFixed(2)}%` }]);
-  }
-
-  return entries
-    .map(([type, info], idx) => ({
-      type,
-      count: info.count,
-      percentage: info.percentage,
-      color: REJECTION_COLORS[idx % REJECTION_COLORS.length]
-    }))
-    .sort((a, b) => b.count - a.count); // Descending order
-}
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-  const rejectionStats = getRejectionStats(summary, rawAlarms, filters);
-
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    return true;
-  });
-  const prTotal = filtered.length;
-  const prCounts = filtered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#ccc');
-
-  const makeChartData = (key, obj) => {
-    const labels = Object.keys(obj);
-    const values = labels.map(l => obj[l].count);
-    const cols = labels.map((_, i) => REJECTION_COLORS[i % REJECTION_COLORS.length]);
-    return { labels, values, bgColors: cols, borderColor: cols };
-  };
-
-  const partitionObj = !filters.region
-    ? summary.regionWise
-    : { [filters.region]: summary.regionWise[filters.region] };
-
-  return (
-    <>
-      {/* Rejection-Type Cards */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={50} sm={10} md={3} key={type}>
-            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-              <CardContent>
-                <Typography variant="subtitle2">{type}</Typography>
-                <Typography variant="h6">{count}</Typography>
-                <Typography variant="body2">{percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Three Charts in One Row */}
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {/* Partition Chart */}
-        {partitionObj && Object.keys(partitionObj).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {!filters.region ? 'Global Partition' : `${filters.region} Partition`}
-                </Typography>
-                <MyChart
-                  type="doughnut"
-                  data={makeChartData('partition', partitionObj)}
-                  height={600}
-                  width={650}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* Priority Wise */}
-        <Grid item xs={400} md={200}>
-          <Card sx={{ border: '1px solid #ccc' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-              <MyChart
-                type="pie"
-                data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                height={600}
-                width={650}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Location Wise */}
-        {summary.locationWise && Object.keys(summary.locationWise).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Location Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={makeChartData('locationWise', summary.locationWise)}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={1000}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-
-      {/* Month Wise & Operator Wise */}
-      <Grid container spacing={5}>
-        {summary.monthWise && Object.keys(summary.monthWise).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={makeChartData('monthWise', summary.monthWise)}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Month' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {summary.operatorWise && Object.keys(summary.operatorWise).length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-                <MyChart
-                  type="bar"
-                  data={makeChartData('operatorWise', summary.operatorWise)}
-                  height={600}
-                  width={800}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </>
-  );
-}
-
-
-
-File 5
+File 5 
 
 Dashboard.js
+
+
 
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -1320,43 +642,6 @@ export default function Dashboard() {
 }
 
 
-
-File 6
-
-SummaryCard.css
-
-.summary-container {
-    padding: 20px;
-  }
-  
-  .summary-cards {
-    margin-bottom: 30px;
-  }
-  
-  .cards {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 20px;
-  }
-  
-  .card {
-    background-color: black;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-size: 1.2rem;
-  }
-  
-  .charts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    justify-content: space-around;
-  }
-  
-  .chart {
-    width: 300px;
-    max-width: 100%;
-  }
 
 
 
