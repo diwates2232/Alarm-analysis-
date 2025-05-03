@@ -1,3 +1,11 @@
+// old
+const employeeOptions = useMemo(
+  () => [...new Set(locationFiltered.map(a => a['Employee Name']))],
+  [locationFiltered]
+);
+
+
+
 
 // new: employeeOptions from the currently region+location filtered set
 const employeeOptions = useMemo(() => {
