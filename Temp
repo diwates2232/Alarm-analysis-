@@ -1,3 +1,410 @@
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters      from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard    from '../components/AlarmCard';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', month: '', priority: ''
+  });
+
+  // Fetch summary & raw
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([s, r]) => {
+        setSummary(s.data);
+        setRawAlarms(r.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // Region options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [],
+    [summary]
+  );
+
+  // Location options depend on region
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms
+            .filter(a => a.Region === filters.region)
+            .map(a => a.Location)
+        ))
+      : [],
+    [rawAlarms, filters.region]
+  );
+
+  // Month options from summary.monthWise
+  const monthOptions = useMemo(
+    () => summary ? Object.keys(summary.monthWise).sort() : [],
+    [summary]
+  );
+
+  // Priority options
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(
+      rawAlarms.map(a => a['CCURE Incident Priority'])
+    )),
+    [rawAlarms]
+  );
+
+  // Compute totals & response %
+  const { totalAlarms, responseSentPercentage } = useMemo(() => {
+    const base = rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)   return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.month    && a.Month    !== filters.month)    return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    });
+    const tot  = base.length;
+    const sent = base.filter(a =>
+      a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
+    ).length;
+    return {
+      totalAlarms: tot,
+      responseSentPercentage: tot
+        ? `${((sent / tot) * 100).toFixed(2)}%`
+        : '0%'
+    };
+  }, [rawAlarms, filters]);
+
+  // Auto‐rotate filters
+  const slidesRef = useRef([]);
+  const slideIdx  = useRef(0);
+  useEffect(() => {
+    if (!summary) return;
+    const slides = [{ region:'', location:'', month:'', priority:'' }];
+    regionOptions.forEach(r => slides.push({ region:r, location:'', month:'', priority:'' }));
+    slidesRef.current = slides;
+    slideIdx.current   = 0;
+    setFilters(slides[0]);
+    const id = setInterval(() => {
+      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
+      setFilters(slidesRef.current[slideIdx.current]);
+    }, 30000);
+    return () => clearInterval(id);
+  }, [summary, regionOptions]);
+
+  // Build filteredSummary for charts, including operatorWise
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+
+    // region & location
+    if (filters.region) {
+      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(loc => !filters.location || loc === filters.location)
+        .forEach(loc => {
+          fs.locationWise[loc] = summary.locationWise[loc];
+        });
+    }
+
+    // month
+    if (filters.month) {
+      fs.monthWise = { [filters.month]: summary.monthWise[filters.month] };
+    }
+
+    // recalc operatorWise from the filtered rawAlarms
+    const opCounts = rawAlarms
+      .filter(a => {
+        if (filters.region   && a.Region   !== filters.region)   return false;
+        if (filters.location && a.Location !== filters.location) return false;
+        if (filters.month    && a.Month    !== filters.month)    return false;
+        if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+        return true;
+      })
+      .reduce((acc, a) => {
+        // use the actual field name for operator:
+        const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+        acc[op] = (acc[op] || 0) + 1;
+        return acc;
+      }, {});
+
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
+    return fs;
+  }, [summary, rawAlarms, filters, locationOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width:'100vw', minHeight:'100vh', overflowX:'hidden' }}>
+      {/* Header */}
+      <Box component="header" sx={{
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        borderBottom:'3px solid #1976d2', bgcolor:'#e3f2fd', p:2
+      }}>
+        <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display:'flex', gap:2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py:4 }}>
+        {/* Filters */}
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
+
+        {/* Cards */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={rawAlarms}
+          filters={filters}
+        />
+
+        {/* Charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={rawAlarms}
+        />
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+
+// src/components/Filters.js
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import SearchIcon from '@mui/icons-material/Search';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions,
+  employeeOptions,
+  doorOptions,
+  priorityOptions,
+  rejectionOptions
+}) {
+  const handleChange = field => e => {
+    const value = e.target.value;
+    setFilters(prev => {
+      const next = { ...prev, [field]: value };
+      // cascade resets
+      if (field === 'region') {
+        next.location = '';
+        next.month = '';
+        next.priority = '';
+        next.rejection = '';
+        next.employee = '';
+        next.door = '';
+      }
+      if (field === 'location') {
+        next.month = '';
+        next.priority = '';
+        next.rejection = '';
+        next.employee = '';
+        next.door = '';
+      }
+      if (field === 'month') {
+        next.priority = '';
+        next.rejection = '';
+      }
+      if (field === 'priority') {
+        next.rejection = '';
+      }
+      if (field === 'door') {
+        next.rejection = '';
+      }
+      return next;
+    });
+  };
+
+  return (
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          select label="Region" fullWidth
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><PublicIcon/></InputAdornment>
+          }}
+        >
+          <MenuItem key="" value="">All Regions</MenuItem>
+          {regionOptions.map(r => (
+            <MenuItem key={r} value={r}>{r}</MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item>
+        <TextField
+          select label="Location" fullWidth
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><LocationOnIcon/></InputAdornment>
+          }}
+        >
+          <MenuItem key="" value="">All Locations</MenuItem>
+          {locationOptions.map(l => (
+            <MenuItem key={l} value={l}>{l}</MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+
+      {/* Month */}
+      {monthOptions && (
+        <Grid item>
+          <TextField
+            select label="Month" fullWidth
+            value={filters.month}
+            onChange={handleChange('month')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><CalendarMonthIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem key="" value="">All Months</MenuItem>
+            {monthOptions.map(m => (
+              <MenuItem key={m} value={m}>{m}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Employee */}
+      {employeeOptions && (
+        <Grid item>
+          <TextField
+            select label="Employee" fullWidth
+            value={filters.employee}
+            onChange={handleChange('employee')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><SearchIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem key="" value="">All Employees</MenuItem>
+            {employeeOptions.map(e => (
+              <MenuItem key={e} value={e}>{e}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Door */}
+      {doorOptions && (
+        <Grid item>
+          <TextField
+            select label="Door" fullWidth
+            value={filters.door}
+            onChange={handleChange('door')}
+          >
+            <MenuItem key="" value="">All Doors</MenuItem>
+            {doorOptions.map(d => (
+              <MenuItem key={d} value={d}>{d}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Priority */}
+      {priorityOptions && (
+        <Grid item>
+          <TextField
+            select label="Priority" fullWidth
+            value={filters.priority}
+            onChange={handleChange('priority')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><PriorityHighIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem key="" value="">All Priorities</MenuItem>
+            {priorityOptions.map(p => (
+              <MenuItem key={p} value={p}>{p}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Rejection */}
+      {rejectionOptions && (
+        <Grid item>
+          <TextField
+            select label="Rejection" fullWidth
+            value={filters.rejection}
+            onChange={handleChange('rejection')}
+          >
+            <MenuItem key="" value="">All Rejections</MenuItem>
+            {rejectionOptions.map(r => (
+              <MenuItem key={r} value={r}>{r}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Date */}
+      {filters.hasOwnProperty('date') && (
+        <Grid item>
+          <TextField
+            label="Date"
+            type="date"
+            fullWidth
+            value={filters.date}
+            onChange={handleChange('date')}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+      )}
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
 as per your Given files i have update this files.
 when i update this file Operator Wise Charts display Unknown result & 
 Month dropdown is not display any option .
