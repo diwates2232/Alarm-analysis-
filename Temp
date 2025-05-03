@@ -1,3 +1,119 @@
+// src/components/Filters.js
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions = [],
+  priorityOptions = []
+}) {
+  const handleChange = field => e =>
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value,
+      ...(field === 'region' && { location: '' })
+    }));
+
+  return (
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          select label="Region"
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Regions</MenuItem>
+          {regionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item>
+        <TextField
+          select label="Location"
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LocationOnIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Month */}
+      <Grid item>
+        <TextField
+          select label="Month"
+          value={filters.month}
+          onChange={handleChange('month')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <CalendarMonthIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Months</MenuItem>
+          {monthOptions.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Priority */}
+      <Grid item>
+        <TextField
+          select label="Priority"
+          value={filters.priority}
+          onChange={handleChange('priority')}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PriorityHighIcon />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Priorities</MenuItem>
+          {priorityOptions.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+        </TextField>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
 // src/pages/Dashboard.js
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Box, Typography, Container } from '@mui/material';
