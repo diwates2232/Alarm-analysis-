@@ -1,3 +1,23 @@
+// new: monthOptions from rawAlarms filtered by region+location
+const monthOptions = useMemo(() => {
+  // start with rawAlarms, apply region+location filters
+  const base = rawAlarms.filter(a => {
+    if (filters.region   && a.Region   !== filters.region)   return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    return true;
+  });
+  // unique months
+  return Array.from(new Set(base.map(a => a.Month))).sort();
+}, [rawAlarms, filters.region, filters.location]);
+
+
+
+
+
+
+
+
+
 // src/components/Filters.js
 import React from 'react';
 import {
