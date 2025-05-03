@@ -1,25 +1,59 @@
-// old
-const employeeOptions = useMemo(
-  () => [...new Set(locationFiltered.map(a => a['Employee Name']))],
-  [locationFiltered]
-);
+check below files and solve this errors. dont make another changes on foles.
+
+
+File 1
+
+dashboard.js
 
 
 
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters      from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard    from '../components/AlarmCard';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
 
-// new: employeeOptions from the currently region+location filtered set
-const employeeOptions = useMemo(() => {
-  return Array.from(new Set(
-    filteredAlarms.map(a => a['Employee Name'])
-  )).sort();
-}, [filteredAlarms]);
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', month: '', priority: ''
+  });
+
+  // Fetch summary & raw
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // Options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [], [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms
+            .filter(a => a.Region === filters.region)
+            .map(a => a.Location)
+        ))
+      : [], [rawAlarms, filters.region]
+  );
 
 
+  // const monthOptions = useMemo(
+  //   () => summary ? Object.keys(summary.monthWise) : [], [summary]
+  // );
 
-
-
-
-// new: monthOptions from rawAlarms filtered by region+location
+  // new: monthOptions from rawAlarms filtered by region+location
 const monthOptions = useMemo(() => {
   // start with rawAlarms, apply region+location filters
   const base = rawAlarms.filter(a => {
@@ -35,443 +69,288 @@ const monthOptions = useMemo(() => {
 
 
 
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
 
-
-
-
-// src/components/Filters.js
-import React from 'react';
-import {
-  TextField,
-  MenuItem,
-  Grid,
-  InputAdornment
-} from '@mui/material';
-import PublicIcon from '@mui/icons-material/Public';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import SearchIcon from '@mui/icons-material/Search';
-import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
-
-export default function Filters({
-  filters,
-  setFilters,
-  regionOptions = [],
-  locationOptions = [],
-  monthOptions,
-  employeeOptions,
-  doorOptions,
-  priorityOptions,
-  rejectionOptions
-}) {
-  const handleChange = field => e => {
-    const value = e.target.value;
-    setFilters(prev => {
-      // always start from previous, then override this field
-      const next = { ...prev, [field]: value };
-
-      // cascade resets:
-      if (field === 'region') {
-        // new region: clear location + everything downstream
-        next.location   = '';
-        next.month      = '';
-        next.priority   = '';
-        next.rejection  = '';
-        next.employee   = '';
-        next.door       = '';
-      }
-      if (field === 'location') {
-        // new location: clear month + downstream
-        next.month      = '';
-        next.priority   = '';
-        next.rejection  = '';
-        next.employee   = '';
-        next.door       = '';
-      }
-      if (field === 'month') {
-        // new month: clear priority + rejection
-        next.priority   = '';
-        next.rejection  = '';
-      }
-      if (field === 'priority') {
-        // new priority: clear rejection
-        next.rejection  = '';
-      }
-      if (field === 'employee') {
-        // selecting employee shouldn't clear other filters
-      }
-      if (field === 'door') {
-        // new door: clear rejection
-        next.rejection  = '';
-      }
-      return next;
+  // total & response percentage
+  const { totalAlarms, responseSentPercentage } = useMemo(() => {
+    const base = rawAlarms.filter(a => {
+      if (filters.region   && a.Region !== filters.region)                               return false;
+      if (filters.location && a.Location !== filters.location)                           return false;
+      if (filters.month    && a.Month !== filters.month)                                 return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)         return false;
+      return true;
     });
-  };
+    const total = base.length;
+    const sent  = base.filter(a =>
+      a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
+    ).length;
+    return {
+      totalAlarms: total,
+      responseSentPercentage: total
+        ? `${((sent / total) * 100).toFixed(2)}%`
+        : '0%'
+    };
+  }, [rawAlarms, filters]);
+
+  // Auto‐rotate
+  const slidesRef = useRef([]);
+  const slideIdx  = useRef(0);
+  useEffect(() => {
+    if (!summary) return;
+    const slides = [{ region:'', location:'', month:'', priority:'' }];
+    regionOptions.forEach(r => slides.push({ region:r, location:'', month:'', priority:'' }));
+    slidesRef.current = slides;
+    slideIdx.current   = 0;
+    setFilters(slides[0]);
+    const id = setInterval(() => {
+      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
+      setFilters(slidesRef.current[slideIdx.current]);
+    }, 30000);
+    return () => clearInterval(id);
+  }, [summary, regionOptions]);
+
+  // filteredSummary for charts
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+    // region & location
+    if (filters.region) {
+      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(loc => !filters.location || loc === filters.location)
+        .forEach(loc => {
+          fs.locationWise[loc] = summary.locationWise[loc];
+        });
+    }
+    // month
+    if (filters.month) {
+      fs.monthWise = { [filters.month]: summary.monthWise[filters.month] };
+    }
+    return fs;
+  }, [summary, filters, locationOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
 
   return (
-    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-      {/* Region */}
-      <Grid item>
-        <TextField
-          select label="Region" fullWidth
-          value={filters.region}
-          onChange={handleChange('region')}
-          InputProps={{
-            startAdornment: <InputAdornment position="start"><PublicIcon/></InputAdornment>
-          }}
-        >
-          <MenuItem value="">All Regions</MenuItem>
-          {regionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
-        </TextField>
-      </Grid>
+    <Box sx={{ width:'100vw', minHeight:'100vh', overflowX:'hidden' }}>
+      {/* Header */}
+      <Box component="header" sx={{
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        borderBottom:'3px solid #1976d2', bgcolor:'#e3f2fd', p:2
+      }}>
+        <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display:'flex', gap:2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
 
-      {/* Location */}
-      <Grid item>
-        <TextField
-          select label="Location" fullWidth
-          value={filters.location}
-          onChange={handleChange('location')}
-          disabled={!filters.region}
-          InputProps={{
-            startAdornment: <InputAdornment position="start"><LocationOnIcon/></InputAdornment>
-          }}
-        >
-          <MenuItem value="">All Locations</MenuItem>
-          {locationOptions.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
-        </TextField>
-      </Grid>
+      <Container maxWidth={false} sx={{ py:4 }}>
+        {/* Filters: all your props */}
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
 
-      {/* Month (Dashboard) */}
-      {monthOptions && (
-        <Grid item>
-          <TextField
-            select label="Month" fullWidth
-            value={filters.month}
-            onChange={handleChange('month')}
-            InputProps={{
-              startAdornment: <InputAdornment position="start"><CalendarMonthIcon/></InputAdornment>
-            }}
-          >
-            <MenuItem value="">All Months</MenuItem>
-            {monthOptions.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
-          </TextField>
-        </Grid>
-      )}
+        {/* Cards */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={rawAlarms}
+          filters={filters}
+        />
 
-      {/* Employee (RawAlarms) */}
-      {employeeOptions && (
-        <Grid item>
-          <TextField
-            select label="Employee" fullWidth
-            value={filters.employee}
-            onChange={handleChange('employee')}
-            InputProps={{
-              startAdornment: <InputAdornment position="start"><SearchIcon/></InputAdornment>
-            }}
-          >
-            <MenuItem value="">All Employees</MenuItem>
-            {employeeOptions.map(e => <MenuItem key={e} value={e}>{e}</MenuItem>)}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Door */}
-      {doorOptions && (
-        <Grid item>
-          <TextField
-            select label="Door" fullWidth
-            value={filters.door}
-            onChange={handleChange('door')}
-          >
-            <MenuItem value="">All Doors</MenuItem>
-            {doorOptions.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Priority */}
-      {priorityOptions && (
-        <Grid item>
-          <TextField
-            select label="Priority" fullWidth
-            value={filters.priority}
-            onChange={handleChange('priority')}
-            InputProps={{
-              startAdornment: <InputAdornment position="start"><PriorityHighIcon/></InputAdornment>
-            }}
-          >
-            <MenuItem value="">All Priorities</MenuItem>
-            {priorityOptions.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Rejection */}
-      {rejectionOptions && (
-        <Grid item>
-          <TextField
-            select label="Rejection" fullWidth
-            value={filters.rejection}
-            onChange={handleChange('rejection')}
-          >
-            <MenuItem value="">All Rejections</MenuItem>
-            {rejectionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Date */}
-      {filters.hasOwnProperty('date') && (
-        <Grid item>
-          <TextField
-            label="Date"
-            type="date"
-            fullWidth
-            value={filters.date}
-            onChange={handleChange('date')}
-            InputLabelProps={{ shrink: true }}
-          />
-        </Grid>
-      )}
-    </Grid>
+        {/* Charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={rawAlarms}
+        />
+      </Container>
+    </Box>
   );
 }
 
 
 
 
+File 2
 
-
-Read below Filters.js file 
-I will explain you Where filters are not Working yet.
-on Dashboard Ui When i slect Month Priority Wise  charts are not Visibled aslo Total Alarms Count
-& responece sent percentage Are not Updated.same for rejection type cards.and all Graphs.
-
-Operator Wise  this charts are still not Updates their count Region Wise as Well location Wise 
-aslo not Update Month Wise & priority Wise also.
-
-then takling about raw alarms Anlysis Ui 
-here Month ise Filtered are not Working yet.
-region , Location , Filters are Working correctly.
-Employee - dropdown are also Working but i want to filtered Employee as selected Region wise 
-also Location Wise . same for Door & rejections.
-
-
-So make sure give me Updated Filters.js File carefully. Solve Above Issue Carefully.
-i u need to check another file and update this file i will share you files.
+rawAlarms.js
 
 
 
+// src/pages/RawAlarms.js
+import React, { useEffect, useState, useMemo } from 'react';
+import { Typography, Container, Grid, TextField, MenuItem, Box, Button, Link } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import Filters from '../components/Filters';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
 
-Filters.js
+export default function RawAlarms() {
+  const [alarms, setAlarms]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', door: '', employee: '',
+    priority: '', rejection: '', date: ''
+  });
+
+  const [view, setView] = useState('employee'); // 'employee' | 'door' | 'detailed'
+
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(() => setAlarms([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // derive filter options...
+  const regionOptions   = useMemo(() => [...new Set(alarms.map(a => a.Region))], [alarms]);
+  const locationOptions = useMemo(() => [...new Set(alarms
+    .filter(a => !filters.region || a.Region === filters.region)
+    .map(a => a.Location))], [alarms, filters.region]);
+  const doorOptions     = useMemo(() => [...new Set(alarms
+    .filter(a => (!filters.region || a.Region === filters.region) && (!filters.location || a.Location === filters.location))
+    .map(a => a.Door))], [alarms, filters.region, filters.location]);
 
 
-// src/components/Filters.js
-import React from 'react';
-import {
-  TextField,
-  MenuItem,
-  Grid,
-  InputAdornment
-} from '@mui/material';
-import PublicIcon from '@mui/icons-material/Public';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import SearchIcon from '@mui/icons-material/Search';
-import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 
-export default function Filters({
-  filters,
-  setFilters,
-  regionOptions = [],
-  locationOptions = [],
-  monthOptions,
-  employeeOptions,
-  doorOptions,
-  priorityOptions,
-  rejectionOptions
-}) {
-  const handleChange = field => e =>
-    setFilters(prev => ({
-      ...prev,
-      [field]: e.target.value,
-      ...(field === 'region' && { location: '' })
-    }));
+  // const employeeOptions = useMemo(() => [...new Set(alarms.map(a => a['Employee Name']))], [alarms]);
+
+  // new: employeeOptions from the currently region+location filtered set
+const employeeOptions = useMemo(() => {
+  return Array.from(new Set(
+    filteredAlarms.map(a => a['Employee Name'])
+  )).sort();
+}, [filteredAlarms]);
+
+
+
+
+
+
+  const priorityOptions = useMemo(() => [...new Set(alarms.map(a => a['CCURE Incident Priority']))], [alarms]);
+  const rejectionOptions= useMemo(() => [...new Set(alarms.map(a => a.Rejection))], [alarms]);
+
+  // filtered alarms by all fields
+  const filtered = useMemo(() => {
+    return alarms.filter(a => {
+      if (filters.region     && a.Region !== filters.region)                 return false;
+      if (filters.location   && a.Location !== filters.location)             return false;
+      if (filters.door       && a.Door !== filters.door)                     return false;
+      if (filters.employee   && a['Employee Name'] !== filters.employee)     return false;
+      if (filters.priority   && a['CCURE Incident Priority'] !== filters.priority) return false;
+      if (filters.rejection  && a.Rejection !== filters.rejection)           return false;
+      if (filters.date       && a.Date !== filters.date)                     return false;
+      return true;
+    });
+  }, [alarms, filters]);
+
+  if (loading) return (
+    <Container maxWidth={false} sx={{ pt: 4 }}>
+      <Typography variant="h4">Raw Alarms</Typography>
+      <Typography>Loading…</Typography>
+    </Container>
+  );
 
   return (
-    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-      {/* Region */}
-      <Grid item>
-        <TextField
-          select
-          label="Region"
-          fullWidth
-          value={filters.region}
-          onChange={handleChange('region')}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <PublicIcon />
-              </InputAdornment>
-            )
-          }}
+    <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          bgcolor: 'background.paper', p: 2, borderBottom: 1, borderColor: 'divider'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TableChartIcon fontSize="large" />
+          <Typography variant="h4">Raw Alarms Analysis</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link href="/"><DashboardIcon /> Dashboard</Link>
+          <Link href="/alarms"><TableChartIcon /> Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      {/* Filters */}
+      <Box sx={{ p: 2 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          doorOptions={doorOptions}
+          employeeOptions={employeeOptions}
+          priorityOptions={priorityOptions}
+          rejectionOptions={rejectionOptions}
+        />
+      </Box>
+
+      {/* View buttons */}
+      <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+        <Button
+          variant={view === 'employee' ? 'contained' : 'outlined'}
+          onClick={() => setView('employee')}
         >
-          <MenuItem value="">All Regions</MenuItem>
-          {regionOptions.map(r => (
-            <MenuItem key={r} value={r}>{r}</MenuItem>
-          ))}
-        </TextField>
-      </Grid>
-
-      {/* Location */}
-      <Grid item>
-        <TextField
-          select
-          label="Location"
-          fullWidth
-          value={filters.location}
-          onChange={handleChange('location')}
-          disabled={!filters.region}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <LocationOnIcon />
-              </InputAdornment>
-            )
-          }}
+          Employee Analysis
+        </Button>
+        <Button
+          variant={view === 'door' ? 'contained' : 'outlined'}
+          onClick={() => setView('door')}
         >
-          <MenuItem value="">All Locations</MenuItem>
-          {locationOptions.map(l => (
-            <MenuItem key={l} value={l}>{l}</MenuItem>
-          ))}
-        </TextField>
-      </Grid>
+          Door Analysis
+        </Button>
+        <Button
+          variant={view === 'detailed' ? 'contained' : 'outlined'}
+          onClick={() => setView('detailed')}
+        >
+          Detailed Records
+        </Button>
+      </Box>
 
-      {/* Month (Dashboard) */}
-      {monthOptions && (
-        <Grid item>
-          <TextField
-            select
-            label="Month"
-            fullWidth
-            value={filters.month}
-            onChange={handleChange('month')}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <CalendarMonthIcon />
-                </InputAdornment>
-              )
-            }}
-          >
-            <MenuItem value="">All Months</MenuItem>
-            {monthOptions.map(m => (
-              <MenuItem key={m} value={m}>{m}</MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Employee (RawAlarms) */}
-      {employeeOptions && (
-        <Grid item>
-          <TextField
-            select
-            label="Employee"
-            fullWidth
-            value={filters.employee}
-            onChange={handleChange('employee')}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-          >
-            <MenuItem value="">All Employees</MenuItem>
-            {employeeOptions.map(e => (
-              <MenuItem key={e} value={e}>{e}</MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Door */}
-      {doorOptions && (
-        <Grid item>
-          <TextField
-            select
-            label="Door"
-            fullWidth
-            value={filters.door}
-            onChange={handleChange('door')}
-          >
-            <MenuItem value="">All Doors</MenuItem>
-            {doorOptions.map(d => (
-              <MenuItem key={d} value={d}>{d}</MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Priority */}
-      {priorityOptions && (
-        <Grid item>
-          <TextField
-            select
-            label="Priority"
-            fullWidth
-            value={filters.priority}
-            onChange={handleChange('priority')}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <PriorityHighIcon />
-                </InputAdornment>
-              )
-            }}
-          >
-            <MenuItem value="">All Priorities</MenuItem>
-            {priorityOptions.map(p => (
-              <MenuItem key={p} value={p}>{p}</MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Rejection */}
-      {rejectionOptions && (
-        <Grid item>
-          <TextField
-            select
-            label="Rejection"
-            fullWidth
-            value={filters.rejection}
-            onChange={handleChange('rejection')}
-          >
-            <MenuItem value="">All Rejections</MenuItem>
-            {rejectionOptions.map(r => (
-              <MenuItem key={r} value={r}>{r}</MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-      )}
-
-      {/* Date */}
-      {filters.hasOwnProperty('date') && (
-        <Grid item>
-          <TextField
-            label="Date"
-            type="date"
-            fullWidth
-            value={filters.date}
-            onChange={handleChange('date')}
-            InputLabelProps={{ shrink: true }}
+      {/* Table */}
+      <Box sx={{ p: 2 }}>
+        {view === 'employee' && (
+          <AlarmsTable
+            alarms={filtered}
+            maxRows={100}
+            tableType="employee"
           />
-        </Grid>
-      )}
-    </Grid>
+        )}
+        {view === 'door' && (
+          <AlarmsTable
+            alarms={filtered}
+            maxRows={100}
+            tableType="door"
+          />
+        )}
+        {view === 'detailed' && (
+          <AlarmsTable
+            alarms={filtered}
+            maxRows={100}
+            tableType="detailed"
+          />
+        )}
+      </Box>
+    </Container>
   );
 }
 
+
+
+   
