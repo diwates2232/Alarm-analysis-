@@ -1,3 +1,16 @@
+
+// new: employeeOptions from the currently region+location filtered set
+const employeeOptions = useMemo(() => {
+  return Array.from(new Set(
+    filteredAlarms.map(a => a['Employee Name'])
+  )).sort();
+}, [filteredAlarms]);
+
+
+
+
+
+
 // new: monthOptions from rawAlarms filtered by region+location
 const monthOptions = useMemo(() => {
   // start with rawAlarms, apply region+location filters
