@@ -1,3 +1,33 @@
+   // --- 6. Month Wise ---
+-  const monthCounts = filtered.reduce((acc, a) => {
+-    acc[a.Month] = (acc[a.Month] || 0) + 1;
+-    return acc;
+-  }, {});
+-  const monthLabels = Object.keys(monthCounts);
+-  const monthValues = monthLabels.map(m => monthCounts[m]);
+-  const monthColors = defaultColors.slice(0, monthLabels.length);
++  const monthCounts = filtered.reduce((acc, a) => {
++    // first try a.Month, otherwise extract from a.Date
++    const monthKey = a.Month
++      || new Date(a.Date).toLocaleString('en-US', { month: 'short' });
++    if (!monthKey) return acc;
++    acc[monthKey] = (acc[monthKey] || 0) + 1;
++    return acc;
++  }, {});
++  const monthLabels = Object.keys(monthCounts).sort((a, b) => {
++    // sort by calendar order
++    const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
++    return monthOrder.indexOf(a) - monthOrder.indexOf(b);
++  });
++  const monthValues = monthLabels.map(m => monthCounts[m]);
++  const monthColors = defaultColors.slice(0, monthLabels.length);
+
+
+
+
+
+
+
 import React from 'react';
 import MyChart from './Chart';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
