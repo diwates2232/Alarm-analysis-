@@ -1,3 +1,6 @@
+Read carefully SummaryCards.js File and solve above issue and Give me Updated 
+js file carefully dont change another functions.
+
 
 import React from 'react';
 import MyChart from './Chart';
