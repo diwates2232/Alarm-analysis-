@@ -1,3 +1,161 @@
+Read below js file Carefully.There is Some functions are not Working yet
+read all Files Carefully and give Me Updated.js Files.
+
+Issue-1) Alarm Analysis Dashboard in this page there is Option for Select Month .Month options are added correctly but When i select Month option 
+Charts anre not filtered .Also Smoe charts are not visible, as well Some Shows Same data While  month is diffrent.
+So make sure Add filtered properly.
+
+2) Add Priority Wise dropDown on top .
+And main & Important Priority Wise charts are not Shows Priority partation Slices.
+it need to Display.
+
+
+First give me carefully above two problem Solutionsthen we will discuss next.
+So give me Updated js file those need to replace.
+
+File 1 
+
+Alarmcard.js
+
+
+import React from 'react';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters }) {
+  if (!summary) return null;
+
+  // apply all filters (region, location, month) to raw alarms
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && a.Month !== filters.month) return false;
+    return true;
+  });
+
+  const totalAlarms = filtered.length;
+  const sentCount = filtered.filter(a =>
+    a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
+  ).length;
+  const responseSentPercentage = totalAlarms
+    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 3 }}>
+      {/* Total Alarms */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Total Alarms
+            </Typography>
+            <Typography variant="h4">{totalAlarms}</Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* Response Sent % */}
+      <Grid item xs={12} sm={6} md={3}>
+        <Card>
+          <CardContent>
+            <Typography variant="subtitle1" gutterBottom>
+              Response Sent %
+            </Typography>
+            <Typography variant="h4">{responseSentPercentage}</Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+File 2
+
+charts.js
+
+
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+
+// stronger, fixed palette
+const defaultColors = [
+  '#3366CC', '#DC3912', '#FF9900', '#109618',
+  '#990099', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#316395'
+];
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+    const border = data.borderColor || bg;
+
+    const chartData = {
+      labels: data.labels,
+      datasets: [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 2,
+        ...(type === 'line' && {
+          tension: 0.3,
+          pointRadius: 6
+        })
+      }],
+    };
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      },
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+File 3
+
+Filters.js
+
+
+
 // src/components/Filters.js
 import React from 'react';
 import {
@@ -150,690 +308,450 @@ export default function Filters({
 
 
 
+File 4
 
-// src/components/AlarmsTable.js
-import React, { useMemo } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Button, Typography } from '@mui/material';
-import * as XLSX from 'xlsx';
-
-const AlarmsTable = ({
-  alarms = [],
-  maxRows = 10,
-  tableType = 'employee'
-}) => {
-  // Excel export
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(alarms);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Alarms');
-    XLSX.writeFile(wb, 'alarms.xlsx');
-  };
-
-  // 1) Employee stats with lastAction
-  const employeeStats = useMemo(() => {
-    const stats = {};
-    alarms.forEach(a => {
-      const emp = a['Employee Name'] || 'Unknown';
-      const dt = a.Date + ' ' + a['Time of  Alarm (Local time)'];
-      if (!stats[emp]) {
-        stats[emp] = {
-          total: 0,
-          types: new Set(),
-          doorRej: {},
-          lastDt: dt,
-          lastRegion: a.Region,
-          lastLocation: a.Location,
-          lastAction: a['Action Taken']
-        };
-      }
-      const e = stats[emp];
-      e.total += 1;
-      e.types.add(a.Rejection);
-      const drKey = `${a.Door}::${a.Rejection}`;
-      e.doorRej[drKey] = (e.doorRej[drKey] || 0) + 1;
-      if (dt > e.lastDt) {
-        e.lastDt = dt;
-        e.lastRegion = a.Region;
-        e.lastLocation = a.Location;
-        e.lastAction = a['Action Taken'];
-      }
-    });
-
-    return Object.entries(stats).map(([emp, s], idx) => {
-      const repeats = Object.entries(s.doorRej).filter(([, c]) => c > 1);
-      let topDoor = '', topCount = 0;
-      if (repeats.length) {
-        const [key, cnt] = repeats.reduce((a, b) => a[1] > b[1] ? a : b);
-        [topDoor] = key.split('::');
-        topCount = cnt;
-      }
-      const [lastDate, lastTime] = s.lastDt.split(' ');
-      return {
-        id: idx,
-        srNo: idx + 1,
-        lastDate,
-        lastTime,
-        location: s.lastLocation,
-        region: s.lastRegion,
-        employee: emp,
-        lastAction: s.lastAction,
-        total: s.total,
-        repeatedDoor: topDoor,
-        repeatCount: topCount,
-        rejectionTypes: Array.from(s.types).join(', ')
-      };
-    });
-  }, [alarms]);
-
-  // 2) Door stats
-  const doorStats = useMemo(() => {
-    const d = {};
-    alarms.forEach(a => {
-      const door = a.Door || 'Unknown';
-      if (!d[door]) d[door] = { total: 0, rejections: {} };
-      d[door].total += 1;
-      d[door].rejections[a.Rejection] = (d[door].rejections[a.Rejection]||0) + 1;
-    });
-    return Object.entries(d)
-      .filter(([, s]) => s.total > 1)
-      .map(([door, s], idx) => ({
-        id: idx,
-        door,
-        total: s.total,
-        rejectionCounts: Object.entries(s.rejections)
-          .map(([t,c]) => `${t}:${c}`)
-          .join(', ')
-      }));
-  }, [alarms]);
-
-  // 3) Detailed raw rows
-  const rawRows = useMemo(() => alarms.map((a,i) => ({ id: i, ...a })), [alarms]);
-
-  if (!alarms.length) {
-    return (
-      <Typography variant="h6" align="center" sx={{ mt: 4 }}>
-        No alarm records to display.
-      </Typography>
-    );
-  }
-
-  // Columns for each table
-  const empColumns = [
-    { field: 'srNo', headerName: 'Sr. No', width: 80 },
-    { field: 'lastDate', headerName: 'Date', width: 120 },
-    { field: 'lastTime', headerName: 'Time', width: 120 },
-    { field: 'location', headerName: 'Location', width: 150 },
-    { field: 'region', headerName: 'Region', width: 120 },
-    { field: 'employee', headerName: 'Operator', width: 180 },
-    { field: 'lastAction', headerName: 'Action Taken', width: 180 },
-    { field: 'total', headerName: 'Total Alarms', width: 130 },
-    { field: 'repeatedDoor', headerName: 'Repeated Door', width: 200 },
-    { field: 'repeatCount', headerName: 'Repeat Count', width: 130 },
-    { field: 'rejectionTypes', headerName: 'Types of Rejection', width: 300 },
-  ];
-
-  const doorColumns = [
-    { field: 'door', headerName: 'Door', width: 300 },
-    { field: 'total', headerName: 'Total Alarms', width: 150 },
-    { field: 'rejectionCounts', headerName: 'Rejection Counts', width: 400 }
-  ];
-
-  const rawColumns = [
-    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
-    { field: 'Date', headerName: 'Date', width: 120 },
-    { field: 'Time of  Alarm (Local time)', headerName: 'Time', width: 150 },
-    { field: 'Type of Alarm', headerName: 'Type', width: 150 },
-    { field: 'Door', headerName: 'Door', width: 250 },
-    { field: 'Location', headerName: 'Location', width: 150 },
-    { field: 'Region', headerName: 'Region', width: 120 },
-    { field: 'Rejection', headerName: 'Rejection', width: 180 },
-    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
-    {
-      field: 'Name of Person Attending Alarms (First, Last Name)',
-      headerName: 'Operator', width: 200
-    },
-    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
-    { field: ' Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 }
-  ];
-
-  return (
-    <div style={{ width: '100%', height: '100%' }}>
-      {tableType === 'employee' && (
-        <DataGrid
-          rows={employeeStats}
-          columns={empColumns}
-          pageSize={maxRows}
-          rowsPerPageOptions={[maxRows]}
-          autoHeight={false}
-        />
-      )}
-
-      {tableType === 'door' && (
-        <DataGrid
-          rows={doorStats}
-          columns={doorColumns}
-          pageSize={Math.min(5, maxRows)}
-          rowsPerPageOptions={[Math.min(5, maxRows)]}
-          autoHeight={false}
-        />
-      )}
-
-      {tableType === 'detailed' && (
-        <>
-          <Button variant="contained" color="primary" onClick={exportToExcel} sx={{ mb: 2 }}>
-            Export to Excel
-          </Button>
-          <DataGrid
-            rows={rawRows}
-            columns={rawColumns}
-            getRowClassName={params =>
-              params.row[' Time Taken (Min)'] > 0 ? 'sla-breach' : ''
-            }
-            pageSize={maxRows}
-            rowsPerPageOptions={[10, 20, 50].filter(x => x <= rawRows.length)}
-            autoHeight={false}
-          />
-        </>
-      )}
-    </div>
-  );
-};
-
-export default AlarmsTable;
-
-
-
-
-
-
-
-
-
-
-
-read below js file carefully.
-i want to make some Changes on Ui.
-
-1)So make Raw Alarms Analysis  heading add Icons for this .
-in headind add our two links for navigate Dashboard, raw alarms.
-
-2) Add all Filters for region , door , Employee, ect...(for all section)
-3) add search option for Employee . This is important
-4)Add select Date Filters for selecting date wise alarms.
-
-5)Employee Analysis - Display Only this table.and make a two Buttons for Door analysis, And 
-detailed Alarm record. Display Both table When click on buttons.
-
-6)Employee Analysis table add , Sr.No column, Date , Time ,Location,Region,Operator,Action Taken
-columns, and keep Previous Column same dont change it.
-
-7)Make all changes carefully and give me Updated js files.
-if need i will share you another files in my project.
-
-
-
-
-
-
-
-
-
-
-
-File 1
-
-Alarmtable.js
-
-
-
-// src/components/AlarmsTable.js
-import React, { useMemo } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Button, Typography } from '@mui/material';
-import * as XLSX from 'xlsx';
-
-const AlarmsTable = ({ alarms = [], maxRows = 100 }) => {
-  // Excel export
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(alarms);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Alarms');
-    XLSX.writeFile(wb, 'alarms.xlsx');
-  };
-
-  // 1) Aggregate per-employee stats
-  const employeeStats = useMemo(() => {
-    const stats = {};
-    alarms.forEach(a => {
-      const emp = a['Employee Name'] || 'Unknown';
-      const dt = a.Date + ' ' + a['Time of  Alarm (Local time)'];
-      if (!stats[emp]) {
-        stats[emp] = {
-          total: 0,
-          types: new Set(),
-          doorRej: {},
-          lastDt: dt,
-          lastRegion: a.Region,
-          lastLocation: a.Location,
-        };
-      }
-      const e = stats[emp];
-      e.total += 1;
-      e.types.add(a.Rejection);
-      const drKey = `${a.Door}::${a.Rejection}`;
-      e.doorRej[drKey] = (e.doorRej[drKey] || 0) + 1;
-      if (dt > e.lastDt) {
-        e.lastDt = dt;
-        e.lastRegion = a.Region;
-        e.lastLocation = a.Location;
-      }
-    });
-
-    return Object.entries(stats).map(([emp, s], idx) => {
-      const repeats = Object.entries(s.doorRej).filter(([, cnt]) => cnt > 1);
-      let topDoor = '', topCount = 0;
-      if (repeats.length) {
-        const [key, cnt] = repeats.reduce((a, b) => a[1] > b[1] ? a : b);
-        [topDoor] = key.split('::');
-        topCount = cnt;
-      }
-      const [lastDate, lastTime] = s.lastDt.split(' ');
-      return {
-        id: idx,
-        employee: emp,
-        lastDate,
-        lastTime,
-        total: s.total,
-        repeatedDoor: topDoor,
-        repeatCount: topCount,
-        rejectionTypes: Array.from(s.types).join(', '),
-        location: s.lastLocation,
-        region: s.lastRegion,
-      };
-    });
-  }, [alarms]);
-
-  // 2) Door Analysis
-  const doorStats = useMemo(() => {
-    const d = {};
-    alarms.forEach(a => {
-      const door = a.Door || 'Unknown';
-      if (!d[door]) d[door] = { total: 0, rejections: {} };
-      d[door].total += 1;
-      d[door].rejections[a.Rejection] = (d[door].rejections[a.Rejection] || 0) + 1;
-    });
-    return Object.entries(d)
-      .filter(([, s]) => s.total > 1)
-      .map(([door, s], idx) => ({
-        id: idx,
-        door,
-        total: s.total,
-        rejectionCounts: Object.entries(s.rejections)
-          .map(([type, c]) => `${type}:${c}`)
-          .join(', ')
-      }));
-  }, [alarms]);
-
-  // 3) Detailed raw rows
-  const rawRows = useMemo(() => alarms.map((a, i) => ({ id: i, ...a })), [alarms]);
-
-  if (!alarms.length) {
-    return (
-      <Typography variant="h6" align="center" style={{ marginTop: 40 }}>
-        No alarm records to display.
-      </Typography>
-    );
-  }
-
-  // Columns
-  const empColumns = [
-    { field: 'employee', headerName: 'Employee', width: 180 },
-    { field: 'lastDate', headerName: 'Last Date', width: 120 },
-    { field: 'lastTime', headerName: 'Last Time', width: 120 },
-    { field: 'total', headerName: 'Total Alarms', width: 130 },
-    { field: 'repeatedDoor', headerName: 'Repeated Door', width: 200 },
-    { field: 'repeatCount', headerName: 'Repeat Count', width: 130 },
-    { field: 'rejectionTypes', headerName: 'Types of Rejection', width: 300 },
-    { field: 'location', headerName: 'Location', width: 150 },
-    { field: 'region', headerName: 'Region', width: 120 },
-  ];
-
-  const doorColumns = [
-    { field: 'door', headerName: 'Door', width: 300 },
-    { field: 'total', headerName: 'Total Alarms', width: 150 },
-    { field: 'rejectionCounts', headerName: 'Rejection Counts', width: 400 }
-  ];
-
-  const rawColumns = [
-    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
-    { field: 'Date', headerName: 'Date', width: 120 },
-    { field: 'Time of  Alarm (Local time)', headerName: 'Time', width: 150 },
-    { field: 'Type of Alarm', headerName: 'Type', width: 150 },
-    { field: 'Door', headerName: 'Door', width: 250 },
-    { field: 'Location', headerName: 'Location', width: 150 },
-    { field: 'Region', headerName: 'Region', width: 120 },
-    { field: 'Rejection', headerName: 'Rejection', width: 180 },
-    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
-    {
-      field: 'Name of Person Attending Alarms (First, Last Name)',
-      headerName: 'Operator',
-      width: 200
-    },
-    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
-    { field: ' Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 }
-  ];
-
-  return (
-    <div style={{ width: '100%', height: '100vh' }}>
-      {/* Employee Analysis */}
-      <Typography variant="h5" gutterBottom>
-        Employee Analysis
-      </Typography>
-      <div style={{ height: '30%', marginBottom: 24 }}>
-        <DataGrid
-          rows={employeeStats}
-          columns={empColumns}
-          pageSize={maxRows}
-          rowsPerPageOptions={[maxRows]}
-          autoHeight={false}
-        />
-      </div>
-
-      {/* Door Analysis */}
-      <Typography variant="h5" gutterBottom>
-        Door Analysis
-      </Typography>
-      <div style={{ height: '20%', marginBottom: 24 }}>
-        <DataGrid
-          rows={doorStats}
-          columns={doorColumns}
-          pageSize={Math.min(5, maxRows)}
-          rowsPerPageOptions={[Math.min(5, maxRows)]}
-          autoHeight={false}
-        />
-      </div>
-
-      {/* Detailed Alarm Records */}
-      <Typography variant="h5" gutterBottom>
-        Detailed Alarm Records
-      </Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={exportToExcel}
-        style={{ marginBottom: 16 }}
-      >
-        Export to Excel
-      </Button>
-      <div style={{ height: '40%' }}>
-        <DataGrid
-          rows={rawRows}
-          columns={rawColumns}
-          getRowClassName={params =>
-            params.row[' Time Taken (Min)'] > 0 ? 'sla-breach' : ''
-          }
-          pageSize={maxRows}
-          rowsPerPageOptions={[50, 70, 100].filter(x => x <= rawRows.length)}
-          autoHeight={false}
-        />
-      </div>
-    </div>
-  );
-};
-
-export default AlarmsTable;
-
-
-
-
-File 2
-
-rawAlarms.js
-
-
-
-
-
-import React, { useEffect, useState, useMemo } from 'react';
-import AlarmsTable from '../components/AlarmsTable';
-import { getRawAlarms } from '../services/api';
-import { Typography, Container, Grid, TextField, MenuItem } from '@mui/material';
-
-const RawAlarms = () => {
-  const [alarms, setAlarms] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [filters, setFilters] = useState({
-    region: '',
-    location: '',
-    employee: '',
-    door: '',
-    priority: '',
-    rejection: ''
-  });
-
-  useEffect(() => {
-    getRawAlarms()
-      .then(res => setAlarms(res.data || []))
-      .catch(err => {
-        console.error(err);
-        setAlarms([]);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const regionFiltered = useMemo(() => {
-    return filters.region
-      ? alarms.filter(a => a.Region === filters.region)
-      : alarms;
-  }, [alarms, filters.region]);
-
-  const locationFiltered = useMemo(() => {
-    return filters.location
-      ? regionFiltered.filter(a => a.Location === filters.location)
-      : regionFiltered;
-  }, [regionFiltered, filters.location]);
-
-  const regionOptions = useMemo(() => [...new Set(alarms.map(a => a.Region))], [alarms]);
-  const locationOptions = useMemo(() => [...new Set(regionFiltered.map(a => a.Location))], [regionFiltered]);
-  const employeeOptions = useMemo(() => [...new Set(locationFiltered.map(a => a['Employee Name']))], [locationFiltered]);
-  const doorOptions = useMemo(() => [...new Set(locationFiltered.map(a => a.Door))], [locationFiltered]);
-  const priorityOptions = useMemo(() => [...new Set(locationFiltered.map(a => a['CCURE Incident Priority']))], [locationFiltered]);
-  const rejectionOptions = useMemo(() => [...new Set(locationFiltered.map(a => a.Rejection))], [locationFiltered]);
-
-  const filteredAlarms = useMemo(() => {
-    return alarms.filter(a => {
-      if (filters.region && a.Region !== filters.region) return false;
-      if (filters.location && a.Location !== filters.location) return false;
-      if (filters.employee && a['Employee Name'] !== filters.employee) return false;
-      if (filters.door && a.Door !== filters.door) return false;
-      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
-      if (filters.rejection && a.Rejection !== filters.rejection) return false;
-      return true;
-    });
-  }, [alarms, filters]);
-
-  if (loading) {
-    return (
-      <Container maxWidth={false} style={{ marginTop: 24, width: '100%' }}>
-        <Typography variant="h4">Raw Alarms</Typography>
-        <Typography>Loading alarms…</Typography>
-      </Container>
-    );
-  }
-
-  return (
-    <Container
-      maxWidth={false}
-      style={{
-        margin: 0,
-        padding: 0,
-        width: '100%',
-        height: '100vh',
-        overflow: 'auto'
-      }}
-    >
-      <div style={{ padding: '16px' }}>
-        <Typography variant="h4" gutterBottom>
-          Raw Alarms
-        </Typography>
-
-        <Grid container spacing={2} style={{ marginBottom: 16 }}>
-          {[
-            { label: 'Region', field: 'region', options: regionOptions },
-            { label: 'Location', field: 'location', options: locationOptions },
-            { label: 'Employee', field: 'employee', options: employeeOptions },
-            { label: 'Door', field: 'door', options: doorOptions },
-            { label: 'Priority', field: 'priority', options: priorityOptions },
-            { label: 'Rejection', field: 'rejection', options: rejectionOptions },
-          ].map(({ label, field, options }) => (
-            <Grid item xs={12} sm={6} md={4} lg={2} key={field}>
-              <TextField
-                select
-                label={label}
-                fullWidth
-                value={filters[field]}
-                onChange={e => setFilters(f => ({ ...f, [field]: e.target.value }))}
-              >
-                <MenuItem value="">All</MenuItem>
-                {options.map(opt => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-          ))}
-        </Grid>
-
-        <AlarmsTable alarms={filteredAlarms} maxRows={50} />
-      </div>
-    </Container>
-  );
-};
-
-export default RawAlarms;
-
-
-
-
-
-File 3
-
-Filters.js
-
+SummaryCards.js
 
 
 import React from 'react';
-import {
-  TextField,
-  MenuItem,
-  Grid,
-  InputAdornment,
-  Typography
-} from '@mui/material';
-import PublicIcon from '@mui/icons-material/Public';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import AlarmIcon from '@mui/icons-material/Alarm';
-import SendIcon from '@mui/icons-material/Send';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
 
-export default function Filters({
-  filters,
-  setFilters,
-  regionOptions = [],
-  locationOptions = [],
-  monthOptions = [],
- 
-}) {
-  const handleChange = field => e =>
-    setFilters(prev => ({
-      ...prev,
-      [field]: e.target.value,
-      ...(field === 'region' && { location: '' })
-    }));
+// fixed priority colors
+const PRIORITY_COLORS = {
+  High: '#DC3912',
+  Medium: '#FF9900',
+  Low: '#109618'
+};
+
+// strong default palette for other charts
+const defaultColors = [
+    '#FF9900', '#109618', ' #FED06A','#DC3912',
+  '#990099', '#0099C6','#C1D82F', '#66AA00','#3366CC',
+  '#B82E2E', '#316395','#71C9CD'
+];
+
+// unique fallback palette for rejection types (distinct from defaultColors)
+const REJECTION_COLORS = [
+  '#006400', // dark green
+  '#00008B', // dark blue
+  '#8B008B', // dark magenta
+  '#FF1493', // deep pink
+  '#00CED1', // dark turquoise
+  '#2F4F4F', // dark slate
+  '#6f1c03', // maroon
+  '#ff9a00', // orange red
+];
+
+// explicit mappings for key rejection types
+const REJECTION_COLOR_MAP = {
+  'Wrong PIN': '#109618',                       // green
+  'Clearance - Access Violation': '#FEDC56',      // gold  
+  'Expired': '#FF4F00',                         // dark red
+  'Disabled Badge': '#ED9121'             // orange
+};
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  const {
+    rejectionTypeWise = {},
+    regionWise = {},
+    monthWise = {},
+    locationWise = {},
+    operatorWise = {}
+  } = summary;
+
+  // --- 1. Rejection Stats with unique colors ---
+  function getRejectionStats() {
+    let entries;
+    if (!filters.region) {
+      entries = Object.entries(rejectionTypeWise);
+    } else if (!filters.location) {
+      const total = regionWise[filters.region]?.count || 0;
+      const byType = rawAlarms
+        .filter(a => a.Region === filters.region)
+        .reduce((acc, a) => {
+          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+          return acc;
+        }, {});
+      entries = Object.entries(byType).map(
+        ([type, count]) => [
+          type,
+          { count, percentage: total ? `${((count/total)*100).toFixed(2)}%` : '0%' }
+        ]
+      );
+    } else {
+      const total = locationWise[filters.location]?.count || 0;
+      const byType = rawAlarms
+        .filter(a => a.Region === filters.region && a.Location === filters.location)
+        .reduce((acc, a) => {
+          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+          return acc;
+        }, {});
+      entries = Object.entries(byType).map(
+        ([type, count]) => [
+          type,
+          { count, percentage: total ? `${((count/total)*100).toFixed(2)}%` : '0%' }
+        ]
+      );
+    }
+
+    return entries
+      .map(([type, info], idx) => {
+        // pick explicit map color or fallback
+        const color =
+          REJECTION_COLOR_MAP[type] ||
+          REJECTION_COLORS[idx % REJECTION_COLORS.length];
+        return {
+          type,
+          count: info.count,
+          percentage: info.percentage,
+          color
+        };
+      })
+      .sort((a, b) => b.count - a.count);
+  }
+  const rejectionStats = getRejectionStats();
+
+  // --- 2. Filter rawAlarms by region, location, month ---
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region && a.Region !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month && a.Month !== filters.month) return false;
+    return true;
+  });
+
+  // --- 3. Priority Wise ---
+  const prCounts = filtered.reduce((acc, a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l => prCounts[l]);
+  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#999');
+
+  // --- 4. Operator Wise ---
+  const opCountsObj = operatorWise || {};
+  const opLabels = Object.keys(opCountsObj);
+  const opValues = opLabels.map(l => opCountsObj[l].count || 0);
+  const opColors = defaultColors.slice(0, opLabels.length);
+
+  // --- 5. Partition Data ---
+  const partitionObj = !filters.region
+    ? Object.fromEntries(
+        Object.entries(regionWise).map(([r, info]) => [r, info.count || 0])
+      )
+    : filtered.reduce((acc, a) => {
+        acc[a.Location] = (acc[a.Location] || 0) + 1;
+        return acc;
+      }, {});
+  const partLabels = Object.keys(partitionObj);
+  const partValues = partLabels.map(l => partitionObj[l]);
+  const partColors = defaultColors.slice(0, partLabels.length);
+
+  // --- 6. Month Wise ---
+  const monthLabels = Object.keys(monthWise);
+  const monthValues = monthLabels.map(m => monthWise[m].count || 0);
+  const monthColors = defaultColors.slice(0, monthLabels.length);
+
+  // --- 7. Location Wise ---
+  const locLabels = Object.keys(locationWise);
+  const locValues = locLabels.map(l => locationWise[l].count || 0);
+  const locColors = defaultColors.slice(0, locLabels.length);
 
   return (
-    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
-      {/* Region */}
-      <Grid item>
-        <TextField
-          id="region-select"
-          label="Region"
-          select
-          value={filters.region}
-          onChange={handleChange('region')}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <PublicIcon />
-              </InputAdornment>
-            )
-          }}
-        >
-          <MenuItem value="">Global</MenuItem>
-          {regionOptions.map(region => (
-            <MenuItem key={region} value={region}>
-              {region}
-            </MenuItem>
-          ))}
-        </TextField>
+    <>
+      {/* Rejection-Type Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(({ type, count, percentage, color }) => (
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
 
-      {/* Location */}
-      <Grid item>
-        <TextField
-          id="location-select"
-          label="Location"
-          select
-          value={filters.location}
-          onChange={handleChange('location')}
-          disabled={!filters.region}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <LocationOnIcon />
-              </InputAdornment>
-            )
-          }}
-        >
-          <MenuItem value="">All Locations</MenuItem>
-          {locationOptions.map(loc => (
-            <MenuItem key={loc} value={loc}>
-              {loc}
-            </MenuItem>
-          ))}
-        </TextField>
+      {/* Partition / Priority / Location */}
+      <Grid container spacing={5} sx={{ mb: 4 }}>
+        {partLabels.length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
+                </Typography>
+                <MyChart
+                  type="doughnut"
+                  data={{ labels: partLabels, values: partValues, bgColors: partColors, borderColor: partColors }}
+                  height={600}
+                  width={650}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {prLabels.length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+                <MyChart
+                  type="pie"
+                  data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
+                  height={600}
+                  width={650}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {locLabels.length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Location Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Location' } },
+                      y: { title: { display: true, text: 'Alarm Count' } }
+                    }
+                  }}
+                  height={600}
+                  width={900}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
-      {/* Month */}
-      <Grid item>
-        <TextField
-          id="month-select"
-          label="Month"
-          select
-          value={filters.month}
-          onChange={handleChange('month')}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <CalendarMonthIcon />
-              </InputAdornment>
-            )
-          }}
-        >
-          <MenuItem value="">All Months</MenuItem>
-          {monthOptions.map(m => (
-            <MenuItem key={m} value={m}>
-              {m}
-            </MenuItem>
-          ))}
-        </TextField>
+      {/* Month / Operator */}
+      <Grid container spacing={5}>
+        {monthLabels.length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Month Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={{ labels: monthLabels, values: monthValues, bgColors: monthColors, borderColor: monthColors }}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Month' } },
+                      y: { title: { display: true, text: 'Alarm Count' } }
+                    }
+                  }}
+                  height={600}
+                  width={600}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {opLabels.length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+                <MyChart
+                  type="bar"
+                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
+                  height={600}
+                  width={800}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
-    </Grid>
+    </>
   );
 }
 
 
+
+
+File 5
+
+dashbosrd.js
+
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters      from '../components/Filters';
+import SummaryCards from '../components/SummaryCards';
+import AlarmCard    from '../components/AlarmCard';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
+
+  // Fetch data
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // Regions
+  const regionOptions = useMemo(
+    () => (summary ? Object.keys(summary.regionWise) : []),
+    [summary]
+  );
+
+  // Locations by region
+  const regionLocationsMap = useMemo(() => {
+    const map = {};
+    regionOptions.forEach(region => {
+      map[region] = Array.from(
+        new Set(rawAlarms.filter(a => a.Region === region).map(a => a.Location))
+      );
+    });
+    return map;
+  }, [rawAlarms, regionOptions]);
+
+  // Month options
+  const monthOptions = useMemo(
+    () => (summary ? Object.keys(summary.monthWise) : []),
+    [summary]
+  );
+
+  // Compute total alarms & response %
+  const { totalAlarms, responseSentPercentage } = useMemo(() => {
+    const base = rawAlarms.filter(a => {
+      if (filters.region && a.Region !== filters.region) return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.month && a.Month !== filters.month) return false;
+      return true;
+    });
+    const total = base.length;
+    const sent = base.filter(a =>
+      a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
+    ).length;
+    return {
+      totalAlarms: total,
+      responseSentPercentage: total
+        ? `${((sent / total) * 100).toFixed(2)}%`
+        : '0%'
+    };
+  }, [rawAlarms, filters]);
+
+  // Auto‐slide filters
+  const slidesRef = useRef([]);
+  const slideIdx  = useRef(0);
+  useEffect(() => {
+    if (!summary) return;
+    const slides = [{ region: '', location: '', month: '' }];
+    regionOptions.forEach(region => slides.push({ region, location: '', month: '' }));
+    slidesRef.current = slides;
+    slideIdx.current   = 0;
+    setFilters(slides[0]);
+    const id = setInterval(() => {
+      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
+      setFilters(slidesRef.current[slideIdx.current]);
+    }, 60000);
+    return () => clearInterval(id);
+  }, [summary, regionOptions]);
+
+  // Build filteredSummary for SummaryCards
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+    if (filters.region) {
+      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      (regionLocationsMap[filters.region] || [])
+        .filter(loc => !filters.location || loc === filters.location)
+        .forEach(loc => {
+          fs.locationWise[loc] = summary.locationWise[loc];
+        });
+    }
+    return fs;
+  }, [summary, filters, regionLocationsMap]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width: '100vw', minHeight: '100vh', p: 0, m: 0, overflowX: 'hidden' }}>
+      {/* Header */}
+      <Box
+        component="header"
+        sx={{
+          width: '100%',
+          borderBottom: '3px solid #1976d2',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          py: 2,
+          px: 4,
+          bgcolor: '#e3f2fd'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py: 4 }}>
+        <form autoComplete="off" noValidate>
+          {/* Filters row */}
+          <Filters
+            filters={filters}
+            setFilters={setFilters}
+            regionOptions={regionOptions}
+            locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
+            monthOptions={monthOptions}
+            totalAlarms={totalAlarms}
+            responseSentPercentage={responseSentPercentage}
+          />
+
+          {/* Alarm cards */}
+          <AlarmCard
+            summary={filteredSummary}
+            rawAlarms={rawAlarms}
+            filters={filters}
+            setFilters={setFilters}
+          />
+        </form>
+
+        {/* Summary charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={rawAlarms}
+        />
+      </Container>
+    </Box>
+  );
+}
 
 
 
