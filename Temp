@@ -1,3 +1,206 @@
+// src/components/Filters.js
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import SearchIcon from '@mui/icons-material/Search';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions,
+  employeeOptions,
+  doorOptions,
+  priorityOptions,
+  rejectionOptions
+}) {
+  const handleChange = field => e => {
+    const value = e.target.value;
+    setFilters(prev => {
+      // always start from previous, then override this field
+      const next = { ...prev, [field]: value };
+
+      // cascade resets:
+      if (field === 'region') {
+        // new region: clear location + everything downstream
+        next.location   = '';
+        next.month      = '';
+        next.priority   = '';
+        next.rejection  = '';
+        next.employee   = '';
+        next.door       = '';
+      }
+      if (field === 'location') {
+        // new location: clear month + downstream
+        next.month      = '';
+        next.priority   = '';
+        next.rejection  = '';
+        next.employee   = '';
+        next.door       = '';
+      }
+      if (field === 'month') {
+        // new month: clear priority + rejection
+        next.priority   = '';
+        next.rejection  = '';
+      }
+      if (field === 'priority') {
+        // new priority: clear rejection
+        next.rejection  = '';
+      }
+      if (field === 'employee') {
+        // selecting employee shouldn't clear other filters
+      }
+      if (field === 'door') {
+        // new door: clear rejection
+        next.rejection  = '';
+      }
+      return next;
+    });
+  };
+
+  return (
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          select label="Region" fullWidth
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><PublicIcon/></InputAdornment>
+          }}
+        >
+          <MenuItem value="">All Regions</MenuItem>
+          {regionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item>
+        <TextField
+          select label="Location" fullWidth
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><LocationOnIcon/></InputAdornment>
+          }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Month (Dashboard) */}
+      {monthOptions && (
+        <Grid item>
+          <TextField
+            select label="Month" fullWidth
+            value={filters.month}
+            onChange={handleChange('month')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><CalendarMonthIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem value="">All Months</MenuItem>
+            {monthOptions.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Employee (RawAlarms) */}
+      {employeeOptions && (
+        <Grid item>
+          <TextField
+            select label="Employee" fullWidth
+            value={filters.employee}
+            onChange={handleChange('employee')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><SearchIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem value="">All Employees</MenuItem>
+            {employeeOptions.map(e => <MenuItem key={e} value={e}>{e}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Door */}
+      {doorOptions && (
+        <Grid item>
+          <TextField
+            select label="Door" fullWidth
+            value={filters.door}
+            onChange={handleChange('door')}
+          >
+            <MenuItem value="">All Doors</MenuItem>
+            {doorOptions.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Priority */}
+      {priorityOptions && (
+        <Grid item>
+          <TextField
+            select label="Priority" fullWidth
+            value={filters.priority}
+            onChange={handleChange('priority')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><PriorityHighIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem value="">All Priorities</MenuItem>
+            {priorityOptions.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Rejection */}
+      {rejectionOptions && (
+        <Grid item>
+          <TextField
+            select label="Rejection" fullWidth
+            value={filters.rejection}
+            onChange={handleChange('rejection')}
+          >
+            <MenuItem value="">All Rejections</MenuItem>
+            {rejectionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Date */}
+      {filters.hasOwnProperty('date') && (
+        <Grid item>
+          <TextField
+            label="Date"
+            type="date"
+            fullWidth
+            value={filters.date}
+            onChange={handleChange('date')}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Grid>
+      )}
+    </Grid>
+  );
+}
+
+
+
+
+
+
 Read below Filters.js file 
 I will explain you Where filters are not Working yet.
 on Dashboard Ui When i slect Month Priority Wise  charts are not Visibled aslo Total Alarms Count
