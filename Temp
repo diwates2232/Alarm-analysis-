@@ -1,3 +1,58 @@
+
+
+--- a/src/components/SummaryCards.js
++++ b/src/components/SummaryCards.js
+@@ export default function SummaryCards({ summary, filters, rawAlarms }) {
+   // --- 2. Filter rawAlarms by region, location, month ---
+   const filtered = rawAlarms.filter(a => {
+     if (filters.region && a.Region !== filters.region) return false;
+     if (filters.location && a.Location !== filters.location) return false;
+     if (filters.month && a.Month !== filters.month) return false;
+     if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+     return true;
+   });
+@@
+   // --- 7. Location Wise (was using summary.locationWise) ---
+-  const locLabels = Object.keys(locationWise);
+-  const locValues = locLabels.map(l => locationWise[l].count || 0);
+-  const locColors = defaultColors.slice(0, locLabels.length);
++  const locCounts = filtered.reduce((acc, a) => {
++    acc[a.Location] = (acc[a.Location] || 0) + 1;
++    return acc;
++  }, {});
++  const locLabels = Object.keys(locCounts);
++  const locValues = locLabels.map(l => locCounts[l]);
++  const locColors = defaultColors.slice(0, locLabels.length);
+ 
+   return (
+@@
+         {locLabels.length > 0 && (
+           <Grid item xs={400} md={200}>
+             <Card sx={{ border: '1px solid #ccc' }}>
+               <CardContent>
+                 <Typography variant="h6" gutterBottom>Location Wise</Typography>
+-                <MyChart
++                <MyChart
+                   type="line"
+-                  data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
++                  data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
+                   options={{
+                     scales: {
+                       x: { title: { display: true, text: 'Location' } },
+                       y: { title: { display: true, text: 'Alarm Count' } }
+                     }
+                   }}
+                   height={600}
+                   width={900}
+                 />
+               </CardContent>
+             </Card>
+           </Grid>
+
+
+
+
+
 read Carefully dashboard.js File carefully.
 In Dashboard There is a One issue .When i select priority all data are Filtered Succesfully.
 But Total Alarms count , And responce Sent Percentage are not Update
