@@ -1,3 +1,344 @@
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+export default function Dashboard() {
+  const [summary, setSummary] = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters] = useState({
+    region: '', location: '', month: '', priority: ''
+  });
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // --- derive month from Date string ---
+  const getMonth = dateStr =>
+    new Date(dateStr).toLocaleString('en-US', { month: 'short' });
+
+  // 1) options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [], [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [], [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(() => (
+    Array.from(new Set(
+      rawAlarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => getMonth(a.Date))
+    ))
+    .sort((a, b) => a.localeCompare(b))
+  ), [rawAlarms, filters.region, filters.location]);
+
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
+
+  // 2) filtered base for cards & charts
+  const filtered = useMemo(() => {
+    return rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)   return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.month    && getMonth(a.Date) !== filters.month) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    });
+  }, [rawAlarms, filters]);
+
+  // 3) summary slice for cards/charts
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+
+    // regionWise & locationWise
+    if (filters.region) {
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
+        });
+    }
+
+    // monthWise
+    if (filters.month) {
+      const mCount = filtered.filter(a => getMonth(a.Date) === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {};
+    }
+
+    // operatorWise
+    const opCounts = filtered.reduce((c, a) => {
+      const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+      c[op] = (c[op] || 0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
+    return fs;
+  }, [summary, filtered, filters, locationOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
+      <Box component="header" sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py: 4 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
+
+        {/* cards (top row) */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={filtered}
+          filters={filters}
+        />
+
+        {/* charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={filtered}
+        />
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+
+
+
+import React from 'react';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+const PRIORITY_COLORS = {
+  High: '#DC3912',
+  Medium: '#FF9900',
+  Low: '#109618'
+};
+
+const defaultColors = [
+  '#FF9900', '#109618', '#FED06A', '#DC3912',
+  '#990099', '#0099C6', '#C1D82F', '#66AA00',
+  '#3366CC', '#B82E2E', '#316395', '#71C9CD'
+];
+
+const REJECTION_COLORS = [
+  '#006400', '#00008B', '#8B008B', '#FF1493',
+  '#00CED1', '#2F4F4F', '#6f1c03', '#ff9a00'
+];
+
+const REJECTION_COLOR_MAP = {
+  'Wrong PIN': '#109618',
+  'Clearance - Access Violation': '#FEDC56',
+  'Expired': '#FF4F00',
+  'Disabled Badge': '#ED9121'
+};
+
+// helper to extract short month from date string
+const getMonth = dateStr =>
+  new Date(dateStr).toLocaleString('en-US', { month: 'short' });
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  const {
+    rejectionTypeWise = {},
+    regionWise = {},
+    monthWise = {},
+    locationWise = {},
+    operatorWise = {}
+  } = summary;
+
+  // single filtered set
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region   && a.Region   !== filters.region) return false;
+    if (filters.location && a.Location !== filters.location) return false;
+    if (filters.month    && getMonth(a.Date) !== filters.month) return false;
+    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+    return true;
+  });
+
+  // 1) Rejection Stats from filtered
+  const rejectionCounts = filtered.reduce((acc, a) => {
+    acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
+    return acc;
+  }, {});
+  const rejectionStats = Object.entries(rejectionCounts)
+    .map(([type, count], idx) => {
+      const percentage = filtered.length
+        ? `${((count / filtered.length) * 100).toFixed(2)}%`
+        : '0%';
+      const color = REJECTION_COLOR_MAP[type]
+        || REJECTION_COLORS[idx % REJECTION_COLORS.length];
+      return { type, count, percentage, color };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  // 3) Priority Wise
+  const prCounts = filtered.reduce((acc, a) => {
+    const p = a['CCURE Incident Priority'];
+    acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {});
+  const prLabels = Object.keys(prCounts);
+  const prValues = prLabels.map(l => prCounts[l]);
+  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#999');
+
+  // 4) Operator Wise (from summary.operatorWise)
+  const opCountsObj = operatorWise || {};
+  const opLabels = Object.keys(opCountsObj);
+  const opValues = opLabels.map(l => opCountsObj[l].count || 0);
+  const opColors = defaultColors.slice(0, opLabels.length);
+
+  // 5) Partition Data
+  const partitionObj = !filters.region
+    ? Object.fromEntries(
+        Object.entries(regionWise).map(([r, info]) => [r, info.count || 0])
+      )
+    : filtered.reduce((acc, a) => {
+        acc[a.Location] = (acc[a.Location] || 0) + 1;
+        return acc;
+      }, {});
+  const partLabels = Object.keys(partitionObj);
+  const partValues = partLabels.map(l => partitionObj[l]);
+  const partColors = defaultColors.slice(0, partLabels.length);
+
+  // 6) Month Wise from filtered
+  const monthCounts = filtered.reduce((acc, a) => {
+    const key = getMonth(a.Date);
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthLabels = Object.keys(monthCounts)
+    .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+  const monthValues = monthLabels.map(m => monthCounts[m]);
+  const monthColors = defaultColors.slice(0, monthLabels.length);
+
+  // 7) Location Wise from filtered
+  const locCounts = filtered.reduce((acc, a) => {
+    acc[a.Location] = (acc[a.Location] || 0) + 1;
+    return acc;
+  }, {});
+  const locLabels = Object.keys(locCounts);
+  const locValues = locLabels.map(l => locCounts[l]);
+  const locColors = defaultColors.slice(0, locLabels.length);
+
+  return (
+    <>
+      {/* Rejection-Type Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(({ type, count, percentage, color }) => (
+          <Grid item xs={12} sm={6} md={3} key={type}>
+            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{type}</Typography>
+                <Typography variant="h6">{count}</Typography>
+                <Typography variant="body2">{percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Partition / Priority / Location */}
+      {/* … unchanged … */}
+
+      {/* Month / Operator */}
+      <Grid container spacing={5}>
+        {monthLabels.length > 0 && (
+          <Grid item xs={400} md={200}>
+            <Card sx={{ border: '1px solid #ccc' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Month Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={{
+                    labels: monthLabels,
+                    values: monthValues,
+                    bgColors: monthColors,
+                    borderColor: monthColors
+                  }}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Month' } },
+                      y: { title: { display: true, text: 'Alarm Count' } }
+                    }
+                  }}
+                  height={600}
+                  width={600}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+        {/* Operator chart … unchanged … */}
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
 let check both file and make changes carefully.
 dont make changes in another functions.
 
