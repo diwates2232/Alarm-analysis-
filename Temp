@@ -1,512 +1,155 @@
-// src/components/SummaryCards.js
-import React from 'react';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
+read carefully rawAlarms.js file carefully.and add Export to Excel function on Employee Anaysis table as Well Door Analysis 
 
-const PRIORITY_COLORS = {
-  High: '#DC3912',
-  Medium: '#FF9900',
-  Low: '#109618'
-};
+add this button as per requirnment and Give me Updated js file carefully.dont make Another changes.
 
-const defaultColors = [
-  '#FF9900', '#109618', '#FED06A', '#DC3912',
-  '#990099', '#0099C6', '#C1D82F', '#66AA00',
-  '#3366CC', '#B82E2E', '#316395', '#71C9CD'
-];
 
-const REJECTION_COLORS = [
-  '#006400', '#00008B', '#8B008B', '#FF1493',
-  '#00CED1', '#2F4F4F', '#6f1c03', '#ff9a00'
-];
+// src/pages/RawAlarms.js
+import React, { useEffect, useState, useMemo } from 'react';
+import { Typography, Container, Grid, TextField, MenuItem, Box, Button, Link } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import Filters from '../components/Filters';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
 
-const REJECTION_COLOR_MAP = {
-  'Wrong PIN': '#109618',
-  'Clearance - Access Violation': '#FEDC56',
-  'Expired': '#FF4F00',
-  'Disabled Badge': '#ED9121'
-};
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-
-  const {
-    rejectionTypeWise = {},
-    regionWise = {},
-    monthWise = {},
-    locationWise = {},
-    operatorWise = {}
-  } = summary;
-
-  // --- single filtered array applying ALL filters ---
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month    && a.Month    !== filters.month)    return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
-    return true;
+export default function RawAlarms() {
+  const [alarms, setAlarms]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', door: '', employee: '',
+    priority: '', rejection: '', date: ''
   });
+  const [view, setView] = useState('employee');
 
-  // --- 1. Rejection Stats from filtered ---
-  const rejectionCounts = filtered.reduce((acc, a) => {
-    acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-    return acc;
-  }, {});
-  const rejectionStats = Object.entries(rejectionCounts)
-    .map(([type, count], idx) => {
-      const percentage = filtered.length
-        ? `${((count / filtered.length) * 100).toFixed(2)}%`
-        : '0%';
-      const color = REJECTION_COLOR_MAP[type]
-        || REJECTION_COLORS[idx % REJECTION_COLORS.length];
-      return { type, count, percentage, color };
-    })
-    .sort((a, b) => b.count - a.count);
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(() => setAlarms([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  // --- 3. Priority Wise ---
-  const prCounts = filtered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#999');
-
-  // --- 4. Operator Wise (comes from summary.operatorWise) ---
-  const opCountsObj = operatorWise || {};
-  const opLabels = Object.keys(opCountsObj);
-  const opValues = opLabels.map(l => opCountsObj[l].count || 0);
-  const opColors = defaultColors.slice(0, opLabels.length);
-
-  // --- 5. Partition Data (region or location) ---
-  const partitionObj = !filters.region
-    ? Object.fromEntries(
-        Object.entries(regionWise).map(([r, info]) => [r, info.count || 0])
-      )
-    : filtered.reduce((acc, a) => {
-        acc[a.Location] = (acc[a.Location] || 0) + 1;
-        return acc;
-      }, {});
-  const partLabels = Object.keys(partitionObj);
-  const partValues = partLabels.map(l => partitionObj[l]);
-  const partColors = defaultColors.slice(0, partLabels.length);
-
-  // --- 6. Month Wise from filtered ---
-  const monthCounts = filtered.reduce((acc, a) => {
-    const key = a.Month
-      || new Date(a.Date).toLocaleString('en-US', { month: 'short' });
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const monthLabels = Object.keys(monthCounts).sort((a,b) =>
-    monthOrder.indexOf(a) - monthOrder.indexOf(b)
+  // derive filter options
+  const regionOptions = useMemo(
+    () => Array.from(new Set(alarms.map(a => a.Region))).sort(),
+    [alarms]
   );
-  const monthValues = monthLabels.map(m => monthCounts[m]);
-  const monthColors = defaultColors.slice(0, monthLabels.length);
 
-  // --- 7. Location Wise from filtered ---
-  const locCounts = filtered.reduce((acc, a) => {
-    acc[a.Location] = (acc[a.Location] || 0) + 1;
-    return acc;
-  }, {});
-  const locLabels = Object.keys(locCounts);
-  const locValues = locLabels.map(l => locCounts[l]);
-  const locColors = defaultColors.slice(0, locLabels.length);
+  const locationOptions = useMemo(
+    () => Array.from(new Set(
+      alarms
+        .filter(a => !filters.region || a.Region === filters.region)
+        .map(a => a.Location)
+    )).sort(),
+    [alarms, filters.region]
+  );
+
+  const doorOptions = useMemo(
+    () => Array.from(new Set(
+      alarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => a.Door)
+    )).sort(),
+    [alarms, filters.region, filters.location]
+  );
+
+  // employeeOptions now built from same region+location slice:
+  const employeeOptions = useMemo(
+    () => Array.from(new Set(
+      alarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => a['Employee Name'])
+    )).sort(),
+    [alarms, filters.region, filters.location]
+  );
+
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(alarms.map(a => a['CCURE Incident Priority']))).sort(),
+    [alarms]
+  );
+
+  const rejectionOptions = useMemo(
+    () => Array.from(new Set(alarms.map(a => a.Rejection))).sort(),
+    [alarms]
+  );
+
+  const filtered = useMemo(() => {
+    return alarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)                return false;
+      if (filters.location && a.Location !== filters.location)              return false;
+      if (filters.door     && a.Door     !== filters.door)                  return false;
+      if (filters.employee && a['Employee Name'] !== filters.employee)      return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      if (filters.rejection && a.Rejection !== filters.rejection)           return false;
+      if (filters.date     && a.Date     !== filters.date)                  return false;
+      return true;
+    });
+  }, [alarms, filters]);
+
+  if (loading) return (
+    <Container maxWidth={false} sx={{ pt: 4 }}>
+      <Typography variant="h4">Raw Alarms</Typography>
+      <Typography>Loading…</Typography>
+    </Container>
+  );
 
   return (
-    <>
-      {/* Rejection-Type Cards */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={12} sm={6} md={3} key={type}>
-            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-              <CardContent>
-                <Typography variant="subtitle2">{type}</Typography>
-                <Typography variant="h6">{count}</Typography>
-                <Typography variant="body2">{percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+    <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
+      {/* Header */}
+      <Box sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        bgcolor: 'background.paper', p: 2, borderBottom: 1, borderColor: 'divider'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TableChartIcon fontSize="large" />
+          <Typography variant="h4">Raw Alarms Analysis</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link href="/"><DashboardIcon /> Dashboard</Link>
+          <Link href="/alarms"><TableChartIcon /> Raw Alarms</Link>
+        </Box>
+      </Box>
 
-      {/* Partition / Priority / Location */}
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {partLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
-                </Typography>
-                <MyChart
-                  type="doughnut"
-                  data={{ labels: partLabels, values: partValues, bgColors: partColors, borderColor: partColors }}
-                  height={600}
-                  width={650}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {prLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-                <MyChart
-                  type="pie"
-                  data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                  height={600}
-                  width={650}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {locLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Location Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={900}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
+      {/* Filters */}
+      <Box sx={{ p: 2 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          doorOptions={doorOptions}
+          employeeOptions={employeeOptions}
+          priorityOptions={priorityOptions}
+          rejectionOptions={rejectionOptions}
+        />
+      </Box>
 
-      {/* Month / Operator */}
-      <Grid container spacing={5}>
-        {monthLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{
-                    labels: monthLabels,
-                    values: monthValues,
-                    bgColors: monthColors,
-                    borderColor: monthColors
-                  }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Month' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {opLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-                <MyChart
-                  type="bar"
-                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
-                  height={600}
-                  width={800}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </>
+      {/* View toggle */}
+      <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+        <Button
+          variant={view==='employee'?'contained':'outlined'}
+          onClick={() => setView('employee')}
+        >Employee Analysis</Button>
+        <Button
+          variant={view==='door'?'contained':'outlined'}
+          onClick={() => setView('door')}
+        >Door Analysis</Button>
+        <Button
+          variant={view==='detailed'?'contained':'outlined'}
+          onClick={() => setView('detailed')}
+        >Detailed Records</Button>
+      </Box>
+
+      {/* Table */}
+      <Box sx={{ p: 2 }}>
+        <AlarmsTable alarms={filtered} maxRows={100} tableType={view} />
+      </Box>
+    </Container>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-let check my previous file and add changes on this file and give me Updated js file carefully.
-dont make another changes
-
-// src/components/SummaryCards.js
-import React from 'react';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const PRIORITY_COLORS = {
-  High: '#DC3912',
-  Medium: '#FF9900',
-  Low: '#109618'
-};
-
-const defaultColors = [
-  '#FF9900', '#109618', '#FED06A', '#DC3912',
-  '#990099', '#0099C6', '#C1D82F', '#66AA00',
-  '#3366CC', '#B82E2E', '#316395', '#71C9CD'
-];
-
-const REJECTION_COLORS = [
-  '#006400', '#00008B', '#8B008B', '#FF1493',
-  '#00CED1', '#2F4F4F', '#6f1c03', '#ff9a00'
-];
-
-const REJECTION_COLOR_MAP = {
-  'Wrong PIN': '#109618',
-  'Clearance - Access Violation': '#FEDC56',
-  'Expired': '#FF4F00',
-  'Disabled Badge': '#ED9121'
-};
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-
-  const {
-    rejectionTypeWise = {},
-    regionWise = {},
-    monthWise = {},
-    locationWise = {},
-    operatorWise = {}
-  } = summary;
-
-  function getRejectionStats() {
-    let entries;
-    if (!filters.region) {
-      entries = Object.entries(rejectionTypeWise);
-    } else if (!filters.location) {
-      const total = regionWise[filters.region]?.count || 0;
-      const byType = rawAlarms
-        .filter(a => a.Region === filters.region)
-        .reduce((acc, a) => {
-          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-          return acc;
-        }, {});
-      entries = Object.entries(byType).map(
-        ([type, count]) => [type, { count, percentage: total ? `${((count / total) * 100).toFixed(2)}%` : '0%' }]
-      );
-    } else {
-      const total = locationWise[filters.location]?.count || 0;
-      const byType = rawAlarms
-        .filter(a => a.Region === filters.region && a.Location === filters.location)
-        .reduce((acc, a) => {
-          acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-          return acc;
-        }, {});
-      entries = Object.entries(byType).map(
-        ([type, count]) => [type, { count, percentage: total ? `${((count / total) * 100).toFixed(2)}%` : '0%' }]
-      );
-    }
-
-    return entries
-      .map(([type, info], idx) => ({
-        type,
-        count: info.count,
-        percentage: info.percentage,
-        color: REJECTION_COLOR_MAP[type] || REJECTION_COLORS[idx % REJECTION_COLORS.length]
-      }))
-      .sort((a, b) => b.count - a.count);
-  }
-
-  const rejectionStats = getRejectionStats();
-
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region && a.Region !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month && a.Month !== filters.month) return false;
-    return true;
-  });
-
-  const prCounts = filtered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#999');
-
-  const opCountsObj = operatorWise || {};
-  const opLabels = Object.keys(opCountsObj);
-  const opValues = opLabels.map(l => opCountsObj[l].count || 0);
-  const opColors = defaultColors.slice(0, opLabels.length);
-
-  const partitionObj = !filters.region
-    ? Object.fromEntries(Object.entries(regionWise).map(([r, info]) => [r, info.count || 0]))
-    : filtered.reduce((acc, a) => {
-      acc[a.Location] = (acc[a.Location] || 0) + 1;
-      return acc;
-    }, {});
-  const partLabels = Object.keys(partitionObj);
-  const partValues = partLabels.map(l => partitionObj[l]);
-  const partColors = defaultColors.slice(0, partLabels.length);
-
-  const monthCounts = filtered.reduce((acc, a) => {
-    const monthKey = a.Month || new Date(a.Date).toLocaleString('en-US', { month: 'short' });
-    if (!monthKey) return acc;
-    acc[monthKey] = (acc[monthKey] || 0) + 1;
-    return acc;
-  }, {});
-  const monthLabels = Object.keys(monthCounts).sort((a, b) => {
-    const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return monthOrder.indexOf(a) - monthOrder.indexOf(b);
-  });
-  const monthValues = monthLabels.map(m => monthCounts[m]);
-  const monthColors = defaultColors.slice(0, monthLabels.length);
-
-
-   const locCounts = filtered.reduce((acc, a) => {
-        acc[a.Location] = (acc[a.Location] || 0) + 1;
-        return acc;
-     }, {});
-      const locLabels = Object.keys(locCounts);
-      const locValues = locLabels.map(l => locCounts[l]);
-      const locColors = defaultColors.slice(0, locLabels.length);
-     
-
-
-
-  return (
-    <>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={12} sm={6} md={3} key={type}>
-            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-              <CardContent>
-                <Typography variant="subtitle2">{type}</Typography>
-                <Typography variant="h6">{count}</Typography>
-                <Typography variant="body2">{percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {partLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
-                </Typography>
-                <MyChart
-                  type="doughnut"
-                  data={{ labels: partLabels, values: partValues, bgColors: partColors, borderColor: partColors }}
-                  height={600}
-                  width={650}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {prLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-                <MyChart
-                  type="pie"
-                  data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                  height={600}
-                  width={650}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {locLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Location Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={900}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-
-      <Grid container spacing={5}>
-        {monthLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{
-                    labels: monthLabels,
-                    values: monthValues,
-                    bgColors: monthColors,
-                    borderColor: monthColors
-                  }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Month' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={600}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {opLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-                <MyChart
-                  type="bar"
-                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
-                  height={600}
-                  width={800}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </>
-  );
-}
-
