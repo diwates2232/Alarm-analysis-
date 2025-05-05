@@ -1,3 +1,66 @@
+Read Caregully my API responce . and Add Employee ID on Employee Analysis table , 
+& Add Employee name & Employee ID on Details Records table .
+
+
+[
+  {
+    "Sr. No": 1,
+    "Date": "01-Apr-25",
+    "Time of  Alarm (Local time)": "05:21:18",
+    "Owner": "GSOC",
+    "Type of Alarm": "Badge Access",
+    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
+    "Location": "LT.Vilnius",
+    "Region": "EMEA",
+    "Rejection": "Wrong Pin",
+    "CCURE Incident Priority": "Low",
+    "Name of Person Attending Alarms (First, Last Name)": "Manisha Choudhari",
+    "Employee Name": "Jhorar, Kapil",
+    "Employee ID No": 326022,
+    "If Reoccured Yes/No": "No",
+    "Action Taken": "Not Sent",
+    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
+    "Target SLA in Mins": "0:00:00",
+    "Date of Action (MM/DD/YY)": "01-Apr-25",
+    "Time of Action": "05:21:18",
+    " Time Taken (Min)": 0,
+    "Time of Completion": "05:21:18",
+    "If not resolved, escalated to?": "NA",
+    "Date of Escalation": "NA",
+    "Time Of Escalation": "NA",
+    "Completed By": "Manisha Choudhari"
+  },
+  {
+    "Sr. No": 2,
+    "Date": "01-Apr-25",
+    "Time of  Alarm (Local time)": "11:12:09",
+    "Owner": "GSOC",
+    "Type of Alarm": "Badge Access",
+    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
+    "Location": "LT.Vilnius",
+    "Region": "EMEA",
+    "Rejection": "Wrong Pin",
+    "CCURE Incident Priority": "Low",
+    "Name of Person Attending Alarms (First, Last Name)": "Swapnil Diwate",
+    "Employee Name": "Zikov Laurino, Ivan Alexander",
+    "If Reoccured Yes/No": "No",
+    "Action Taken": "Not Sent",
+    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
+    "Target SLA in Mins": "0:00:00",
+    "Date of Action (MM/DD/YY)": "01-Apr-25",
+    "Time of Action": "11:12:09",
+    " Time Taken (Min)": 0,
+    "Time of Completion": "11:12:09",
+    "If not resolved, escalated to?": "NA",
+    "Date of Escalation": "NA",
+    "Time Of Escalation": "NA",
+    "Completed By": "Swapnil Diwate"
+  },
+
+
+file 1
+Alarms.js 
+
 // src/pages/RawAlarms.js
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
@@ -240,168 +303,3 @@ export default function RawAlarms() {
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-read carefully rawAlarms.js file carefully.and add Export to Excel function on Employee Anaysis table as Well Door Analysis 
-
-add this button as per requirnment and Give me Updated js file carefully.dont make Another changes.
-
-
-// src/pages/RawAlarms.js
-import React, { useEffect, useState, useMemo } from 'react';
-import { Typography, Container, Grid, TextField, MenuItem, Box, Button, Link } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import Filters from '../components/Filters';
-import AlarmsTable from '../components/AlarmsTable';
-import { getRawAlarms } from '../services/api';
-
-export default function RawAlarms() {
-  const [alarms, setAlarms]       = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [filters, setFilters]     = useState({
-    region: '', location: '', door: '', employee: '',
-    priority: '', rejection: '', date: ''
-  });
-  const [view, setView] = useState('employee');
-
-  useEffect(() => {
-    getRawAlarms()
-      .then(res => setAlarms(res.data || []))
-      .catch(() => setAlarms([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  // derive filter options
-  const regionOptions = useMemo(
-    () => Array.from(new Set(alarms.map(a => a.Region))).sort(),
-    [alarms]
-  );
-
-  const locationOptions = useMemo(
-    () => Array.from(new Set(
-      alarms
-        .filter(a => !filters.region || a.Region === filters.region)
-        .map(a => a.Location)
-    )).sort(),
-    [alarms, filters.region]
-  );
-
-  const doorOptions = useMemo(
-    () => Array.from(new Set(
-      alarms
-        .filter(a =>
-          (!filters.region   || a.Region   === filters.region) &&
-          (!filters.location || a.Location === filters.location)
-        )
-        .map(a => a.Door)
-    )).sort(),
-    [alarms, filters.region, filters.location]
-  );
-
-  // employeeOptions now built from same region+location slice:
-  const employeeOptions = useMemo(
-    () => Array.from(new Set(
-      alarms
-        .filter(a =>
-          (!filters.region   || a.Region   === filters.region) &&
-          (!filters.location || a.Location === filters.location)
-        )
-        .map(a => a['Employee Name'])
-    )).sort(),
-    [alarms, filters.region, filters.location]
-  );
-
-  const priorityOptions = useMemo(
-    () => Array.from(new Set(alarms.map(a => a['CCURE Incident Priority']))).sort(),
-    [alarms]
-  );
-
-  const rejectionOptions = useMemo(
-    () => Array.from(new Set(alarms.map(a => a.Rejection))).sort(),
-    [alarms]
-  );
-
-  const filtered = useMemo(() => {
-    return alarms.filter(a => {
-      if (filters.region   && a.Region   !== filters.region)                return false;
-      if (filters.location && a.Location !== filters.location)              return false;
-      if (filters.door     && a.Door     !== filters.door)                  return false;
-      if (filters.employee && a['Employee Name'] !== filters.employee)      return false;
-      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
-      if (filters.rejection && a.Rejection !== filters.rejection)           return false;
-      if (filters.date     && a.Date     !== filters.date)                  return false;
-      return true;
-    });
-  }, [alarms, filters]);
-
-  if (loading) return (
-    <Container maxWidth={false} sx={{ pt: 4 }}>
-      <Typography variant="h4">Raw Alarms</Typography>
-      <Typography>Loading…</Typography>
-    </Container>
-  );
-
-  return (
-    <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
-      {/* Header */}
-      <Box sx={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        bgcolor: 'background.paper', p: 2, borderBottom: 1, borderColor: 'divider'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <TableChartIcon fontSize="large" />
-          <Typography variant="h4">Raw Alarms Analysis</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Link href="/"><DashboardIcon /> Dashboard</Link>
-          <Link href="/alarms"><TableChartIcon /> Raw Alarms</Link>
-        </Box>
-      </Box>
-
-      {/* Filters */}
-      <Box sx={{ p: 2 }}>
-        <Filters
-          filters={filters}
-          setFilters={setFilters}
-          regionOptions={regionOptions}
-          locationOptions={locationOptions}
-          doorOptions={doorOptions}
-          employeeOptions={employeeOptions}
-          priorityOptions={priorityOptions}
-          rejectionOptions={rejectionOptions}
-        />
-      </Box>
-
-      {/* View toggle */}
-      <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
-        <Button
-          variant={view==='employee'?'contained':'outlined'}
-          onClick={() => setView('employee')}
-        >Employee Analysis</Button>
-        <Button
-          variant={view==='door'?'contained':'outlined'}
-          onClick={() => setView('door')}
-        >Door Analysis</Button>
-        <Button
-          variant={view==='detailed'?'contained':'outlined'}
-          onClick={() => setView('detailed')}
-        >Detailed Records</Button>
-      </Box>
-
-      {/* Table */}
-      <Box sx={{ p: 2 }}>
-        <AlarmsTable alarms={filtered} maxRows={100} tableType={view} />
-      </Box>
-    </Container>
-  );
-}
