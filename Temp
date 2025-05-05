@@ -1,3 +1,374 @@
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+export default function Dashboard() {
+  const [summary, setSummary] = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters] = useState({
+    region: '', location: '', month: '', priority: ''
+  });
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // 1) options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [], [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [], [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(
+    () => Array.from(new Set(
+          rawAlarms
+            .filter(a => (!filters.region || a.Region === filters.region) &&
+                         (!filters.location || a.Location === filters.location))
+            .map(a => a.Month)
+        ))
+        .sort((a,b)=> a.localeCompare(b)),
+    [rawAlarms, filters.region, filters.location]
+  );
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
+
+  // 2) filtered base for cards & charts
+  const filtered = useMemo(() => {
+    return rawAlarms.filter(a => {
+      if (filters.region && a.Region !== filters.region) return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.month && a.Month !== filters.month) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    });
+  }, [rawAlarms, filters]);
+
+  // 3) summary slice for cards/charts
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    // keep rejectionTypeWise, then overwrite regionWise/monthWise/locationWise/operatorWise
+    const fs = { ...summary };
+
+    // regionWise & locationWise
+    if (filters.region) {
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
+        });
+    }
+
+    // monthWise
+    if (filters.month) {
+      const mCount = filtered.filter(a => a.Month === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {}; // we’ll build from filtered raw
+    }
+
+    // operatorWise
+    const opCounts = filtered.reduce((c,a)=>{
+      const op = a['Name of Person Attending Alarms (First, Last Name)']||'Unknown';
+      c[op] = (c[op]||0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k,v])=>[k,{count:v}])
+    );
+
+    return fs;
+  }, [summary, filtered, filters, locationOptions]);
+
+  if (!summary) return <Typography>Loading dashboard…</Typography>;
+
+  return (
+    <Box sx={{ width:'100vw', minHeight:'100vh', overflowX:'hidden' }}>
+      <Box component="header" sx={{
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        borderBottom:'3px solid #1976d2', bgcolor:'#e3f2fd', p:2
+      }}>
+        <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+          <DashboardIcon fontSize="large" /><Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display:'flex', gap:2 }}>
+          <Link to="/">➤ Dashboard</Link><Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py:4 }}>
+        <Filters
+          filters={filters} setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
+
+        {/* cards (top row) */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={rawAlarms}
+          filters={filters}
+        />
+
+        {/* charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={filtered}
+        />
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+
+import React from 'react';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+// … your color constants unchanged …
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  const {
+    rejectionTypeWise = {},
+    regionWise = {},
+    monthWise = {},
+    locationWise = {},
+    operatorWise = {}
+  } = summary;
+
+  // 1) Rejection stats (unchanged) …
+
+  // 2) Use rawAlarms (already filtered) for month chart:
+  const monthLabels = Object.keys(monthWise);
+  const monthValues = monthLabels.map(m => monthWise[m].count || 0);
+  const monthColors = defaultColors.slice(0, monthLabels.length);
+
+  // 3) The rest (partition, priority, operator) all use the
+  // same `rawAlarms` slice passed from Dashboard above.
+
+  return (
+    <>
+      {/* Rejection-Type Cards */}  
+      {/* … */}
+
+      {/* Partition / Priority / Location charts */}
+      {/* … */}
+
+      {/* Month / Operator */}
+      <Grid container spacing={5}>
+        {monthLabels.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card sx={{ border:'1px solid #ccc', boxShadow:3 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Month Wise</Typography>
+                <MyChart
+                  type="line"
+                  data={{ labels: monthLabels, values: monthValues, bgColors: monthColors, borderColor: monthColors }}
+                  options={{
+                    animation: { duration: 1000, easing: 'easeOutQuart' },
+                    scales: {
+                      x: { title:{ display:true, text:'Month' } },
+                      y: { title:{ display:true, text:'Alarm Count' } }
+                    }
+                  }}
+                  height={400}
+                  width={'100%'}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+        {/* Operator chart */}
+        {/* … */}
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+import React, { useEffect, useState, useMemo } from 'react';
+import {
+  Typography, Container, Box,
+  Grid, Button, Link as RouterLink
+} from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import Filters from '../components/Filters';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+
+export default function RawAlarms() {
+  const [alarms, setAlarms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    region:'', location:'', door:'', employee:'',
+    priority:'', rejection:'', date:''
+  });
+  const [view, setView] = useState('employee');
+
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(() => setAlarms([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // filter options cascade
+  const regionOptions = useMemo(()=>
+    [...new Set(alarms.map(a=>a.Region))].sort(), [alarms]
+  );
+  const locationOptions = useMemo(()=>
+    [...new Set(alarms.filter(a=>!filters.region||a.Region===filters.region)
+                    .map(a=>a.Location))].sort(),
+    [alarms, filters.region]
+  );
+  const doorOptions = useMemo(()=>
+    [...new Set(alarms
+      .filter(a=>(!filters.region||a.Region===filters.region)&&
+                   (!filters.location||a.Location===filters.location))
+      .map(a=>a.Door)
+    )].sort(),
+    [alarms, filters.region, filters.location]
+  );
+  const employeeOptions = useMemo(()=>
+    [...new Set(alarms
+      .filter(a=>(!filters.region||a.Region===filters.region)&&
+                   (!filters.location||a.Location===filters.location))
+      .map(a=>a['Employee Name'])
+    )].sort(),
+    [alarms, filters.region, filters.location]
+  );
+  const priorityOptions = useMemo(()=>
+    [...new Set(alarms.map(a=>a['CCURE Incident Priority']))].sort(),
+    [alarms]
+  );
+  const rejectionOptions = useMemo(()=>
+    [...new Set(alarms.map(a=>a.Rejection))].sort(),
+    [alarms]
+  );
+
+  // full filtered slice
+  const filtered = useMemo(()=> alarms.filter(a=>{
+    if(filters.region && a.Region!==filters.region) return false;
+    if(filters.location && a.Location!==filters.location) return false;
+    if(filters.door && a.Door!==filters.door) return false;
+    if(filters.employee && a['Employee Name']!==filters.employee) return false;
+    if(filters.priority && a['CCURE Incident Priority']!==filters.priority) return false;
+    if(filters.rejection && a.Rejection!==filters.rejection) return false;
+    if(filters.date && a.Date!==filters.date) return false;
+    return true;
+  }), [alarms, filters]);
+
+  if(loading) {
+    return (
+      <Container maxWidth={false} sx={{ pt:4 }}>
+        <Typography variant="h4">Raw Alarms Analysis</Typography>
+        <Typography>Loading…</Typography>
+      </Container>
+    );
+  }
+
+  return (
+    <Container maxWidth={false} sx={{ p:0, height:'100vh', overflow:'auto' }}>
+      {/* header */}
+      <Box sx={{
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        bgcolor:'background.paper', p:2, borderBottom:1, borderColor:'divider'
+      }}>
+        <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+          <TableChartIcon fontSize="large" />
+          <Typography variant="h4">Raw Alarms Analysis</Typography>
+        </Box>
+        <Box sx={{ display:'flex', gap:2 }}>
+          <RouterLink to="/"><DashboardIcon /> Dashboard</RouterLink>
+          <RouterLink to="/alarms"><TableChartIcon /> Raw Alarms</RouterLink>
+        </Box>
+      </Box>
+
+      {/* filters */}
+      <Box sx={{ p:2 }}>
+        <Filters
+          filters={filters} setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          doorOptions={doorOptions}
+          employeeOptions={employeeOptions}
+          priorityOptions={priorityOptions}
+          rejectionOptions={rejectionOptions}
+        />
+      </Box>
+
+      {/* view toggle */}
+      <Box sx={{ p:2, display:'flex', gap:2 }}>
+        <Button
+          variant={view==='employee'?'contained':'outlined'}
+          onClick={()=>setView('employee')}
+        >
+          Employee Analysis
+        </Button>
+        <Button
+          variant={view==='door'?'contained':'outlined'}
+          onClick={()=>setView('door')}
+        >
+          Door Analysis
+        </Button>
+        <Button
+          variant={view==='detailed'?'contained':'outlined'}
+          onClick={()=>setView('detailed')}
+        >
+          Detailed Records
+        </Button>
+      </Box>
+
+      {/* table */}
+      <Box sx={{ p:2 }}>
+        <AlarmsTable alarms={filtered} maxRows={50} tableType={view} />
+      </Box>
+    </Container>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
 Read Carefully Below All js files .And see Month Wise Dropdown is added on dashboard page
 but When i try to filter data on monthly All charts and its value are not updates yet.
 
