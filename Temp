@@ -1,3 +1,28 @@
+Here’s a short and clear email you can send along with the Excel rejection report:
+
+⸻
+
+Subject: EMEA – April Rejection Report (Employees with >20 Rejections)
+
+Dear [Manager’s Name],
+
+Please find attached the rejection report for the EMEA region for April. It includes only employees with more than 20 rejections.
+
+Let me know if you need any additional insights.
+
+Best regards,
+[Your Name]
+
+⸻
+
+Let me know if you want help generating the Excel file or formatting it.
+
+
+
+
+
+
+
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Box, Typography, Container } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
