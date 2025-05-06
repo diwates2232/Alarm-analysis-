@@ -1,3 +1,157 @@
+--- a/src/components/SummaryCards.js
++++ b/src/components/SummaryCards.js
+@@ return (
+-      {/* 8. Priority-by-Location Line Chart */}
+-     {locations.length > 0 && (
+-       <Grid container spacing={5} sx={{ mb: 4 }}>
+-          <Grid item xs={400} md={200}>
+-           <Card sx={{ border: '1px solid #ccc' }}>
+-              <CardContent>
+-                <Typography variant="h6" gutterBottom>
+-                  Priority by Location
+-                </Typography>
+-                <MyChart
+-                  type="line"
+-                 data={{ labels: locations, datasets: seriesData }}
+-                  options={{
+-                   scales: {
+-                      x: { title: { display: true, text: 'Location' } },
+-                      y: { title: { display: true, text: 'Alarm Count' } }
+-                   }
+-                  }}
+-                  height={550}
+-                width={700}
+-                />
+-              </CardContent>
+-            </Card>
+-          </Grid>
+-        </Grid>
+-      )}
+-
+-
+-       {/* Month / Operator */}
+-       <Grid container spacing={5}>
+-        {monthLabels.length > 0 && (
+-          <Grid item xs={400} md={200}>
+-            <Card sx={{ border: '1px solid #ccc' }}>
+-              <CardContent>
+-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
+-                <MyChart
+-                  type="line"
+-                  data={{
+-                    labels: monthLabels,
+-                    values: monthValues,
+-                    bgColors: monthColors,
+-                    borderColor: monthColors
+-                  }}
+-                  options={{
+-                    scales: {
+-                      x: { title: { display: true, text: 'Month' } },
+-                      y: { title: { display: true, text: 'Alarm Count' } }
+-                    }
+-                  }}
+-                  height={550}
+-                  width={600}
+-                />
+-              </CardContent>
+-            </Card>
+-          </Grid>
+-        )}
+-        {opLabels.length > 0 && (
+-          <Grid item xs={400} md={200}>
+-            <Card sx={{ border: '1px solid #ccc' }}>
+-              <CardContent>
+-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+-                <MyChart
+-                  type="bar"
+-                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
+-                  height={550}
+-                  width={600}
+-                />
+-              </CardContent>
+-            </Card>
+-          </Grid>
+-        )}
+-      </Grid>
++      {/* 8/9/10 — Priority-by-Location, Month-Wise & Operator-Wise in one row */}
++      <Grid container spacing={2} sx={{ mb: 4 }}>
++        {/* Priority by Location */}
++        <Grid item xs={12} md={4}>
++          <Card sx={{ border: '1px solid #ccc' }}>
++            <CardContent>
++              <Typography variant="h6" gutterBottom>Priority by Location</Typography>
++              <MyChart
++                type="line"
++                data={{ labels: locations, datasets: seriesData }}
++                options={{
++                  scales: {
++                    x: { title: { display: true, text: 'Location' } },
++                    y: { title: { display: true, text: 'Alarm Count' } }
++                  },
++                  plugins: { legend: { position: 'bottom' } }
++                }}
++                height={300}
++                width="100%"
++              />
++            </CardContent>
++          </Card>
++        </Grid>
++
++        {/* Month Wise */}
++        <Grid item xs={12} md={4}>
++          <Card sx={{ border: '1px solid #ccc' }}>
++            <CardContent>
++              <Typography variant="h6" gutterBottom>Month Wise</Typography>
++              <MyChart
++                type="line"
++                data={{
++                  labels: monthLabels,
++                  values: monthValues,
++                  bgColors: monthColors,
++                  borderColor: monthColors
++                }}
++                options={{
++                  scales: {
++                    x: { title: { display: true, text: 'Month' } },
++                    y: { title: { display: true, text: 'Alarm Count' } }
++                  }
++                }}
++                height={300}
++                width="100%"
++              />
++            </CardContent>
++          </Card>
++        </Grid>
++
++        {/* Operator Wise */}
++        <Grid item xs={12} md={4}>
++          <Card sx={{ border: '1px solid #ccc' }}>
++            <CardContent>
++              <Typography variant="h6" gutterBottom>Operator Wise</Typography>
++              <MyChart
++                type="bar"
++                data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
++                options={{
++                  scales: {
++                    x: { title: { display: true, text: 'Operator' } },
++                    y: { title: { display: true, text: 'Alarm Count' } }
++                  }
++                }}
++                height={300}
++                width="100%"
++              />
++            </CardContent>
++          </Card>
++        </Grid>
++      </Grid>
+ 
+    </>
+   );
+ }
+
+
+
+
 Read Carefully SummaryCards.js file carefully.and Adjust Priority by Location , Month Wise ,Operator Wise Charts in 1 line .
 Dont Make another Changes in this file 
 
