@@ -1,3 +1,168 @@
+This is my Previous working file 
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+export default function Dashboard() {
+  const [summary, setSummary] = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters] = useState({
+    region: '', location: '', month: '', priority: ''
+  });
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // --- derive month from Date string ---
+  const getMonth = dateStr =>
+    new Date(dateStr).toLocaleString('en-US', { month: 'short' });
+
+  // 1) options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [], [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [], [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(() => (
+    Array.from(new Set(
+      rawAlarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => getMonth(a.Date))
+    ))
+    .sort((a, b) => a.localeCompare(b))
+  ), [rawAlarms, filters.region, filters.location]);
+
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
+
+  // 2) filtered base for cards & charts
+  const filtered = useMemo(() => {
+    return rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)   return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.month    && getMonth(a.Date) !== filters.month) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    });
+  }, [rawAlarms, filters]);
+
+  // 3) summary slice for cards/charts
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+
+    // regionWise & locationWise
+    if (filters.region) {
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
+        });
+    }
+
+    // monthWise
+    if (filters.month) {
+      const mCount = filtered.filter(a => getMonth(a.Date) === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {};
+    }
+
+    // operatorWise
+    const opCounts = filtered.reduce((c, a) => {
+      const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+      c[op] = (c[op] || 0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
+    return fs;
+  }, [summary, filtered, filters, locationOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
+      <Box component="header" sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py: 4 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
+
+        {/* cards (top row) */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={filtered}
+          filters={filters}
+        />
+
+        {/* charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={filtered}
+        />
+      </Container>
+    </Box>
+  );
+}
+
+
+
+& 
+
+
+this is Current File as you provide so Compare both file and Give me updated js file carefully.
+
+
+
+
 // src/pages/Dashboard.js
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Box, Typography, Container } from '@mui/material';
@@ -160,367 +325,4 @@ export default function Dashboard() {
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-// src/components/Chart.js
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-
-// stronger, fixed palette
-const defaultColors = [
-  '#3366CC', '#DC3912', '#FF9900', '#109618',
-  '#990099', '#0099C6', '#DD4477', '#66AA00',
-  '#B82E2E', '#316395'
-];
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = '100%'
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  // Register the datalabels plugin once
-  useEffect(() => {
-    Chart.register(ChartDataLabels);
-  }, []);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    chartRef.current?.destroy();
-
-    // Prepare datasets with boxed labels
-    const datasets = Array.isArray(data.datasets)
-      ? data.datasets.map(ds => ({
-          ...ds,
-          borderWidth: 2,
-          fill: ds.fill ?? false,
-          datalabels: {
-            display: true,
-            formatter: v => v,
-            font: { weight: 'bold' },
-            color: '#000',
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            borderRadius: 4,
-            padding: 4,
-            anchor: 'end',
-            align: 'top',
-            clip: false  // allow beyond chart area
-          }
-        }))
-      : (() => {
-          const bg = data.bgColors || defaultColors.slice(0, data.values.length);
-          const border = data.borderColor || bg;
-          return [{
-            label: data.label || '',
-            data: data.values,
-            backgroundColor: bg,
-            borderColor: border,
-            borderWidth: 2,
-            ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
-            datalabels: {
-              display: true,
-              formatter: v => v,
-              font: { weight: 'bold' },
-              color: '#000',
-              backgroundColor: 'rgba(255,255,255,0.8)',
-              borderRadius: 4,
-              padding: 4,
-              anchor: 'end',
-              align: 'top',
-              clip: false
-            }
-          }];
-        })();
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: {
-        labels: data.labels,
-        datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 800 },
-        plugins: {
-          legend: { labels: { font: { size: 14 } } },
-          datalabels: {
-            // ensure labels can render outside dataset elements
-            clip: false
-          }
-        },
-        scales: {
-          x: { beginAtZero: true, ...(options.scales?.x || {}) },
-          y: { beginAtZero: true, ...(options.scales?.y || {}) }
-        },
-        ...options
-      }
-    });
-
-    return () => chartRef.current?.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-// src/components/Chart.js
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-
-// stronger, fixed palette
-const defaultColors = [
-  '#3366CC', '#DC3912', '#FF9900', '#109618',
-  '#990099', '#0099C6', '#DD4477', '#66AA00',
-  '#B82E2E', '#316395'
-];
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = '100%'
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  // Register the datalabels plugin once
-  useEffect(() => {
-    Chart.register(ChartDataLabels);
-  }, []);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    chartRef.current?.destroy();
-
-    // Build datasets, injecting datalabels config
-    const datasets = Array.isArray(data.datasets)
-      ? data.datasets.map(ds => ({
-          ...ds,
-          borderWidth: 2,
-          fill: ds.fill ?? false,
-          datalabels: {
-            display: true,
-            formatter: v => v,
-            font: { weight: 'bold' },
-            color: '#000',
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            borderRadius: 4,
-            padding: 4,
-            // adjust position dynamically
-            anchor: 'end',
-            align: 'top',
-          }
-        }))
-      : (() => {
-          const bg = data.bgColors || defaultColors.slice(0, data.values.length);
-          const border = data.borderColor || bg;
-          return [{
-            label: data.label || '',
-            data: data.values,
-            backgroundColor: bg,
-            borderColor: border,
-            borderWidth: 2,
-            ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
-            datalabels: {
-              display: true,
-              formatter: v => v,
-              font: { weight: 'bold' },
-              color: '#000',
-              backgroundColor: 'rgba(255,255,255,0.8)',
-              borderRadius: 4,
-              padding: 4,
-              anchor: 'end',
-              align: 'top',
-            }
-          }];
-        })();
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: {
-        labels: data.labels,
-        datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 800 },
-        plugins: {
-          legend: { labels: { font: { size: 14 } } },
-          datalabels: {
-            // globals: will be overridden by per–dataset settings
-            clamp: true,
-            clip: true
-          }
-        },
-        scales: {
-          x: { beginAtZero: true, ...(options.scales?.x || {}) },
-          y: { beginAtZero: true, ...(options.scales?.y || {}) }
-        },
-        ...options
-      }
-    });
-
-    return () => chartRef.current?.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-Read below Chart.js file carefully and add bestfit for values.also add box for show values .
-also add another functions and give me Updated .js file carefully.
-Dont mak changes in another functions.
-
-// src/components/Chart.js
-import React, { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
-
-// stronger, fixed palette
-const defaultColors = [
-  '#3366CC', '#DC3912', '#FF9900', '#109618',
-  '#990099', '#0099C6', '#DD4477', '#66AA00',
-  '#B82E2E', '#316395'
-];
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = '100%'
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-
-  // Register the datalabels plugin once
-  useEffect(() => {
-    Chart.register(ChartDataLabels);
-  }, []);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-    if (chartRef.current) chartRef.current.destroy();
-
-    let datasets;
-
-    // Multi-series support: if you passed data.datasets array
-    if (Array.isArray(data.datasets)) {
-      datasets = data.datasets.map(ds => ({
-        ...ds,
-        borderWidth: 2,
-        fill: ds.fill ?? false,
-        // enable datalabels on each series
-        datalabels: {
-          display: true,
-          formatter: val => val,
-          font: { weight: 'bold' },
-          color: '#333'
-        }
-      }));
-    } else {
-      // Single-series fallback
-      const bg = data.bgColors || defaultColors.slice(0, data.values.length);
-      const border = data.borderColor || bg;
-      datasets = [{
-        label: data.label || '',
-        data: data.values,
-        backgroundColor: bg,
-        borderColor: border,
-        borderWidth: 2,
-        ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
-        datalabels: {
-          display: true,
-          formatter: val => val,
-          font: { weight: 'bold' },
-          color: '#333'
-        }
-      }];
-    }
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: {
-        labels: data.labels,
-        datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 800 },
-        plugins: {
-          // always show legend
-          legend: { labels: { font: { size: 14 } } },
-          // datalabels plugin global defaults
-          datalabels: {
-            anchor: 'end',
-            align: 'top'
-          }
-        },
-        scales: {
-          x: { beginAtZero: true, ...(options.scales?.x || {}) },
-          y: { beginAtZero: true, ...(options.scales?.y || {}) }
-        },
-        ...options
-      }
-    });
-
-    return () => chartRef.current?.destroy();
-  }, [type, data, options]);
-
-  return (
-    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
-      <canvas ref={canvasRef} />
-    </div>
-  );
-}
 
