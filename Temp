@@ -1,3 +1,76 @@
+@@ top of file
+ import React from 'react';
+ import MyChart from './Chart';
+ import { Card, CardContent, Typography, Grid } from '@mui/material';
++
++// same month helper as in Dashboard/AlarmCard:
++const getMonth = dateStr => {
++  const d = new Date(dateStr);
++  if (isNaN(d)) return '';
++  const m  = d.toLocaleString('en-US',{ month: 'short' });
++  const yy = String(d.getFullYear()).slice(-2);
++  return `${m}-${yy}`;
++};
+ 
+ export default function SummaryCards({ summary, filters, rawAlarms }) {
+   if (!summary) return null;
+ 
+   const {
+     rejectionTypeWise = {},
+     regionWise = {},
+     monthWise = {},
+     locationWise = {},
+     operatorWise = {}
+   } = summary;
+ 
+   // --- build a fully filtered array using the same getMonth helper ---
+-  const filtered = rawAlarms.filter(a => {
+-    if (filters.region   && a.Region   !== filters.region) return false;
+-    if (filters.location && a.Location !== filters.location) return false;
+-    if (filters.month    && a.Month    !== filters.month)    return false;
+-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+-    return true;
+-  });
++  const filtered = rawAlarms.filter(a => {
++    if (filters.region   && a.Region   !== filters.region)   return false;
++    if (filters.location && a.Location !== filters.location) return false;
++    if (filters.month    && getMonth(a.Date) !== filters.month) return false;
++    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
++    return true;
++  });
+ 
+   // … rest of your code is unchanged, except anywhere you were looking at a.Month,
+   // swap it to getMonth(a.Date).  In particular your “Month Wise” chart should now:
+-  // const monthCounts = filtered.reduce((acc, a) => {
+-  //   acc[a.Month] = (acc[a.Month] || 0) + 1;
+-  //   return acc;
+-  // }, {});
++  const monthCounts = filtered.reduce((acc, a) => {
++    const key = getMonth(a.Date);
++    if (!key) return acc;
++    acc[key] = (acc[key] || 0) + 1;
++    return acc;
++  }, {});
+   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+   const monthLabels = Object.keys(monthCounts)
+     .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+   const monthValues = monthLabels.map(m => monthCounts[m]);
+   const monthColors = defaultColors.slice(0, monthLabels.length);
+ 
+   // … and everything else stays exactly as it was.
+ }
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Box, Typography, Container } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
