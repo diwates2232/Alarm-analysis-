@@ -1,110 +1,74 @@
+read my previous chart.js file carefully & Add above Functions in this file .dont change another
+functions in this file.
+
 import React, { useEffect, useRef } from 'react';
-import {
-  Chart,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import Chart from 'chart.js/auto';
 
-// Register required Chart.js components
-Chart.register(ArcElement, CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+// stronger, fixed palette
+const defaultColors = [
+  '#3366CC', '#DC3912', '#FF9900', '#109618',
+  '#990099', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#316395'
+];
 
-const MyChart = ({ data }) => {
-  const chartRef = useRef(null);
-  const chartInstance = useRef(null);
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
 
   useEffect(() => {
-    const ctx = chartRef.current.getContext('2d');
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
 
-    // Destroy existing chart instance if it exists
-    if (chartInstance.current) {
-      chartInstance.current.destroy();
-    }
+    const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+    const border = data.borderColor || bg;
 
-    // Define chart configuration
-    const config = {
-      type: 'bar', // Change to 'doughnut', 'line', etc. as needed
-      data: {
-        labels: data.labels,
-        datasets: [{
-          label: 'My Dataset',
-          data: data.values,
-          backgroundColor: [
-            '#8884d8',
-            '#82ca9d',
-            '#ffc658',
-            '#ff7f50',
-            '#a29bfe',
-          ],
-          borderWidth: 1,
-        }],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          tooltip: {
-            enabled: true,
-          },
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-          },
-          y: {
-            beginAtZero: true,
-          },
-        },
-      },
+    const chartData = {
+      labels: data.labels,
+      datasets: [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 2,
+        ...(type === 'line' && {
+          tension: 0.3,
+          pointRadius: 6
+        })
+      }],
     };
 
-    // Create new chart instance
-    chartInstance.current = new Chart(ctx, config);
-  }, [data]);
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      },
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
 
   return (
-    <div style={{ width: '100%', height: '400px' }}>
-      <canvas ref={chartRef}></canvas>
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
     </div>
   );
-};
+}
 
-export default MyChart;
-
-
-
-
-
-
-
-
-
-
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
-
-const Charts = ({ data }) => {
-  const chartData = Object.entries(data.monthWise).map(([month, values]) => ({
-    month,
-    count: values.count,
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData}>
-        <XAxis dataKey="month" />
-        <YAxis />
-        <Tooltip />
-        <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
-        <Line type="monotone" dataKey="count" stroke="#8884d8" />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-};
-
-export default Charts;
