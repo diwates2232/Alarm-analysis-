@@ -6,6 +6,112 @@ import ChartDataLabels from 'chartjs-plugin-datalabels';
 // register the plugin globally
 Chart.register(ChartDataLabels);
 
+const defaultColors = [
+  '#3366CC', '#DC3912', '#FF9900', '#109618',
+  '#990099', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#316395'
+];
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    chartRef.current?.destroy();
+
+    // build datasets
+    const datasets = Array.isArray(data.datasets)
+      ? data.datasets.map(ds => ({
+          ...ds,
+          borderWidth: 2,
+          fill: ds.fill ?? false
+        }))
+      : [{
+          label: data.label || '',
+          data: data.values,
+          backgroundColor: data.bgColors || defaultColors.slice(0, data.values.length),
+          borderColor: data.borderColor || (data.bgColors || defaultColors).slice(0, data.values.length),
+          borderWidth: 2,
+          ...(type === 'line' && { tension: 0.3, pointRadius: 6 })
+        }];
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: {
+            display: true,
+            labels: { font: { size: 14 } }
+          },
+          datalabels: {
+            anchor: type === 'bar' ? 'end' : 'center',
+            align: type === 'bar' ? 'start' : 'end',
+            clamp: true,
+            clip: true,
+            padding: 4,
+            borderRadius: 4,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',  // dark semi-transparent box
+            color: '#fff',                            // white text
+            font: {
+              weight: 'bold',
+              size: 12
+            },
+            formatter: (value) => value
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      },
+      plugins: [ChartDataLabels]
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// src/components/Chart.js
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+// register the plugin globally
+Chart.register(ChartDataLabels);
+
 // stronger, fixed palette
 const defaultColors = [
   '#3366CC', '#DC3912', '#FF9900', '#109618',
