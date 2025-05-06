@@ -1,176 +1,21 @@
+raed below dashboard.js file carefully & make a required changes in this file and Give me updated js file carefuly.
+  dont make another changes in this file.
+
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Box, Typography, Container } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import Filters      from '../components/Filters';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
 import SummaryCards from '../components/SummaryCards';
-import AlarmCard    from '../components/AlarmCard';
 import { getAlarmSummary, getRawAlarms } from '../services/api';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
+  const [summary, setSummary] = useState(null);
   const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
-
-  // Fetch data
-  useEffect(() => {
-    Promise.all([getAlarmSummary(), getRawAlarms()])
-      .then(([sumRes, rawRes]) => {
-        setSummary(sumRes.data);
-        setRawAlarms(rawRes.data);
-      })
-      .catch(console.error);
-  }, []);
-
-  // Regions
-  const regionOptions = useMemo(
-    () => (summary ? Object.keys(summary.regionWise) : []),
-    [summary]
-  );
-
-  // Locations by region
-  const regionLocationsMap = useMemo(() => {
-    const map = {};
-    regionOptions.forEach(region => {
-      map[region] = Array.from(
-        new Set(rawAlarms.filter(a => a.Region === region).map(a => a.Location))
-      );
-    });
-    return map;
-  }, [rawAlarms, regionOptions]);
-
-  // Month options
-  const monthOptions = useMemo(
-    () => (summary ? Object.keys(summary.monthWise) : []),
-    [summary]
-  );
-
-  // Compute total alarms & response %
-  const { totalAlarms, responseSentPercentage } = useMemo(() => {
-    const base = rawAlarms.filter(a => {
-      if (filters.region && a.Region !== filters.region) return false;
-      if (filters.location && a.Location !== filters.location) return false;
-      if (filters.month && a.Month !== filters.month) return false;
-      return true;
-    });
-    const total = base.length;
-    const sent = base.filter(a =>
-      a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
-    ).length;
-    return {
-      totalAlarms: total,
-      responseSentPercentage: total
-        ? `${((sent / total) * 100).toFixed(2)}%`
-        : '0%'
-    };
-  }, [rawAlarms, filters]);
-
-  // Auto‐slide filters
-  const slidesRef = useRef([]);
-  const slideIdx  = useRef(0);
-  useEffect(() => {
-    if (!summary) return;
-    const slides = [{ region: '', location: '', month: '' }];
-    regionOptions.forEach(region => slides.push({ region, location: '', month: '' }));
-    slidesRef.current = slides;
-    slideIdx.current   = 0;
-    setFilters(slides[0]);
-    const id = setInterval(() => {
-      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
-      setFilters(slidesRef.current[slideIdx.current]);
-    }, 30000);
-    return () => clearInterval(id);
-  }, [summary, regionOptions]);
-
-  // Build filteredSummary for SummaryCards
-  const filteredSummary = useMemo(() => {
-    if (!summary) return null;
-    const fs = { ...summary };
-    if (filters.region) {
-      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
-      fs.locationWise = {};
-      (regionLocationsMap[filters.region] || [])
-        .filter(loc => !filters.location || loc === filters.location)
-        .forEach(loc => {
-          fs.locationWise[loc] = summary.locationWise[loc];
-        });
-    }
-    return fs;
-  }, [summary, filters, regionLocationsMap]);
-
-  if (!summary) {
-    return <Typography>Loading dashboard…</Typography>;
-  }
-
-  return (
-    <Box sx={{ width: '100vw', minHeight: '100vh', p: 0, m: 0, overflowX: 'hidden' }}>
-      {/* Header */}
-      <Box
-        component="header"
-        sx={{
-          width: '100%',
-          borderBottom: '3px solid #1976d2',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          py: 2,
-          px: 4,
-          bgcolor: '#e3f2fd'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <DashboardIcon fontSize="large" />
-          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Link to="/">➤ Dashboard</Link>
-          <Link to="/alarms">➤ Raw Alarms</Link>
-        </Box>
-      </Box>
-
-      <Container maxWidth={false} sx={{ py: 4 }}>
-        <form autoComplete="off" noValidate>
-          {/* Filters row */}
-          <Filters
-            filters={filters}
-            setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
-            monthOptions={monthOptions}
-            totalAlarms={totalAlarms}
-            responseSentPercentage={responseSentPercentage}
-          />
-
-          {/* Alarm cards */}
-          <AlarmCard
-            summary={filteredSummary}
-            rawAlarms={rawAlarms}
-            filters={filters}
-            setFilters={setFilters}
-          />
-        </form>
-
-        {/* Summary charts */}
-        <SummaryCards
-          summary={filteredSummary}
-          filters={filters}
-          rawAlarms={rawAlarms}
-        />
-      </Container>
-    </Box>
-  );
-}
-
-
-
-
-
-
-
-export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
+  const [filters, setFilters] = useState({
+    region: '', location: '', month: '', priority: ''
+  });
 
   useEffect(() => {
     Promise.all([getAlarmSummary(), getRawAlarms()])
@@ -181,236 +26,96 @@ export default function Dashboard() {
       .catch(console.error);
   }, []);
 
-  // 1) Regions for dropdown
-  const regionOptions = useMemo(
-    () => (summary ? Object.keys(summary.regionWise) : []),
-    [summary]
-  );
+  // --- derive month from Date string ---
+  const getMonth = dateStr =>
+    new Date(dateStr).toLocaleString('en-US', { month: 'short' });
 
-  // 2) Locations per region
-  const regionLocationsMap = useMemo(() => {
-    const map = {};
-    regionOptions.forEach(region => {
-      map[region] = Array.from(
-        new Set(
-          rawAlarms
-            .filter(a => a.Region === region)
-            .map(a => a.Location)
+  // 1) options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [], [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [], [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(() => (
+    Array.from(new Set(
+      rawAlarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
         )
-      );
-    });
-    return map;
-  }, [rawAlarms, regionOptions]);
+        .map(a => getMonth(a.Date))
+    ))
+    .sort((a, b) => a.localeCompare(b))
+  ), [rawAlarms, filters.region, filters.location]);
 
-  // 3) Month options from summary.monthWise
-  const monthOptions = useMemo(
-    () => (summary ? Object.keys(summary.monthWise) : []),
-    [summary]
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
   );
 
-  // 4) Compute totals for the Filters display
-  const { totalAlarms, responseSentPercentage } = useMemo(() => {
-    // filter by region & location & month
-    const base = rawAlarms.filter(a => {
-      if (filters.region && a.Region !== filters.region) return false;
+  // 2) filtered base for cards & charts
+  const filtered = useMemo(() => {
+    return rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)   return false;
       if (filters.location && a.Location !== filters.location) return false;
-      if (filters.month && a.Month !== filters.month) return false;
+      if (filters.month    && getMonth(a.Date) !== filters.month) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
       return true;
     });
-    const total = base.length;
-    const sent = base.filter(a =>
-      a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
-    ).length;
-    return {
-      totalAlarms: total,
-      responseSentPercentage: total
-        ? `${((sent / total) * 100).toFixed(2)}%`
-        : '0%'
-    };
   }, [rawAlarms, filters]);
 
-  // 5) Auto‐slide logic (unchanged)
-  const slidesRef = useRef([]);
-  const slideIdx  = useRef(0);
-  useEffect(() => {
-    if (!summary) return;
-    const slides = [{ region: '', location: '', month: '' }];
-    regionOptions.forEach(region => slides.push({ region, location: '', month: '' }));
-    slidesRef.current = slides;
-    slideIdx.current   = 0;
-    setFilters(slides[0]);
-    const id = setInterval(() => {
-      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
-      setFilters(slidesRef.current[slideIdx.current]);
-    }, 30000);
-    return () => clearInterval(id);
-  }, [summary, regionOptions]);
-
-  // 6) Build filteredSummary for SummaryCards (unchanged)
+  // 3) summary slice for cards/charts
   const filteredSummary = useMemo(() => {
     if (!summary) return null;
     const fs = { ...summary };
+
+    // regionWise & locationWise
     if (filters.region) {
-      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
       fs.locationWise = {};
-      (regionLocationsMap[filters.region] || [])
-        .filter(loc => !filters.location || loc === filters.location)
-        .forEach(loc => {
-          fs.locationWise[loc] = summary.locationWise[loc];
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
         });
     }
+
+    // monthWise
+    if (filters.month) {
+      const mCount = filtered.filter(a => getMonth(a.Date) === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {};
+    }
+
+    // operatorWise
+    const opCounts = filtered.reduce((c, a) => {
+      const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+      c[op] = (c[op] || 0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
     return fs;
-  }, [summary, filters, regionLocationsMap]);
+  }, [summary, filtered, filters, locationOptions]);
 
   if (!summary) {
     return <Typography>Loading dashboard…</Typography>;
   }
 
   return (
-    <Box sx={{ width: '100vw', minHeight: '100vh', p: 0, m: 0, overflowX: 'hidden' }}>
-      {/* Header unchanged */}
-      …
-
-      <Container maxWidth={false} sx={{ py: 4 }}>
-        <form autoComplete="off" noValidate>
-          {/* Hidden dummy fields omitted */}
-
-          <Filters
-            filters={filters}
-            setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
-            
-            // NEW props:
-            monthOptions={monthOptions}
-            totalAlarms={totalAlarms}
-            responseSentPercentage={responseSentPercentage}
-          />
-
-          <AlarmCard
-            summary={filteredSummary}
-            rawAlarms={rawAlarms}
-            filters={filters}
-            setFilters={setFilters}
-          />
-        </form>
-
-        <SummaryCards
-          summary={filteredSummary}
-          filters={filters}
-          rawAlarms={rawAlarms}
-        />
-      </Container>
-    </Box>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-rRead below dashboard.js file and help to solve 
-
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Box, Typography, Container } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import Filters      from '../components/Filters';
-import SummaryCards from '../components/SummaryCards';
-import AlarmCard    from '../components/AlarmCard';
-import { getAlarmSummary, getRawAlarms } from '../services/api';
-import { Link } from 'react-router-dom';
-
-export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({ region: '', location: '', month: '' });
-
-  useEffect(() => {
-    Promise.all([getAlarmSummary(), getRawAlarms()])
-      .then(([sumRes, rawRes]) => {
-        setSummary(sumRes.data);
-        setRawAlarms(rawRes.data);
-      })
-      .catch(console.error);
-  }, []);
-
-  const regionOptions = useMemo(
-    () => (summary ? Object.keys(summary.regionWise) : []),
-    [summary]
-  );
-
-  const regionLocationsMap = useMemo(() => {
-    const map = {};
-    regionOptions.forEach(region => {
-      map[region] = Array.from(
-        new Set(rawAlarms.filter(a => a.Region === region).map(a => a.Location))
-      );
-    });
-    return map;
-  }, [rawAlarms, regionOptions]);
-
-  const slidesRef = useRef([]);
-  const slideIdx  = useRef(0);
-  useEffect(() => {
-    if (!summary) return;
-    const slides = [{ region: '', location: '' }];
-    regionOptions.forEach(region => slides.push({ region, location: '' }));
-    slidesRef.current = slides;
-    slideIdx.current   = 0;
-    setFilters(slides[0]);
-    const id = setInterval(() => {
-      slideIdx.current = (slideIdx.current + 1) % slidesRef.current.length;
-      setFilters(slidesRef.current[slideIdx.current]);
-    }, 30000);
-    return () => clearInterval(id);
-  }, [summary, regionOptions]);
-
-  const filteredSummary = useMemo(() => {
-    if (!summary) return null;
-    const fs = { ...summary };
-    if (filters.region) {
-      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
-      fs.locationWise = {};
-      (regionLocationsMap[filters.region] || [])
-        .filter(loc => !filters.location || loc === filters.location)
-        .forEach(loc => {
-          fs.locationWise[loc] = summary.locationWise[loc];
-        });
-    }
-    return fs;
-  }, [summary, filters, regionLocationsMap]);
-
-  if (!summary) {
-    return <Typography>Loading dashboard…</Typography>;
-  }
-
-  return (
-    <Box sx={{ width: '100vw', minHeight: '100vh', p: 0, m: 0, overflowX: 'hidden' }}>
-      {/* Header */}
-      <Box
-        component="header"
-        sx={{
-          width: '100%',
-          borderBottom: '3px solid #1976d2',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          py: 2,
-          px: 4,
-          bgcolor: '#e3f2fd'
-        }}
-      >
+    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
+      <Box component="header" sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p: 2
+      }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <DashboardIcon fontSize="large" />
           <Typography variant="h4">Alarm Analysis Dashboard</Typography>
@@ -422,44 +127,30 @@ export default function Dashboard() {
       </Box>
 
       <Container maxWidth={false} sx={{ py: 4 }}>
-        <form autoComplete="off" noValidate>
-          {/* Hidden dummy fields to absorb autofill */}
-          <input
-            type="text"
-            name="username"
-            style={{ display: 'none' }}
-            autoComplete="username"
-          />
-          <input
-            type="password"
-            name="password"
-            style={{ display: 'none' }}
-            autoComplete="new-password"
-          />
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
 
-          <Filters
-            filters={filters}
-            setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={filters.region ? regionLocationsMap[filters.region] : []}
-          />
+        {/* cards (top row) */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={filtered}
+          filters={filters}
+        />
 
-          <AlarmCard
-            summary={filteredSummary}
-            rawAlarms={rawAlarms}
-            filters={filters}
-            setFilters={setFilters}
-          />
-        </form>
-
+        {/* charts */}
         <SummaryCards
           summary={filteredSummary}
           filters={filters}
-          rawAlarms={rawAlarms}
+          rawAlarms={filtered}
         />
       </Container>
     </Box>
   );
 }
-
 
