@@ -1,3 +1,125 @@
+
+
+
+
+// src/components/Chart.js
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+// stronger, fixed palette
+const defaultColors = [
+  '#3366CC', '#DC3912', '#FF9900', '#109618',
+  '#990099', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#316395'
+];
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  // Register the datalabels plugin once
+  useEffect(() => {
+    Chart.register(ChartDataLabels);
+  }, []);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
+
+    let datasets;
+
+    // Multi-series support: if you passed data.datasets array
+    if (Array.isArray(data.datasets)) {
+      datasets = data.datasets.map(ds => ({
+        ...ds,
+        borderWidth: 2,
+        fill: ds.fill ?? false,
+        // enable datalabels on each series
+        datalabels: {
+          display: true,
+          formatter: val => val,
+          font: { weight: 'bold' },
+          color: '#333'
+        }
+      }));
+    } else {
+      // Single-series fallback
+      const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+      const border = data.borderColor || bg;
+      datasets = [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 2,
+        ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
+        datalabels: {
+          display: true,
+          formatter: val => val,
+          font: { weight: 'bold' },
+          color: '#333'
+        }
+      }];
+    }
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          // always show legend
+          legend: { labels: { font: { size: 14 } } },
+          // datalabels plugin global defaults
+          datalabels: {
+            anchor: 'end',
+            align: 'top'
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      }
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 read below Chart.js file carefully and make changes in this file for legends & values and Give me updated js file carefully.
 Dont make another changes in this file
 
