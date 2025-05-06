@@ -1,459 +1,88 @@
---- a/src/components/SummaryCards.js
-+++ b/src/components/SummaryCards.js
-@@ return (
--      {/* 8. Priority-by-Location Line Chart */}
--     {locations.length > 0 && (
--       <Grid container spacing={5} sx={{ mb: 4 }}>
--          <Grid item xs={400} md={200}>
--           <Card sx={{ border: '1px solid #ccc' }}>
--              <CardContent>
--                <Typography variant="h6" gutterBottom>
--                  Priority by Location
--                </Typography>
--                <MyChart
--                  type="line"
--                 data={{ labels: locations, datasets: seriesData }}
--                  options={{
--                   scales: {
--                      x: { title: { display: true, text: 'Location' } },
--                      y: { title: { display: true, text: 'Alarm Count' } }
--                   }
--                  }}
--                  height={550}
--                width={700}
--                />
--              </CardContent>
--            </Card>
--          </Grid>
--        </Grid>
--      )}
--
--
--       {/* Month / Operator */}
--       <Grid container spacing={5}>
--        {monthLabels.length > 0 && (
--          <Grid item xs={400} md={200}>
--            <Card sx={{ border: '1px solid #ccc' }}>
--              <CardContent>
--                <Typography variant="h6" gutterBottom>Month Wise</Typography>
--                <MyChart
--                  type="line"
--                  data={{
--                    labels: monthLabels,
--                    values: monthValues,
--                    bgColors: monthColors,
--                    borderColor: monthColors
--                  }}
--                  options={{
--                    scales: {
--                      x: { title: { display: true, text: 'Month' } },
--                      y: { title: { display: true, text: 'Alarm Count' } }
--                    }
--                  }}
--                  height={550}
--                  width={600}
--                />
--              </CardContent>
--            </Card>
--          </Grid>
--        )}
--        {opLabels.length > 0 && (
--          <Grid item xs={400} md={200}>
--            <Card sx={{ border: '1px solid #ccc' }}>
--              <CardContent>
--                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
--                <MyChart
--                  type="bar"
--                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
--                  height={550}
--                  width={600}
--                />
--              </CardContent>
--            </Card>
--          </Grid>
--        )}
--      </Grid>
-+      {/* 8/9/10 — Priority-by-Location, Month-Wise & Operator-Wise in one row */}
-+      <Grid container spacing={2} sx={{ mb: 4 }}>
-+        {/* Priority by Location */}
-+        <Grid item xs={12} md={4}>
-+          <Card sx={{ border: '1px solid #ccc' }}>
-+            <CardContent>
-+              <Typography variant="h6" gutterBottom>Priority by Location</Typography>
-+              <MyChart
-+                type="line"
-+                data={{ labels: locations, datasets: seriesData }}
-+                options={{
-+                  scales: {
-+                    x: { title: { display: true, text: 'Location' } },
-+                    y: { title: { display: true, text: 'Alarm Count' } }
-+                  },
-+                  plugins: { legend: { position: 'bottom' } }
-+                }}
-+                height={300}
-+                width="100%"
-+              />
-+            </CardContent>
-+          </Card>
-+        </Grid>
-+
-+        {/* Month Wise */}
-+        <Grid item xs={12} md={4}>
-+          <Card sx={{ border: '1px solid #ccc' }}>
-+            <CardContent>
-+              <Typography variant="h6" gutterBottom>Month Wise</Typography>
-+              <MyChart
-+                type="line"
-+                data={{
-+                  labels: monthLabels,
-+                  values: monthValues,
-+                  bgColors: monthColors,
-+                  borderColor: monthColors
-+                }}
-+                options={{
-+                  scales: {
-+                    x: { title: { display: true, text: 'Month' } },
-+                    y: { title: { display: true, text: 'Alarm Count' } }
-+                  }
-+                }}
-+                height={300}
-+                width="100%"
-+              />
-+            </CardContent>
-+          </Card>
-+        </Grid>
-+
-+        {/* Operator Wise */}
-+        <Grid item xs={12} md={4}>
-+          <Card sx={{ border: '1px solid #ccc' }}>
-+            <CardContent>
-+              <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-+              <MyChart
-+                type="bar"
-+                data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
-+                options={{
-+                  scales: {
-+                    x: { title: { display: true, text: 'Operator' } },
-+                    y: { title: { display: true, text: 'Alarm Count' } }
-+                  }
-+                }}
-+                height={300}
-+                width="100%"
-+              />
-+            </CardContent>
-+          </Card>
-+        </Grid>
-+      </Grid>
- 
-    </>
-   );
- }
+read below Chart.js file carefully and make changes in this file for legends & values and Give me updated js file carefully.
+Dont make another changes in this file
+
+File 1
+
+Charts.js
 
 
 
+// src/components/Chart.js
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
 
-Read Carefully SummaryCards.js file carefully.and Adjust Priority by Location , Month Wise ,Operator Wise Charts in 1 line .
-Dont Make another Changes in this file 
-
-
-import React from 'react';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const PRIORITY_COLORS = {
-  High: '#DC3912',
-  Medium: '#FF9900',
-  Low: '#109618'
-};
-
+// stronger, fixed palette
 const defaultColors = [
-  '#FF9900', '#109618', '#FED06A', '#DC3912',
-  '#990099', '#0099C6', '#C1D82F', '#66AA00',
-  '#3366CC', '#B82E2E', '#316395', '#71C9CD'
+  '#3366CC', '#DC3912', '#FF9900', '#109618',
+  '#990099', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#316395'
 ];
 
-const REJECTION_COLORS = [
-  '#006400', '#00008B', '#8B008B', '#FF1493',
-  '#00CED1', '#2F4F4F', '#6f1c03', '#ff9a00'
-];
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef = useRef(null);
 
-const REJECTION_COLOR_MAP = {
-  'Wrong Pin':'#49A044',
-  'Facility code':'#49A044',
-  'Unknown card':'#49A044',
-  'Not activated':'#49A044',
-  'Site code':'#49A044',
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    if (chartRef.current) chartRef.current.destroy();
 
+    let datasets;
 
+    // Multi-series support: if you passed data.datasets array
+    if (Array.isArray(data.datasets)) {
+      datasets = data.datasets.map(ds => ({
+        ...ds,
+        borderWidth: 2,
+        fill: ds.fill ?? false
+      }));
+    } else {
+      // Single-series fallback
+      const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+      const border = data.borderColor || bg;
+      datasets = [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 2,
+        ...(type === 'line' && { tension: 0.3, pointRadius: 6 })
+      }];
+    }
 
-  'Clearance - Access Violation': '#FFDF00',
-  'Expired': '#FFDF00',
-  'Lost':'#FFDF00',
-  'Disabled Badge': '#FFA500',
-  'Duress Alarm':'#FFA500',
-};
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      }
+    });
 
-// helper to extract short month from date string
-const getMonth = dateStr =>
-  new Date(dateStr).toLocaleString('en-US', { month: 'short' });
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-
-  const {
-    rejectionTypeWise = {},
-    regionWise = {},
-    monthWise = {},
-    locationWise = {},
-    operatorWise = {}
-  } = summary;
-
-  // single filtered set
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month    && getMonth(a.Date) !== filters.month) return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
-    return true;
-  });
-
-  // 1) Rejection Stats from filtered
-  const rejectionCounts = filtered.reduce((acc, a) => {
-    acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-    return acc;
-  }, {});
-  const rejectionStats = Object.entries(rejectionCounts)
-    .map(([type, count], idx) => {
-      const percentage = filtered.length
-        ? `${((count / filtered.length) * 100).toFixed(2)}%`
-        : '0%';
-      const color = REJECTION_COLOR_MAP[type]
-        || REJECTION_COLORS[idx % REJECTION_COLORS.length];
-      return { type, count, percentage, color };
-    })
-    .sort((a, b) => b.count - a.count);
-
-  // 3) Priority Wise
-  const prCounts = filtered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#999');
-
-  // 4) Operator Wise (from summary.operatorWise)
-  const opCountsObj = operatorWise || {};
-  const opLabels = Object.keys(opCountsObj);
-  const opValues = opLabels.map(l => opCountsObj[l].count || 0);
-  const opColors = defaultColors.slice(0, opLabels.length);
-
-  // 5) Partition Data
-  const partitionObj = !filters.region
-    ? Object.fromEntries(
-        Object.entries(regionWise).map(([r, info]) => [r, info.count || 0])
-      )
-    : filtered.reduce((acc, a) => {
-        acc[a.Location] = (acc[a.Location] || 0) + 1;
-        return acc;
-      }, {});
-  const partLabels = Object.keys(partitionObj);
-  const partValues = partLabels.map(l => partitionObj[l]);
-  const partColors = defaultColors.slice(0, partLabels.length);
-
-  // 6) Month Wise from filtered
-  const monthCounts = filtered.reduce((acc, a) => {
-    const key = getMonth(a.Date);
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const monthLabels = Object.keys(monthCounts)
-    .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-  const monthValues = monthLabels.map(m => monthCounts[m]);
-  const monthColors = defaultColors.slice(0, monthLabels.length);
-
-  // 7) Location Wise from filtered
-  const locCounts = filtered.reduce((acc, a) => {
-    acc[a.Location] = (acc[a.Location] || 0) + 1;
-    return acc;
-  }, {});
-  const locLabels = Object.keys(locCounts);
-  const locValues = locLabels.map(l => locCounts[l]);
-  const locColors = defaultColors.slice(0, locLabels.length);
-
-
-    // --- 8. Priority by Location (NEW) ---
-    const locations = [...new Set(filtered.map(a => a.Location))];
-    const priorities = ['Low', 'Medium', 'High', 'Critical'];
-   const seriesData = priorities.map((prio, idx) => ({
-      label: prio,
-      data: locations.map(loc =>
-        filtered.filter(a =>
-          a.Location === loc &&
-          a['CCURE Incident Priority'] === prio
-        ).length
-      ),
-      borderColor: PRIORITY_COLORS[prio] || defaultColors[idx % defaultColors.length],
-     backgroundColor: 'transparent',
-    }));
-
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
 
   return (
-
-    <>
-    {/* Rejection-Type Cards */}
-    <Grid container spacing={2} sx={{ mb: 2 }}>
-      {rejectionStats.map(({ type, count, percentage, color }) => (
-        <Grid item xs={12} sm={6} md={3} key={type}>
-          <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-            <CardContent>
-              <Typography variant="subtitle2">{type}</Typography>
-              <Typography variant="h6">{count}</Typography>
-              <Typography variant="body2">{percentage}</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
-
-
-
-
-      {/* Partition / Priority / Location */}
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {partLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
-                </Typography>
-                <MyChart
-                  type="doughnut"
-                  data={{ labels: partLabels, values: partValues, bgColors: partColors, borderColor: partColors }}
-                  height={550}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {prLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-                <MyChart
-                  type="pie"
-                  data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                  height={550}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {locLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Location Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={550}
-                  width={750}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-
-
-
-
-
-            {/* 8. Priority-by-Location Line Chart */}
-     {locations.length > 0 && (
-       <Grid container spacing={5} sx={{ mb: 4 }}>
-          <Grid item xs={400} md={200}>
-           <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Priority by Location
-                </Typography>
-                <MyChart
-                  type="line"
-                 data={{ labels: locations, datasets: seriesData }}
-                  options={{
-                   scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                   }
-                  }}
-                  height={550}
-                width={700}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
- 
-
-       {/* Month / Operator */}
-       <Grid container spacing={5}>
-        {monthLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{
-                    labels: monthLabels,
-                    values: monthValues,
-                    bgColors: monthColors,
-                    borderColor: monthColors
-                  }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Month' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={550}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {opLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-                <MyChart
-                  type="bar"
-                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
-                  height={550}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </>
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
   );
 }
