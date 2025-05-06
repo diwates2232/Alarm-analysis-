@@ -1,522 +1,6 @@
+Api Responce
 
-// src/components/AlarmCard.js
-import React from 'react';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters }) {
-  if (!summary) return null;
-
-  // 1) apply all filters (region, location, month, priority)
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region)                             return false;
-    if (filters.location && a.Location !== filters.location)                           return false;
-    if (filters.month    && a.Month    !== filters.month)                              return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)         return false;
-    return true;
-  });
-
-  const totalAlarms = filtered.length;
-
-  // normalize helper
-  const normalize = str => (str || '').toString().trim().toLowerCase();
-
-  // 2) counts per your rules
-  const responseSentCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'no' &&
-    normalize(a['Action Taken']) === 'response sent'
-  ).length;
-
-  const notSentCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'no' &&
-    normalize(a['Action Taken']) === 'not sent'
-  ).length;
-
-  const reoccurredCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'yes' &&
-    normalize(a['Action Taken']) === 'reoccured'
-  ).length;
-
-  const responseSentPercentage = totalAlarms
-    ? `${((responseSentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Total Alarms</Typography>
-            <Typography variant="h4">{totalAlarms}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Response Sent</Typography>
-            <Typography variant="h4">{responseSentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Not Sent */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Not Sent</Typography>
-            <Typography variant="h4">{notSentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Re-occurred */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Re-occurred</Typography>
-            <Typography variant="h4">{reoccurredCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Response Sent %</Typography>
-            <Typography variant="h4">{responseSentPercentage}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-
-
-
-
-
-
-// src/components/AlarmCard.js
-import React from 'react';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters }) {
-  if (!summary) return null;
-
-  // 1) Apply all filters (region, location, month, priority)
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region)                             return false;
-    if (filters.location && a.Location !== filters.location)                           return false;
-    if (filters.month    && a.Month    !== filters.month)                              return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)         return false;
-    return true;
-  });
-
-  const totalAlarms = filtered.length;
-
-  // 2) Normalize "Action Taken" once
-  const normalize = str => (str || '').toString().trim().toLowerCase();
-
-  // 3) Count "not sent" exactly, everything else counts as "sent"
-  const notSentCount = filtered.filter(a => normalize(a['Action Taken']) === 'not sent').length;
-  const sentCount    = totalAlarms - notSentCount;
-
-  // 4) Count re-occurred
-  const reoccurredCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'yes'
-  ).length;
-
-  // 5) Percentage of sent
-  const responseSentPercentage = totalAlarms
-    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Total Alarms
-            </Typography>
-            <Typography variant="h4">{totalAlarms}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent */}
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent
-            </Typography>
-            <Typography variant="h4">{sentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Not Sent */}
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Not Sent
-            </Typography>
-            <Typography variant="h4">{notSentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Re-occurred */}
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Re-occurred
-            </Typography>
-            <Typography variant="h4">{reoccurredCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent %
-            </Typography>
-            <Typography variant="h4">{responseSentPercentage}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-// src/components/AlarmCard.js
-import React from 'react';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters }) {
-  if (!summary) return null;
-
-  // apply all filters (region, location, month, priority) to raw alarms
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region)                             return false;
-    if (filters.location && a.Location !== filters.location)                           return false;
-    if (filters.month    && a.Month    !== filters.month)                              return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)         return false;
-    return true;
-  });
-
-  const totalAlarms = filtered.length;
-
-  // normalize Action Taken for exact matching
-  const actionOf = a => (a['Action Taken'] || '').trim().toLowerCase();
-
-  // count strictly "sent" vs "not sent"
-  const sentCount    = filtered.filter(a => actionOf(a) === 'sent').length;
-  const notSentCount = filtered.filter(a => actionOf(a) === 'not sent').length;
-
-  // re-occurred count
-  const reoccurredCount = filtered.filter(a =>
-    (a['If Reoccured Yes/No'] || '').trim().toLowerCase() === 'yes'
-  ).length;
-
-  // percentage of sent (only those exactly marked "sent")
-  const responseSentPercentage = totalAlarms
-    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Total Alarms
-            </Typography>
-            <Typography variant="h4">{totalAlarms}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent Count */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent
-            </Typography>
-            <Typography variant="h4">{sentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Not Sent Count */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Not Sent
-            </Typography>
-            <Typography variant="h4">{notSentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Re-occurred Count */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Re-occurred
-            </Typography>
-            <Typography variant="h4">{reoccurredCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent %
-            </Typography>
-            <Typography variant="h4">{responseSentPercentage}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-// src/components/AlarmCard.js
-import React from 'react';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters }) {
-  if (!summary) return null;
-
-  // apply all filters (region, location, month, priority) to raw alarms
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region)                             return false;
-    if (filters.location && a.Location !== filters.location)                           return false;
-    if (filters.month    && a.Month    !== filters.month)                              return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)         return false;
-    return true;
-  });
-
-  const totalAlarms     = filtered.length;
-  const sentCount       = filtered.filter(a =>
-    a['Action Taken'] && a['Action Taken'] !== 'Not Sent'
-  ).length;
-  const notSentCount    = filtered.filter(a =>
-    !a['Action Taken'] || a['Action Taken'] === 'Not Sent'
-  ).length;
-  const reoccurredCount = filtered.filter(a =>
-    a['If Reoccured Yes/No'] && a['If Reoccured Yes/No'].toLowerCase() === 'yes'
-  ).length;
-
-  const responseSentPercentage = totalAlarms
-    ? `${((sentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Total Alarms
-            </Typography>
-            <Typography variant="h4">{totalAlarms}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent Count */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent
-            </Typography>
-            <Typography variant="h4">{sentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Not Sent Count */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Not Sent
-            </Typography>
-            <Typography variant="h4">{notSentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Re-occurred Count */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Re-occurred
-            </Typography>
-            <Typography variant="h4">{reoccurredCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1" gutterBottom>
-              Response Sent %
-            </Typography>
-            <Typography variant="h4">{responseSentPercentage}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-[
-  {
-    "Sr. No": 1,
-    "Date": "01-Apr-25",
-    "Time of  Alarm (Local time)": "05:21:18",
-    "Owner": "GSOC",
-    "Type of Alarm": "Badge Access",
-    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-    "Location": "LT.Vilnius",
-    "Region": "EMEA",
-    "Rejection": "Wrong Pin",
-    "CCURE Incident Priority": "Low",
-    "Name of Person Attending Alarms (First, Last Name)": "Manisha Choudhari",
-    "Employee Name": "Jhorar, Kapil",
-    "Employee ID No": 326022,
-    "If Reoccured Yes/No": "No",
-    "Action Taken": "Not Sent",
-    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
-    "Target SLA in Mins": "0:00:00",
-    "Date of Action (MM/DD/YY)": "01-Apr-25",
-    "Time of Action": "05:21:18",
-    " Time Taken (Min)": 0,
-    "Time of Completion": "05:21:18",
-    "If not resolved, escalated to?": "NA",
-    "Date of Escalation": "NA",
-    "Time Of Escalation": "NA",
-    "SLA Met": "Yes",
-    "Completed By": "Manisha Choudhari"
-  },
-  {
-    "Sr. No": 2,
-    "Date": "01-Apr-25",
-    "Time of  Alarm (Local time)": "11:12:09",
-    "Owner": "GSOC",
-    "Type of Alarm": "Badge Access",
-    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-    "Location": "LT.Vilnius",
-    "Region": "EMEA",
-    "Rejection": "Wrong Pin",
-    "CCURE Incident Priority": "Low",
-    "Name of Person Attending Alarms (First, Last Name)": "Swapnil Diwate",
-    "Employee Name": "Zikov Laurino, Ivan Alexander",
-    "If Reoccured Yes/No": "No",
-    "Action Taken": "Not Sent",
-    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
-    "Target SLA in Mins": "0:00:00",
-    "Date of Action (MM/DD/YY)": "01-Apr-25",
-    "Time of Action": "11:12:09",
-    " Time Taken (Min)": 0,
-    "Time of Completion": "11:12:09",
-    "If not resolved, escalated to?": "NA",
-    "Date of Escalation": "NA",
-    "Time Of Escalation": "NA",
-    "SLA Met": "Yes",
-    "Completed By": "Swapnil Diwate"
-  },
-  {
-    "Sr. No": 3,
-    "Date": "01-Apr-25",
-    "Time of  Alarm (Local time)": "11:20:23",
-    "Owner": "GSOC",
-    "Type of Alarm": "Badge Access",
-    "Door": "EMEA_LT_VNO_GAMA_9th Flr_Main Entrance",
-    "Location": "LT.Vilnius",
-    "Region": "EMEA",
-    "Rejection": "Wrong Pin",
-    "CCURE Incident Priority": "Low",
-    "Name of Person Attending Alarms (First, Last Name)": "Swapnil Diwate",
-    "Employee Name": "Trinkune, Jolanta",
-    "Employee ID No": 307427,
-    "If Reoccured Yes/No": "No",
-    "Action Taken": "Not Sent",
-    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
-    "Target SLA in Mins": "0:00:00",
-    "Date of Action (MM/DD/YY)": "01-Apr-25",
-    "Time of Action": "11:20:23",
-    " Time Taken (Min)": 0,
-    "Time of Completion": "11:20:23",
-    "If not resolved, escalated to?": "NA",
-    "Date of Escalation": "NA",
-    "Time Of Escalation": "NA",
-    "SLA Met": "Yes",
-    "Completed By": "Swapnil Diwate"
-  },
-  {
+ {
     "Sr. No": 4,
     "Date": "01-Apr-25",
     "Time of  Alarm (Local time)": "11:41:17",
@@ -544,31 +28,163 @@ export default function AlarmCard({ summary, rawAlarms, filters }) {
     "SLA Met": "Yes",
     "Completed By": "Swapnil Diwate"
   },
-  {
-    "Sr. No": 5,
-    "Date": "01-Apr-25",
-    "Time of  Alarm (Local time)": "11:42:00",
-    "Owner": "GSOC",
-    "Type of Alarm": "Badge Access",
-    "Door": "EMEA_LT_VNO_GAMA_8th Flr_Stairway",
-    "Location": "LT.Vilnius",
-    "Region": "EMEA",
-    "Rejection": "Wrong Pin",
-    "CCURE Incident Priority": "Low",
-    "Name of Person Attending Alarms (First, Last Name)": "Swapnil Diwate",
-    "Employee Name": "Mashtaler, Yan",
-    "Employee ID No": 314776,
-    "If Reoccured Yes/No": "No",
-    "Action Taken": "Not Sent",
-    "Remediation Notes": "Email not sent- As currently we are not sending 1st and 2nd time Wrong Pin Access Violation mail to EMEA rigion",
-    "Target SLA in Mins": "0:00:00",
-    "Date of Action (MM/DD/YY)": "01-Apr-25",
-    "Time of Action": "11:42:00",
-    " Time Taken (Min)": 0,
-    "Time of Completion": "11:42:00",
-    "If not resolved, escalated to?": "NA",
-    "Date of Escalation": "NA",
-    "Time Of Escalation": "NA",
-    "SLA Met": "Yes",
-    "Completed By": "Swapnil Diwate"
-  },
+
+
+
+
+dashboard.js
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+export default function Dashboard() {
+  const [summary, setSummary] = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters] = useState({
+    region: '', location: '', month: '', priority: ''
+  });
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // --- derive month from Date string ---
+  const getMonth = dateStr =>
+    new Date(dateStr).toLocaleString('en-US', { month: 'short' });
+
+  // 1) options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [], [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [], [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(() => (
+    Array.from(new Set(
+      rawAlarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => getMonth(a.Date))
+    ))
+    .sort((a, b) => a.localeCompare(b))
+  ), [rawAlarms, filters.region, filters.location]);
+
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
+
+  // 2) filtered base for cards & charts
+  const filtered = useMemo(() => {
+    return rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)   return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.month    && getMonth(a.Date) !== filters.month) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    });
+  }, [rawAlarms, filters]);
+
+  // 3) summary slice for cards/charts
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+
+    // regionWise & locationWise
+    if (filters.region) {
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
+        });
+    }
+
+    // monthWise
+    if (filters.month) {
+      const mCount = filtered.filter(a => getMonth(a.Date) === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {};
+    }
+
+    // operatorWise
+    const opCounts = filtered.reduce((c, a) => {
+      const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+      c[op] = (c[op] || 0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
+    return fs;
+  }, [summary, filtered, filters, locationOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
+      <Box component="header" sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py: 4 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
+
+        {/* cards (top row) */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={filtered}
+          filters={filters}
+        />
+
+        {/* charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={filtered}
+        />
+      </Container>
+    </Box>
+  );
+}
+
