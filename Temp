@@ -1,3 +1,9 @@
+Security agencies promptly implemented emergency checks at Mumbai airport following the bomb threat. Investigations are ongoing, with no confirmed link yet to recent military operations.
+
+
+
+
+
 import React from 'react';
 import MyChart from './Chart';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
