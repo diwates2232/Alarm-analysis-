@@ -1,3 +1,20 @@
+npm install cross-env --save-dev
+
+
+"scripts": {
+  "start": "cross-env CHOKIDAR_USEPOLLING=true react-scripts --openssl-legacy-provider start"
+}
+
+
+
+npm start
+
+
+
+
+
+
+
 npm uninstall react-router-dom
 npm install react-router-dom@5
 
