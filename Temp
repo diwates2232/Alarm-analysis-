@@ -1,3 +1,9 @@
+npm uninstall @mui/material @mui/system
+npm install @mui/material@5.11.0 @mui/system@5.11.0
+
+
+
+
 cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend-vite
 npm run dev
 
