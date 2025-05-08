@@ -2,6 +2,69 @@
 const webpack = require('webpack');
 
 module.exports = {
+  // Your existing Babel plugins
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+
+  webpack: {
+    configure: (webpackConfig) => {
+      // 1) Polyfill `process` as before
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser.js')
+      };
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      // 2) Allow importing .mjs without "fullySpecified" errors
+      //    a) Ensure .mjs is in the resolver
+      webpackConfig.resolve.extensions = webpackConfig.resolve.extensions || [];
+      if (!webpackConfig.resolve.extensions.includes('.mjs')) {
+        webpackConfig.resolve.extensions.push('.mjs');
+      }
+
+      //    b) Disable fullySpecified on the JS rule
+      webpackConfig.module.rules.forEach((rule) => {
+        if (rule.oneOf) {
+          rule.oneOf.forEach((one) => {
+            if (
+              one.test &&
+              one.test.toString().includes('js|mjs|jsx')
+            ) {
+              one.resolve = {
+                ...(one.resolve || {}),
+                fullySpecified: false
+              };
+            }
+          });
+        }
+      });
+
+      return webpackConfig;
+    },
+  },
+};
+
+
+
+
+
+
+
+
+
+// craco.config.js
+const webpack = require('webpack');
+
+module.exports = {
   // ONLY your Babel plugins—no webpack.resolve.fallback here
   babel: {
     plugins: [
