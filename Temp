@@ -1,227 +1,536 @@
+let See Compare Both File and Give Me updated js file .carefully.
+Lets check each function.
+
+// src/pages/RawAlarms.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import {
+  Typography,
+  Container,
+  Grid,
+  Box,
+  Button,
+  Link as MuiLink,
+  Card,
+  CardContent
+} from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import Filters from '../components/Filters';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+import * as XLSX from 'xlsx';
 
 
-// // src/pages/RawAlarms.js
-// import React, { useEffect, useState, useMemo, useRef } from 'react';
-// import {
-//   Typography,
-//   Container,
-//   Grid,
-//   TextField,
-//   MenuItem,
-//   Box,
-//   Button,
-//   Link as MuiLink
-// } from '@mui/material';
-// import DashboardIcon from '@mui/icons-material/Dashboard';
-// import TableChartIcon from '@mui/icons-material/TableChart';
-// import Filters from '../components/Filters';
-// import AlarmsTable from '../components/AlarmsTable';
-// import { getRawAlarms } from '../services/api';
-// import * as XLSX from 'xlsx';
+export default function RawAlarms() {
+  const [alarms, setAlarms]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    region: '',
+    location: '',
+    door: '',
+    employee: '',
+    priority: '',
+    rejection: '',
+    month: '',
+    date: ''
+  });
+  const [view, setView] = useState('employee');
 
-// // helper: convert "01-Apr-25" → "2025-04-01"
-// function toISODate(apiDate) {
-//   const [day, monAbbr, yy] = apiDate.split('-');
-//   if (!day || !monAbbr || !yy) return '';
-//   const monthNames = {
-//     Jan: '01', Feb: '02', Mar: '03', Apr: '04',
-//     May: '05', Jun: '06', Jul: '07', Aug: '08',
-//     Sep: '09', Oct: '10', Nov: '11', Dec: '12'
-//   };
-//   const mm = monthNames[monAbbr];
-//   const yyyy = Number(yy) + 2000;
-//   return `${yyyy}-${mm}-${day.padStart(2,'0')}`;
-// }
+  // helper to format month/year for dropdown
+  const formatMonthYear = dateStr =>
+    new Date(dateStr).toLocaleString('en-US', {
+      month: 'short',
+      year: '2-digit'
+    });
 
-// export default function RawAlarms() {
-//   const [alarms, setAlarms]       = useState([]);
-//   const [loading, setLoading]     = useState(true);
-//   const [filters, setFilters]     = useState({
-//     region: '', location: '', door: '', employee: '',
-//     priority: '', rejection: '', date: ''
-//   });
-//   const [view, setView] = useState('employee');
+  // keep a ref to the latest filtered data
+  const filteredRef = useRef([]);
+  const filtered = useMemo(() => {
+    const f = alarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)   return false;
+      if (filters.location && a.Location !== filters.location) return false;
+      if (filters.door     && a.Door     !== filters.door)     return false;
+      if (filters.employee && a['Employee Name'] !== filters.employee) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      if (filters.rejection && a.Rejection !== filters.rejection) return false;
+      if (filters.month    && formatMonthYear(a.Date) !== filters.month) return false;
+      if (filters.date     && a.Date     !== filters.date)     return false;
+     
+      return true;
+    });
+    filteredRef.current = f;
+    return f;
+  }, [alarms, filters]);
 
-//   // keep a ref to the latest filtered data
-//   const filteredRef = useRef([]);
-//   const filtered = useMemo(() => {
-//     const f = alarms.filter(a => {
-//       if (filters.region   && a.Region   !== filters.region)    return false;
-//       if (filters.location && a.Location !== filters.location)  return false;
-//       if (filters.door     && a.Door     !== filters.door)      return false;
-//       if (filters.employee && a['Employee Name'] !== filters.employee) return false;
-//       if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
-//       if (filters.rejection && a.Rejection !== filters.rejection) return false;
-//       // NEW: match ISO date
-//       if (filters.date) {
-//         const iso = toISODate(a.Date);
-//         if (iso !== filters.date) return false;
-//       }
-//       return true;
-//     });
-//     filteredRef.current = f;
-//     return f;
-//   }, [alarms, filters]);
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(() => setAlarms([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-//   useEffect(() => {
-//     getRawAlarms()
-//       .then(res => setAlarms(res.data || []))
-//       .catch(() => setAlarms([]))
-//       .finally(() => setLoading(false));
-//   }, []);
+  // derive filter options
+  const regionOptions = useMemo(() => [...new Set(alarms.map(a => a.Region))].sort(), [alarms]);
+  const locationOptions = useMemo(() =>
+    [...new Set(
+      alarms
+        .filter(a => !filters.region || a.Region === filters.region)
+        .map(a => a.Location)
+    )].sort()
+  , [alarms, filters.region]);
+  const doorOptions = useMemo(() =>
+    [...new Set(
+      alarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => a.Door)
+    )].sort()
+  , [alarms, filters.region, filters.location]);
+  const employeeOptions = useMemo(() =>
+    [...new Set(
+      alarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => a['Employee Name'])
+    )].sort()
+  , [alarms, filters.region, filters.location]);
+  const priorityOptions = useMemo(
+    () => [...new Set(alarms.map(a => a['CCURE Incident Priority']))].sort(),
+    [alarms]
+  );
+  const rejectionOptions = useMemo(
+    () => [...new Set(alarms.map(a => a.Rejection))].sort(),
+    [alarms]
+  );
+  const monthOptions = useMemo(() => {
+    const all = alarms.map(a => formatMonthYear(a.Date));
+    return [...new Set(all)]
+      .sort((a, b) => new Date(a) - new Date(b));
+  }, [alarms]);
 
-//   // derive filter options
-//   const regionOptions = useMemo(
-//     () => Array.from(new Set(alarms.map(a => a.Region))).sort(),
-//     [alarms]
-//   );
-//   const locationOptions = useMemo(
-//     () => Array.from(new Set(
-//       alarms
-//         .filter(a => !filters.region || a.Region === filters.region)
-//         .map(a => a.Location)
-//     )).sort(),
-//     [alarms, filters.region]
-//   );
-//   const doorOptions = useMemo(
-//     () => Array.from(new Set(
-//       alarms
-//         .filter(a =>
-//           (!filters.region   || a.Region   === filters.region) &&
-//           (!filters.location || a.Location === filters.location)
-//         )
-//         .map(a => a.Door)
-//     )).sort(),
-//     [alarms, filters.region, filters.location]
-//   );
-//   const employeeOptions = useMemo(
-//     () => Array.from(new Set(
-//       alarms
-//         .filter(a =>
-//           (!filters.region   || a.Region   === filters.region) &&
-//           (!filters.location || a.Location === filters.location)
-//         )
-//         .map(a => a['Employee Name'])
-//     )).sort(),
-//     [alarms, filters.region, filters.location]
-//   );
-//   const priorityOptions = useMemo(
-//     () => Array.from(new Set(alarms.map(a => a['CCURE Incident Priority']))).sort(),
-//     [alarms]
-//   );
-//   const rejectionOptions = useMemo(
-//     () => Array.from(new Set(alarms.map(a => a.Rejection))).sort(),
-//     [alarms]
-//   );
+  if (loading) {
+    return (
+      <Container maxWidth={false} sx={{ pt: 4 }}>
+        <Typography variant="h4">Raw Alarms</Typography>
+        <Typography>Loading…</Typography>
+      </Container>
+    );
+  }
 
-//   if (loading) {
-//     return (
-//       <Container maxWidth={false} sx={{ pt: 4 }}>
-//         <Typography variant="h4">Raw Alarms</Typography>
-//         <Typography>Loading…</Typography>
-//       </Container>
-//     );
-//   }
+  // normalize helper
+  const normalize = str => (str || '').toString().trim().toLowerCase();
 
-//   // Excel export handlers (unchanged) …
-//   const exportEmployee = () => {
-//     const stats = {};
-//     filteredRef.current.forEach(a => {
-//       const emp = a['Employee Name'] || 'Unknown';
-//       const dt = `${a.Date} ${a['Time of  Alarm (Local time)']}`;
-//       if (!stats[emp]) stats[emp] = { total: 0, lastDt: dt, lastAction: a['Action Taken'] };
-//       stats[emp].total += 1;
-//       if (dt > stats[emp].lastDt) {
-//         stats[emp].lastDt = dt;
-//         stats[emp].lastAction = a['Action Taken'];
-//       }
-//     });
-//     const rows = Object.entries(stats).map(([employee, s], idx) => ({
-//       'Sr. No': idx + 1,
-//       Employee: employee,
-//       Date: s.lastDt.split(' ')[0],
-//       Time: s.lastDt.split(' ')[1],
-//       'Action Taken': s.lastAction,
-//       'Total Alarms': s.total
-//     }));
-//     const ws = XLSX.utils.json_to_sheet(rows);
-//     const wb = XLSX.utils.book_new();
-//     XLSX.utils.book_append_sheet(wb, ws, 'Employee Analysis');
-//     XLSX.writeFile(wb, 'employee_analysis.xlsx');
-//   };
+  // summary card counts
+  const totalAlarms      = filtered.length;
+  const responseSentCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'response sent'
+  ).length;
+  const notSentCount     = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'not sent'
+  ).length;
+  const reoccurredCount  = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'yes' &&
+    normalize(a['Action Taken']) === 'reoccured'
+  ).length;
 
-//   const exportDoor = () => {
-//     const stats = {};
-//     filteredRef.current.forEach(a => {
-//       const door = a.Door || 'Unknown';
-//       if (!stats[door]) stats[door] = { total: 0 };
-//       stats[door].total += 1;
-//     });
-//     const rows = Object.entries(stats).map(([Door, s], idx) => ({
-//       'Sr. No': idx + 1,
-//       Door,
-//       'Total Alarms': s.total
-//     }));
-//     const ws = XLSX.utils.json_to_sheet(rows);
-//     const wb = XLSX.utils.book_new();
-//     XLSX.utils.book_append_sheet(wb, ws, 'Door Analysis');
-//     XLSX.writeFile(wb, 'door_analysis.xlsx');
-//   };
+  // Excel export handlers (unchanged) …
+  const exportEmployee = () => {
+    const stats = {};
+    filteredRef.current.forEach(a => {
+      const emp = a['Employee Name'] || 'Unknown';
+      const dt = `${a.Date} ${a['Time of  Alarm (Local time)']}`;
+      if (!stats[emp]) stats[emp] = { total: 0, lastDt: dt, lastAction: a['Action Taken'] };
+      stats[emp].total += 1;
+      if (dt > stats[emp].lastDt) {
+        stats[emp].lastDt = dt;
+        stats[emp].lastAction = a['Action Taken'];
+      }
+    });
+    const rows = Object.entries(stats).map(([employee, s], idx) => ({
+      'Sr. No': idx + 1,
+      Employee: employee,
+      Date: s.lastDt.split(' ')[0],
+      Time: s.lastDt.split(' ')[1],
+      'Action Taken': s.lastAction,
+      'Total Alarms': s.total
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Employee Analysis');
+    XLSX.writeFile(wb, 'employee_analysis.xlsx');
+  };
 
-//   return (
-//     <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
-//       {/* Header */}
-//       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'background.paper', p: 2, borderBottom: 1, borderColor: 'divider' }}>
-//         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-//           <TableChartIcon fontSize="large" />
-//           <Typography variant="h4">Raw Alarms Analysis</Typography>
-//         </Box>
-//         <Box sx={{ display: 'flex', gap: 2 }}>
-//           <MuiLink href="/"><DashboardIcon /> Dashboard</MuiLink>
-//           <MuiLink href="/alarms"><TableChartIcon /> Raw Alarms</MuiLink>
-//         </Box>
-//       </Box>
+  const exportDoor = () => {
+    const stats = {};
+    filteredRef.current.forEach(a => {
+      const door = a.Door || 'Unknown';
+      if (!stats[door]) stats[door] = { total: 0 };
+      stats[door].total += 1;
+    });
+    const rows = Object.entries(stats).map(([Door, s], idx) => ({
+      'Sr. No': idx + 1,
+      Door,
+      'Total Alarms': s.total
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Door Analysis');
+    XLSX.writeFile(wb, 'door_analysis.xlsx');
+  };
 
-//       {/* Filters */}
-//       <Box sx={{ p: 2 }}>
-//         <Filters
-//           filters={filters}
-//           setFilters={setFilters}
-//           regionOptions={regionOptions}
-//           locationOptions={locationOptions}
-//           doorOptions={doorOptions}
-//           employeeOptions={employeeOptions}
-//           priorityOptions={priorityOptions}
-//           rejectionOptions={rejectionOptions}
-//         />
-//       </Box>
+  return (
+    <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
+      {/* Header */}
+      <Box sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        bgcolor: 'background.paper', p: 2, borderBottom: 1, borderColor: 'divider'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TableChartIcon fontSize="large" />
+          <Typography variant="h4">Raw Alarms Analysis</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <MuiLink href="/"><DashboardIcon /> Dashboard</MuiLink>
+          <MuiLink href="/alarms"><TableChartIcon /> Raw Alarms</MuiLink>
+        </Box>
+      </Box>
 
-//       {/* View toggle */}
-//       <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
-//         <Button variant={view === 'employee' ? 'contained' : 'outlined'} onClick={() => setView('employee')}>Employee Analysis</Button>
-//         <Button variant={view === 'door'     ? 'contained' : 'outlined'} onClick={() => setView('door')}>Door Analysis</Button>
-//         <Button variant={view === 'detailed' ? 'contained' : 'outlined'} onClick={() => setView('detailed')}>Detailed Records</Button>
-//       </Box>
+      {/* Filters */}
+      <Box sx={{ p: 2 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          doorOptions={doorOptions}
+          employeeOptions={employeeOptions}
+          priorityOptions={priorityOptions}
+          rejectionOptions={rejectionOptions}
+          monthOptions={monthOptions}    // ← added
+        />
+      </Box>
 
-//       {/* Table & Exports */}
-//       <Box sx={{ p: 2 }}>
-//         {view === 'employee' && (
-//           <>
-//             <Button variant="contained" onClick={exportEmployee} sx={{ mb: 2 }}>Export Employee Analysis</Button>
-//             <AlarmsTable alarms={filtered} maxRows={100} tableType="employee" />
-//           </>
-//         )}
-//         {view === 'door' && (
-//           <>
-//             <Button variant="contained" onClick={exportDoor} sx={{ mb: 2 }}>Export Door Analysis</Button>
-//             <AlarmsTable alarms={filtered} maxRows={100} tableType="door" />
-//           </>
-//         )}
-//         {view === 'detailed' && (
-//           <AlarmsTable alarms={filtered} maxRows={100} tableType="detailed" />
-//         )}
-//       </Box>
-//     </Container>
-//   );
-// }
+      {/* Summary Cards */}
+      <Grid container spacing={2} sx={{ px: 2, mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1">Total Alarms</Typography>
+              <Typography variant="h4">{totalAlarms}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1">Response Sent</Typography>
+              <Typography variant="h4">{responseSentCount}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1">Not Sent</Typography>
+              <Typography variant="h4">{notSentCount}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle1">Re-occurred</Typography>
+              <Typography variant="h4">{reoccurredCount}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* View toggle */}
+      <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+        <Button
+          variant={view === 'employee' ? 'contained' : 'outlined'}
+          onClick={() => setView('employee')}
+        >
+          Employee Analysis
+        </Button>
+        <Button
+          variant={view === 'door' ? 'contained' : 'outlined'}
+          onClick={() => setView('door')}
+        >
+          Door Analysis
+        </Button>
+        <Button
+          variant={view === 'detailed' ? 'contained' : 'outlined'}
+          onClick={() => setView('detailed')}
+        >
+          Detailed Records
+        </Button>
+      </Box>
+
+      {/* Table & Exports */}
+      <Box sx={{ p: 2 }}>
+        {view === 'employee' && (
+          <>
+            <Button variant="contained" onClick={exportEmployee} sx={{ mb: 2 }}>
+              Export Employee Analysis
+            </Button>
+            <AlarmsTable alarms={filtered} maxRows={100} tableType="employee" />
+          </>
+        )}
+        {view === 'door' && (
+          <>
+            <Button variant="contained" onClick={exportDoor} sx={{ mb: 2 }}>
+              Export Door Analysis
+            </Button>
+            <AlarmsTable alarms={filtered} maxRows={100} tableType="door" />
+          </>
+        )}
+        {view === 'detailed' && (
+          <AlarmsTable alarms={filtered} maxRows={100} tableType="detailed" />
+        )}
+      </Box>
+    </Container>
+  );
+}
+
+
+
+
+
+File 2
+
+
+
+// src/pages/RawAlarms.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import {
+  Typography,
+  Container,
+  Grid,
+  TextField,
+  MenuItem,
+  Box,
+  Button,
+  Link as MuiLink
+} from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import Filters from '../components/Filters';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+import * as XLSX from 'xlsx';
+
+// helper: convert "01-Apr-25" → "2025-04-01"
+function toISODate(apiDate) {
+  const [day, monAbbr, yy] = apiDate.split('-');
+  if (!day || !monAbbr || !yy) return '';
+  const monthNames = {
+    Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+    May: '05', Jun: '06', Jul: '07', Aug: '08',
+    Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+  };
+  const mm = monthNames[monAbbr];
+  const yyyy = Number(yy) + 2000;
+  return `${yyyy}-${mm}-${day.padStart(2,'0')}`;
+}
+
+export default function RawAlarms() {
+  const [alarms, setAlarms]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', door: '', employee: '',
+    priority: '', rejection: '', date: ''
+  });
+  const [view, setView] = useState('employee');
+
+  // keep a ref to the latest filtered data
+  const filteredRef = useRef([]);
+  const filtered = useMemo(() => {
+    const f = alarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)    return false;
+      if (filters.location && a.Location !== filters.location)  return false;
+      if (filters.door     && a.Door     !== filters.door)      return false;
+      if (filters.employee && a['Employee Name'] !== filters.employee) return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      if (filters.rejection && a.Rejection !== filters.rejection) return false;
+      // NEW: match ISO date
+      if (filters.date) {
+        const iso = toISODate(a.Date);
+        if (iso !== filters.date) return false;
+      }
+      return true;
+    });
+    filteredRef.current = f;
+    return f;
+  }, [alarms, filters]);
+
+  useEffect(() => {
+    getRawAlarms()
+      .then(res => setAlarms(res.data || []))
+      .catch(() => setAlarms([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // derive filter options
+  const regionOptions = useMemo(
+    () => Array.from(new Set(alarms.map(a => a.Region))).sort(),
+    [alarms]
+  );
+  const locationOptions = useMemo(
+    () => Array.from(new Set(
+      alarms
+        .filter(a => !filters.region || a.Region === filters.region)
+        .map(a => a.Location)
+    )).sort(),
+    [alarms, filters.region]
+  );
+  const doorOptions = useMemo(
+    () => Array.from(new Set(
+      alarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => a.Door)
+    )).sort(),
+    [alarms, filters.region, filters.location]
+  );
+  const employeeOptions = useMemo(
+    () => Array.from(new Set(
+      alarms
+        .filter(a =>
+          (!filters.region   || a.Region   === filters.region) &&
+          (!filters.location || a.Location === filters.location)
+        )
+        .map(a => a['Employee Name'])
+    )).sort(),
+    [alarms, filters.region, filters.location]
+  );
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(alarms.map(a => a['CCURE Incident Priority']))).sort(),
+    [alarms]
+  );
+  const rejectionOptions = useMemo(
+    () => Array.from(new Set(alarms.map(a => a.Rejection))).sort(),
+    [alarms]
+  );
+
+  if (loading) {
+    return (
+      <Container maxWidth={false} sx={{ pt: 4 }}>
+        <Typography variant="h4">Raw Alarms</Typography>
+        <Typography>Loading…</Typography>
+      </Container>
+    );
+  }
+
+  // Excel export handlers (unchanged) …
+  const exportEmployee = () => {
+    const stats = {};
+    filteredRef.current.forEach(a => {
+      const emp = a['Employee Name'] || 'Unknown';
+      const dt = `${a.Date} ${a['Time of  Alarm (Local time)']}`;
+      if (!stats[emp]) stats[emp] = { total: 0, lastDt: dt, lastAction: a['Action Taken'] };
+      stats[emp].total += 1;
+      if (dt > stats[emp].lastDt) {
+        stats[emp].lastDt = dt;
+        stats[emp].lastAction = a['Action Taken'];
+      }
+    });
+    const rows = Object.entries(stats).map(([employee, s], idx) => ({
+      'Sr. No': idx + 1,
+      Employee: employee,
+      Date: s.lastDt.split(' ')[0],
+      Time: s.lastDt.split(' ')[1],
+      'Action Taken': s.lastAction,
+      'Total Alarms': s.total
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Employee Analysis');
+    XLSX.writeFile(wb, 'employee_analysis.xlsx');
+  };
+
+  const exportDoor = () => {
+    const stats = {};
+    filteredRef.current.forEach(a => {
+      const door = a.Door || 'Unknown';
+      if (!stats[door]) stats[door] = { total: 0 };
+      stats[door].total += 1;
+    });
+    const rows = Object.entries(stats).map(([Door, s], idx) => ({
+      'Sr. No': idx + 1,
+      Door,
+      'Total Alarms': s.total
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Door Analysis');
+    XLSX.writeFile(wb, 'door_analysis.xlsx');
+  };
+
+  return (
+    <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'background.paper', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TableChartIcon fontSize="large" />
+          <Typography variant="h4">Raw Alarms Analysis</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <MuiLink href="/"><DashboardIcon /> Dashboard</MuiLink>
+          <MuiLink href="/alarms"><TableChartIcon /> Raw Alarms</MuiLink>
+        </Box>
+      </Box>
+
+      {/* Filters */}
+      <Box sx={{ p: 2 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          doorOptions={doorOptions}
+          employeeOptions={employeeOptions}
+          priorityOptions={priorityOptions}
+          rejectionOptions={rejectionOptions}
+        />
+      </Box>
+
+      {/* View toggle */}
+      <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+        <Button variant={view === 'employee' ? 'contained' : 'outlined'} onClick={() => setView('employee')}>Employee Analysis</Button>
+        <Button variant={view === 'door'     ? 'contained' : 'outlined'} onClick={() => setView('door')}>Door Analysis</Button>
+        <Button variant={view === 'detailed' ? 'contained' : 'outlined'} onClick={() => setView('detailed')}>Detailed Records</Button>
+      </Box>
+
+      {/* Table & Exports */}
+      <Box sx={{ p: 2 }}>
+        {view === 'employee' && (
+          <>
+            <Button variant="contained" onClick={exportEmployee} sx={{ mb: 2 }}>Export Employee Analysis</Button>
+            <AlarmsTable alarms={filtered} maxRows={100} tableType="employee" />
+          </>
+        )}
+        {view === 'door' && (
+          <>
+            <Button variant="contained" onClick={exportDoor} sx={{ mb: 2 }}>Export Door Analysis</Button>
+            <AlarmsTable alarms={filtered} maxRows={100} tableType="door" />
+          </>
+        )}
+        {view === 'detailed' && (
+          <AlarmsTable alarms={filtered} maxRows={100} tableType="detailed" />
+        )}
+      </Box>
+    </Container>
+  );
+}
+
 
