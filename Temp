@@ -1,3 +1,6 @@
+npm install --save-dev @babel/preset-env @babel/plugin-proposal-class-properties
+
+
 const webpack = require('webpack');
 
 module.exports = {
