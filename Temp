@@ -1,72 +1,35 @@
+// craco.config.js
+const webpack = require('webpack');
 
-  "scripts": {
--   "start": "craco start",
-+   "start": "react-scripts --openssl-legacy-provider start",
-    "build": "craco build",
-    "test": "craco test",
-    "eject": "react-scripts eject"
+module.exports = {
+  // ONLY your Babel plugins—no webpack.resolve.fallback here
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
   },
 
+  // If you need `process` polyfilled in the browser, you can keep the alias+ProvidePlugin.
+  // Otherwise you can delete this entire `webpack` section.
+  webpack: {
+    configure: (webpackConfig) => {
+      // Make sure resolve.alias exists
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        // Maps any import of "process" to the browser shim:
+        process: require.resolve('process/browser.js')
+      };
 
+      // Provide `process` globally (so code that references process.env doesn’t break)
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
 
-
-After installing above we got this error
-
-
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
-
-> alarm-frontend@0.1.0 start
-> craco start
-? Something is already running on port 3000.
-
-Would you like to run the app on another port instead? Yes
-Starting the development server...
-
-Error: error:0308010C:digital envelope routines::unsupported
-    at new Hash (node:internal/crypto/hash:79:19)
-    at Object.createHash (node:crypto:139:10)
-    at module.exports (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\createHash.js:90:53)
-    at NormalModule._initBuildHash (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:401:16)
-    at handleParseError (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:449:10)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:481:5
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:342:12
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:373:3
-    at iterateNormalLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:214:10)
-    at iterateNormalLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:221:10)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:236:3
-    at runSyncOrAsync (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:130:11)
-    at iterateNormalLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:232:2)
-    at Array.<anonymous> (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:205:4)
-    at Storage.finished (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\enhanced-resolve\lib\CachedInputFileSystem.js:55:16)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\enhanced-resolve\lib\CachedInputFileSystem.js:91:9
-(node:4640) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\scripts\start.js:19
-  throw err;
-  ^
-
-Error: error:0308010C:digital envelope routines::unsupported
-    at new Hash (node:internal/crypto/hash:79:19)
-    at Object.createHash (node:crypto:139:10)
-    at module.exports (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\createHash.js:90:53)
-    at NormalModule._initBuildHash (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:401:16)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:433:10
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:308:13
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:367:11
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:233:18
-    at context.callback (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\loader-runner\lib\LoaderRunner.js:111:13)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\babel-loader\lib\index.js:51:103
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
-  opensslErrorStack: [
-    'error:03000086:digital envelope routines::initialization error',
-    'error:0308010C:digital envelope routines::unsupported'
-  ],
-  library: 'digital envelope routines',
-  reason: 'unsupported',
-  code: 'ERR_OSSL_EVP_UNSUPPORTED'
-}
-
-Node.js v22.14.0
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>
+      return webpackConfig;
+    },
+  },
+};
