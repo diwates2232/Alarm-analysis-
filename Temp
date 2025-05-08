@@ -1,5 +1,61 @@
 // craco.config.js
 const webpack = require('webpack');
+const path = require('path');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (config) => {
+      // 1) Treat react-router-dom imports as the CJS build:
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        // everything that starts with "react-router-dom" goes to its index.js
+        'react-router-dom$': path.resolve(
+          __dirname,
+          'node_modules/react-router-dom/index.js'
+        )
+      };
+
+      // 2) Make sure we don’t try to parse any .mjs files:
+      config.resolve.extensions = ['.js', '.jsx', '.ts', '.tsx'];
+
+      // 3) Prevent chokidar from choking on your DumpStack.log.tmp:
+      config.watchOptions = {
+        ignored: [
+          /node_modules/,
+          /C:\\DumpStack\.log\.tmp$/
+        ]
+      };
+
+      // 4) If you still need a browser "process" shim:
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return config;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+// craco.config.js
+const webpack = require('webpack');
 
 module.exports = {
   babel: {
