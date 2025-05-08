@@ -1,3 +1,65 @@
+npm uninstall react-router-dom
+npm install react-router-dom@5
+
+
+// craco.config.js
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      // Handle .mjs properly
+      webpackConfig.module.rules.push({
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto',
+      });
+
+      // Polyfill process for browser
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser.js'),
+      };
+
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser',
+        })
+      );
+
+      return webpackConfig;
+    },
+  },
+};
+
+
+
+
+
+"scripts": {
+  "start": "CHOKIDAR_USEPOLLING=true react-scripts --openssl-legacy-provider start"
+}
+
+
+
+npx rimraf node_modules
+npm cache clean --force
+npm install
+npm start
+
+
+
+
+
+
+
 npx rimraf node_modules/.cache
 npm cache clean --force
 
