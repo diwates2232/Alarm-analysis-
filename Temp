@@ -9,6 +9,83 @@ module.exports = {
       '@babel/plugin-proposal-nullish-coalescing-operator'
     ]
   },
+  webpack: {
+    configure: (webpackConfig) => {
+      // Ensure resolve.alias exists
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+
+        // Force react-router-dom imports to use the CJS build (not the .mjs)
+        'react-router-dom$': path.resolve(
+          __dirname,
+          'node_modules/react-router-dom/dist/react-router-dom.cjs.js'
+        ),
+
+        // Shim `process` in the browser
+        process: require.resolve('process/browser')
+      };
+
+      // Remove .mjs from extensions so CRA doesn’t attempt to load it
+      webpackConfig.resolve.extensions = [
+        '.js',
+        '.jsx',
+        '.ts',
+        '.tsx',
+      ];
+
+      // Provide `process` globally for any code referencing process.env
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      // Tell Webpack’s watcher to ignore system temp files
+      webpackConfig.watchOptions = {
+        ignored: [
+          /node_modules/,
+          /C:\\DumpStack\.log\.tmp/,
+          /\.tmp$/,
+        ],
+      };
+
+      // If devServer is present (CRA >=5), also narrow its watch
+      if (webpackConfig.devServer) {
+        webpackConfig.devServer.watchFiles = {
+          paths: ['src/**/*'],
+          options: {
+            ignored: [/node_modules/, /\.tmp$/],
+          },
+        };
+      }
+
+      return webpackConfig;
+    },
+  },
+};
+
+
+
+
+
+
+
+
+
+
+
+// craco.config.js
+const webpack = require('webpack');
+const path = require('path');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
 
   webpack: {
     configure: (webpackConfig) => {
