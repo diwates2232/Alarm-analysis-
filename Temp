@@ -1,3 +1,70 @@
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      const oneOfRule = webpackConfig.module.rules.find(rule => Array.isArray(rule.oneOf));
+
+      if (oneOfRule) {
+        oneOfRule.oneOf.forEach(rule => {
+          // Only adjust Babel loader rules for JS/TS files (not file-loader or CSS)
+          if (
+            rule.test &&
+            rule.test.toString().includes('js') &&
+            rule.include
+          ) {
+            // Extend `include` instead of replacing
+            if (Array.isArray(rule.include)) {
+              rule.include.push(
+                /node_modules\/@mui\/material/,
+                /node_modules\/@mui\/system/,
+                /node_modules\/@mui\/x-data-grid/
+              );
+            } else {
+              rule.include = [
+                rule.include,
+                /node_modules\/@mui\/material/,
+                /node_modules\/@mui\/system/,
+                /node_modules\/@mui\/x-data-grid/
+              ];
+            }
+          }
+        });
+      }
+
+      // Add polyfill for `process` object
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.fallback = {
+        ...(webpackConfig.resolve.fallback || {}),
+        process: require.resolve('process/browser')
+      };
+
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return webpackConfig;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
+
 read my current file carefully and give me updated file We got again & agian same errors.
 
 craco.config.js
