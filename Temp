@@ -1,3 +1,8 @@
+- import PptxGenJS from 'pptxgenjs';
++ import PptxGenJS from 'pptxgenjs/dist/pptxgen.browser.js';
+
+
+
 // src/pages/Dashboard.js
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Box, Typography, Container, Button } from '@mui/material';
