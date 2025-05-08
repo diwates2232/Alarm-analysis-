@@ -1,3 +1,60 @@
+// craco.config.js
+const path = require('path');
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (config) => {
+      // 1) Alias the ESM entry to the CJS build so Webpack never tries to parse the .mjs
+      config.resolve = config.resolve || {};
+      config.resolve.alias = {
+        ...(config.resolve.alias || {}),
+        // Point any import of that .mjs file to the CJS bundle
+        'react-router-dom/dist/index.mjs': path.resolve(
+          __dirname,
+          'node_modules/react-router-dom/dist/react-router-dom.cjs.js'
+        )
+      };
+
+      // 2) Restrict extensions so .mjs isn’t auto-selected
+      config.resolve.extensions = ['.js', '.jsx', '.ts', '.tsx'];
+
+      // 3) Globally ignore any *.tmp (including DumpStack.log.tmp) from watch
+      config.watchOptions = {
+        ignored: [
+          /node_modules/,
+          /\.tmp$/,
+          // On Windows the locked file
+          /DumpStack\.log\.tmp$/
+        ]
+      };
+
+      // 4) Provide `process` shim (optional, if you still need it)
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return config;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
 read carefully and identify Where is issue and solve it
 
 
