@@ -1,3 +1,60 @@
+// craco.config.js
+const webpack = require('webpack');
+const path = require('path');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+
+  webpack: {
+    configure: (webpackConfig) => {
+      // 1) Point all "react-router-dom" imports at the CJS bundle
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        'react-router-dom$': path.resolve(
+          __dirname,
+          'node_modules/react-router-dom/dist/react-router-dom.cjs.js'
+        ),
+        process: require.resolve('process/browser')
+      };
+
+      // 2) Provide `process` globally if some libs expect it.
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({ process: 'process/browser' })
+      );
+
+      // 3) Tell webpack/chokidar to ignore any .tmp (including DumpStack.log.tmp)
+      const ignoredPatterns = ['**/node_modules/**', '**/*.tmp', 'C:/DumpStack.log.tmp'];
+      webpackConfig.watchOptions = {
+        ...(webpackConfig.watchOptions || {}),
+        ignored: ignoredPatterns
+      };
+      // Also for devServer if CRA 5+
+      if (webpackConfig.devServer) {
+        webpackConfig.devServer.watchFiles = {
+          paths: ['src/**/*'],
+          options: { ignored: ignoredPatterns }
+        };
+      }
+
+      return webpackConfig;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
+
 (c) Microsoft Corporation. All rights reserved.
 
 C:\Users\W0024618>cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend
