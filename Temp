@@ -16,6 +16,79 @@ module.exports = {
       webpackConfig.resolve.alias = {
         ...(webpackConfig.resolve.alias || {}),
 
+        // Redirect react-router-dom .mjs import to its CJS build
+        'react-router-dom/dist/index.mjs': path.resolve(
+          __dirname,
+          'node_modules/react-router-dom/dist/react-router-dom.cjs.js'
+        ),
+
+        // Shim process
+        process: require.resolve('process/browser')
+      };
+
+      // Only load JS/TS extensions, not .mjs
+      webpackConfig.resolve.extensions = ['.js', '.jsx', '.ts', '.tsx'];
+
+      // Provide process globally
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      // Ignore temp/locked files when watching
+      webpackConfig.watchOptions = {
+        ignored: [
+          /node_modules/,
+          /C:\\DumpStack\.log\.tmp/,
+          /\.tmp$/
+        ]
+      };
+
+      // Also configure devServer watchers if present
+      if (webpackConfig.devServer) {
+        webpackConfig.devServer.watchFiles = {
+          paths: ['src/**/*'],
+          options: {
+            ignored: [/node_modules/, /\.tmp$/]
+          }
+        };
+      }
+
+      return webpackConfig;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+// craco.config.js
+const webpack = require('webpack');
+const path = require('path');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      // Ensure resolve.alias exists
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+
         // Force react-router-dom imports to use the CJS build (not the .mjs)
         'react-router-dom$': path.resolve(
           __dirname,
