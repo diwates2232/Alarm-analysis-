@@ -1,3 +1,11 @@
+npx create-vite@latest alarm-frontend-vite --template react
+cd alarm-frontend-vite
+npm install
+npm install @mui/material @emotion/react @emotion/styled
+
+
+
+
 const webpack = require('webpack');
 
 module.exports = {
