@@ -1,3 +1,11 @@
+rmdir /s /q node_modules
+del /f /q package-lock.json
+npm cache clean --force
+npm install
+
+
+
+
 npm install --save-dev @babel/plugin-proposal-optional-chaining @babel/plugin-proposal-nullish-coalescing-operator
 
 
