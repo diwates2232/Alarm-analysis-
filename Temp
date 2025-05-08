@@ -12,6 +12,59 @@ module.exports = {
       const oneOfRule = webpackConfig.module.rules.find(rule => Array.isArray(rule.oneOf));
       if (oneOfRule) {
         oneOfRule.oneOf.forEach(rule => {
+          if (rule.include && typeof rule.include !== 'function') {
+            rule.include = [
+              /node_modules\/@mui\/material/,
+              /node_modules\/@mui\/system/,
+              /node_modules\/@mui\/x-data-grid/,
+              /src/
+            ];
+          }
+        });
+      }
+
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser')
+      };
+
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return webpackConfig;
+    }
+  }
+};
+
+
+
+
+npm install --save-dev @babel/plugin-proposal-optional-chaining @babel/plugin-proposal-nullish-coalescing-operator
+
+
+
+
+
+
+
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      const oneOfRule = webpackConfig.module.rules.find(rule => Array.isArray(rule.oneOf));
+      if (oneOfRule) {
+        oneOfRule.oneOf.forEach(rule => {
           if (rule.include && typeof rule.include === 'function') return; // skip custom include
           if (rule.include && rule.include.toString().includes('src')) {
             rule.include = [
