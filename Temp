@@ -1,3 +1,56 @@
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      webpackConfig.resolve = webpackConfig.resolve || {};
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser')
+      };
+
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return webpackConfig;
+    },
+  },
+};
+
+
+
+
+
+npm install --save-dev @babel/plugin-proposal-optional-chaining @babel/plugin-proposal-nullish-coalescing-operator
+
+
+
+npm install @mui/x-data-grid@v5
+
+rmdir /s /q node_modules
+del /f /q package-lock.json
+npm cache clean --force
+npm install
+npm start
+
+
+
+
+
+
+
+
+
+
 rmdir /s /q node_modules
 del /f /q package-lock.json
 npm cache clean --force
