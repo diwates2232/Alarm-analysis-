@@ -1,767 +1,417 @@
+So raed my Current file and Give Me Both updated js files 
+Dont Make another changes 
 
-// src/components/AlarmCard.js
+
+Dashboard.js
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+
+// helper: convert "01-Apr-25" → "2025-04-01"
+function toISODate(apiDate) {
+  const [d, monAbbr, yy] = apiDate.split('-');
+  const monthNames = {
+    Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+    May: '05', Jun: '06', Jul: '07', Aug: '08',
+    Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+  };
+  const mm = monthNames[monAbbr] || '01';
+  const yyyy = `20${yy}`;
+  return `${yyyy}-${mm}-${d.padStart(2, '0')}`;
+}
+
+// helper: format month/year for dropdown (e.g. "Apr 25")
+function formatMonthYear(apiDate) {
+  const [d, monAbbr, yy] = apiDate.split('-');
+  return `${monAbbr} ${yy}`;
+}
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', month: '', date: '', priority: ''
+  });
+
+  // load once
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // 1️⃣ dropdown options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [],
+    [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [],
+    [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(() => {
+    const all = rawAlarms
+      .filter(a =>
+        (!filters.region   || a.Region   === filters.region) &&
+        (!filters.location || a.Location === filters.location)
+      )
+      .map(a => formatMonthYear(a.Date));
+    return Array.from(new Set(all))
+      .sort((a, b) => {
+        // parse back to YYYY-MM for correct sort
+        const [mA, yA] = a.split(' ');
+        const [mB, yB] = b.split(' ');
+        const dateA = new Date(`20${yA}-${mA}-01`);
+        const dateB = new Date(`20${yB}-${mB}-01`);
+        return dateA - dateB;
+      });
+  }, [rawAlarms, filters.region, filters.location]);
+
+  // full-date ISO options (for the Date picker)
+  const dateOptions = useMemo(() => {
+    const all = rawAlarms.map(a => toISODate(a.Date));
+    return Array.from(new Set(all))
+      .sort();
+  }, [rawAlarms]);
+
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
+
+  // 2️⃣ filtered base
+  const filtered = useMemo(() => (
+    rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)        return false;
+      if (filters.location && a.Location !== filters.location)      return false;
+      if (filters.month    && formatMonthYear(a.Date) !== filters.month) return false;
+      if (filters.date     && toISODate(a.Date) !== filters.date)   return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    })
+  ), [rawAlarms, filters]);
+
+  // 3️⃣ filteredSummary for cards
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+
+    // region/location slice
+    if (filters.region) {
+      fs.regionWise = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
+        });
+    }
+
+    // monthWise
+    if (filters.month) {
+      const mCount = filtered.filter(a => formatMonthYear(a.Date) === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {};
+    }
+
+    // operatorWise
+    const opCounts = filtered.reduce((c, a) => {
+      const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+      c[op] = (c[op] || 0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
+    return fs;
+  }, [summary, filtered, filters, locationOptions]);
+
+  if (!summary) {
+    return <Typography>Loading dashboard…</Typography>;
+  }
+
+  return (
+    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }}>
+      <Box component="header" sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
+
+      <Container maxWidth={false} sx={{ py: 4 }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+         dateOptions={dateOptions}
+          priorityOptions={priorityOptions}
+        />
+
+        {/* cards */}
+        <AlarmCard
+          summary={filteredSummary}
+          rawAlarms={filtered}
+          filters={filters}
+        />
+
+        {/* charts */}
+        <SummaryCards
+          summary={filteredSummary}
+          filters={filters}
+          rawAlarms={filtered}
+        />
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+
+
+file 2
+
+
+Filters.js
+
+
 import React from 'react';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EventIcon from '@mui/icons-material/Event';
+import SearchIcon from '@mui/icons-material/Search';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 
-export default function AlarmCard({ summary, rawAlarms, filters }) {
-  if (!summary) return null;
-
-  // helper: turn "01-Apr-25" → "Apr 25"
-  const formatMonthYear = dateStr => {
-    const [ , mon, yy ] = dateStr.split('-');
-    return `${mon} ${yy}`;
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions,
+ dateOptions,
+  employeeOptions,
+  doorOptions,
+  priorityOptions,
+  rejectionOptions
+}) {
+  const handleChange = field => e => {
+    const value = e.target.value;
+    setFilters(prev => {
+      const next = { ...prev, [field]: value };
+      // cascade resets (unchanged)
+      if (field === 'region') {
+        next.location = '';
+        next.month = '';
+        next.date = '';
+        next.priority = '';
+        next.rejection = '';
+        next.employee = '';
+        next.door = '';
+      }
+      if (field === 'location') {
+        next.month = '';
+        next.date = '';
+        next.priority = '';
+        next.rejection = '';
+        next.employee = '';
+        next.door = '';
+      }
+      if (field === 'month') {
+        next.date = '';
+        next.priority = '';
+        next.rejection = '';
+      }
+      if (field === 'date') {
+        next.priority = '';
+        next.rejection = '';
+      }
+      if (field === 'priority') {
+        next.rejection = '';
+      }
+      if (field === 'door') {
+        next.rejection = '';
+      }
+      return next;
+    });
   };
 
-  // 1) apply all filters (region, location, month, priority)
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region)                         return false;
-    if (filters.location && a.Location !== filters.location)                       return false;
-    if (filters.month    && formatMonthYear(a.Date) !== filters.month)             return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)     return false;
-    return true;
-  });
-
-  const totalAlarms = filtered.length;
-
-  // normalize helper
-  const normalize = str => (str || '').toString().trim().toLowerCase();
-
-  // 2) counts per your rules
-  const responseSentCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'no' &&
-    normalize(a['Action Taken']) === 'response sent'
-  ).length;
-
-  const notSentCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'no' &&
-    normalize(a['Action Taken']) === 'not sent'
-  ).length;
-
-  const reoccurredCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'yes' &&
-    normalize(a['Action Taken']) === 'reoccured'
-  ).length;
-
-  const responseSentPercentage = totalAlarms
-    ? `${((responseSentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
   return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card><CardContent>
-          <Typography variant="subtitle1">Total Alarms</Typography>
-          <Typography variant="h4">{totalAlarms}</Typography>
-        </CardContent></Card>
+    <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          select label="Region" fullWidth
+          value={filters.region}
+          onChange={handleChange('region')}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><PublicIcon/></InputAdornment>
+          }}
+        >
+          <MenuItem value="">All Regions</MenuItem>
+          {regionOptions.map(r => (
+            <MenuItem key={r} value={r}>{r}</MenuItem>
+          ))}
+        </TextField>
       </Grid>
 
-      {/* Response Sent */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card><CardContent>
-          <Typography variant="subtitle1">Response Sent</Typography>
-          <Typography variant="h4">{responseSentCount}</Typography>
-        </CardContent></Card>
+      {/* Location */}
+      <Grid item>
+        <TextField
+          select label="Location" fullWidth
+          value={filters.location}
+          onChange={handleChange('location')}
+          disabled={!filters.region}
+          InputProps={{
+            startAdornment: <InputAdornment position="start"><LocationOnIcon/></InputAdornment>
+          }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(l => (
+            <MenuItem key={l} value={l}>{l}</MenuItem>
+          ))}
+        </TextField>
       </Grid>
 
-      {/* Not Sent */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card><CardContent>
-          <Typography variant="subtitle1">Not Sent</Typography>
-          <Typography variant="h4">{notSentCount}</Typography>
-        </CardContent></Card>
-      </Grid>
+      {/* Month */}
+      {monthOptions && (
+        <Grid item>
+          <TextField
+            select label="Month" fullWidth
+            value={filters.month}
+            onChange={handleChange('month')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><CalendarMonthIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem value="">All Months</MenuItem>
+            {monthOptions.map(m => (
+              <MenuItem key={m} value={m}>{m}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
 
-      {/* Re-occurred */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card><CardContent>
-          <Typography variant="subtitle1">Re-occurred</Typography>
-          <Typography variant="h4">{reoccurredCount}</Typography>
-        </CardContent></Card>
-      </Grid>
+      {/* Date */}
+      {dateOptions && (
+        <Grid item>
+          <TextField
+            select label="Date" fullWidth
+            value={filters.date}
+            onChange={handleChange('date')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><EventIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem value="">All Dates</MenuItem>
+            {dateOptions.map(d => (
+              <MenuItem key={d} value={d}>{d}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
 
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card><CardContent>
-          <Typography variant="subtitle1">Response Sent %</Typography>
-          <Typography variant="h4">{responseSentPercentage}</Typography>
-        </CardContent></Card>
-      </Grid>
+      {/* Priority */}
+      {priorityOptions && (
+        <Grid item>
+          <TextField
+            select label="Priority" fullWidth
+            value={filters.priority}
+            onChange={handleChange('priority')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><PriorityHighIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem value="">All Priorities</MenuItem>
+            {priorityOptions.map(p => (
+              <MenuItem key={p} value={p}>{p}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Remaining filters unchanged… */}
+      {rejectionOptions && (
+        <Grid item>
+          <TextField
+            select label="Rejection" fullWidth
+            value={filters.rejection}
+            onChange={handleChange('rejection')}
+          >
+            <MenuItem value="">All Rejections</MenuItem>
+            {rejectionOptions.map(r => (
+              <MenuItem key={r} value={r}>{r}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+      {employeeOptions && (
+        <Grid item>
+          <TextField
+            select label="Employee" fullWidth
+            value={filters.employee}
+            onChange={handleChange('employee')}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><SearchIcon/></InputAdornment>
+            }}
+          >
+            <MenuItem value="">All Employees</MenuItem>
+            {employeeOptions.map(e => (
+              <MenuItem key={e} value={e}>{e}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
+      {doorOptions && (
+        <Grid item>
+          <TextField
+            select label="Door" fullWidth
+            value={filters.door}
+            onChange={handleChange('door')}
+          >
+            <MenuItem value="">All Doors</MenuItem>
+            {doorOptions.map(d => (
+              <MenuItem key={d} value={d}>{d}</MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+      )}
     </Grid>
   );
 }
-
-
-
-
-
-
-
-// src/components/SummaryCards.js
-import React from 'react';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const PRIORITY_COLORS = {
-  High: '#DC3912',
-  Medium: '#FF9900',
-  Low: '#109618'
-};
-
-const defaultColors = [
-  '#FF9900','#109618','#FED06A','#DC3912',
-  '#990099','#0099C6','#C1D82F','#66AA00',
-  '#3366CC','#B82E2E','#316395','#71C9CD'
-];
-
-const REJECTION_COLORS = [
-  '#006400','#00008B','#8B008B','#FF1493',
-  '#00CED1','#2F4F4F','#6f1c03','#ff9a00'
-];
-
-const REJECTION_COLOR_MAP = {
-  'Wrong Pin':'#49A044','Facility code':'#49A044',
-  'Unknown card':'#49A044','Not activated':'#49A044',
-  'Site code':'#49A044','Clearance - Access Violation':'#FFDF00',
-  'Expired':'#FFDF00','Lost':'#FFDF00',
-  'Disabled Badge':'#FFA500','Duress Alarm':'#FFA500',
-};
-
-// helper: "01-Apr-25" → "Apr 25"
-const formatMonthYear = dateStr => {
-  const [ , mon, yy ] = dateStr.split('-');
-  return `${mon} ${yy}`;
-};
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-
-  const {
-    rejectionTypeWise = {},
-    regionWise = {},
-    monthWise = {},
-    locationWise = {},
-    operatorWise = {}
-  } = summary;
-
-  // apply filters
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region)                         return false;
-    if (filters.location && a.Location !== filters.location)                       return false;
-    if (filters.month    && formatMonthYear(a.Date) !== filters.month)             return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)     return false;
-    return true;
-  });
-
-  // 1) Rejection Stats
-  const rejectionCounts = filtered.reduce((acc, a) => {
-    acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-    return acc;
-  }, {});
-  const rejectionStats = Object.entries(rejectionCounts)
-    .map(([type,count],i) => {
-      const pct = filtered.length
-        ? `${((count/filtered.length)*100).toFixed(2)}%`
-        : '0%';
-      return {
-        type, count, percentage: pct,
-        color: REJECTION_COLOR_MAP[type]
-          || REJECTION_COLORS[i % REJECTION_COLORS.length]
-      };
-    })
-    .sort((a,b)=>b.count-a.count);
-
-  // 2) Priority Wise
-  const prCounts = filtered.reduce((acc,a)=> {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p]||0)+1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l=>prCounts[l]);
-  const prColors = prLabels.map(l=>PRIORITY_COLORS[l]||'#999');
-
-  // 3) Operator Wise (from summary.operatorWise)
-  const opLabels = Object.keys(operatorWise);
-  const opValues = opLabels.map(l=>operatorWise[l].count||0);
-  const opColors = defaultColors.slice(0,opLabels.length);
-
-  // 4) Partition (region or location)
-  const partitionObj = !filters.region
-    ? Object.fromEntries(Object.entries(regionWise).map(([r,i])=>[r,i.count||0]))
-    : filtered.reduce((acc,a)=>{ acc[a.Location]=(acc[a.Location]||0)+1; return acc; }, {});
-  const partLabels = Object.keys(partitionObj);
-  const partValues = partLabels.map(l=>partitionObj[l]);
-  const partColors = defaultColors.slice(0,partLabels.length);
-
-  // 5) Month Wise
-  const monthCounts = filtered.reduce((acc,a)=>{
-    const key = formatMonthYear(a.Date);
-    acc[key]=(acc[key]||0)+1; return acc;
-  }, {});
-  const monthOrder = Object.keys(monthCounts).sort((a,b)=>{
-    // parse back to date to sort
-    const [mA,yA] = a.split(' '), [mB,yB] = b.split(' ');
-    const dA = new Date(`20${yA}-${mA}-01`);
-    const dB = new Date(`20${yB}-${mB}-01`);
-    return dA - dB;
-  });
-  const monthLabels = monthOrder;
-  const monthValues = monthLabels.map(m=>monthCounts[m]);
-  const monthColors = defaultColors.slice(0,monthLabels.length);
-
-  // 6) Location Wise
-  const locCounts = filtered.reduce((acc,a)=>{ acc[a.Location]=(acc[a.Location]||0)+1; return acc; }, {});
-  const locLabels = Object.keys(locCounts);
-  const locValues = locLabels.map(l=>locCounts[l]);
-  const locColors = defaultColors.slice(0,locLabels.length);
-
-  // 7) Priority by Location
-  const locations = [...new Set(filtered.map(a=>a.Location))];
-  const priorities = ['Low','Medium','High','Critical'];
-  const seriesData = priorities.map((prio,i)=>({
-    label: prio,
-    data: locations.map(loc=>
-      filtered.filter(a=>
-        a.Location===loc && a['CCURE Incident Priority']===prio
-      ).length
-    ),
-    borderColor: PRIORITY_COLORS[prio]||defaultColors[i%defaultColors.length],
-    backgroundColor: 'transparent'
-  }));
-
-  return (
-    <>
-      {/* Rejection Cards */}
-      <Grid container spacing={2} sx={{mb:2}}>
-        {rejectionStats.map(r=>(
-          <Grid item xs={12} sm={6} md={3} key={r.type}>
-            <Card sx={{border:`2px solid ${r.color}`,bgcolor:r.color,color:'#fff'}}>
-              <CardContent>
-                <Typography variant="subtitle2">{r.type}</Typography>
-                <Typography variant="h6">{r.count}</Typography>
-                <Typography variant="body2">{r.percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Partition / Priority / Location */}
-      <Grid container spacing={5} sx={{mb:4}}>
-        {/* partition */}
-        {partLabels.length>0 && (
-          <Grid item xs={400} md={200}>
-            <Card><CardContent>
-              <Typography variant="h6" gutterBottom>
-                {!filters.region?'Global Partition':`${filters.region} → Location`}
-              </Typography>
-              <MyChart
-                type="doughnut"
-                data={{labels:partLabels,values:partValues,bgColors:partColors,borderColor:partColors}}
-                height={550} width={600}
-              />
-            </CardContent></Card>
-          </Grid>
-        )}
-        {/* priority */}
-        {prLabels.length>0 && (
-          <Grid item xs={400} md={200}>
-            <Card><CardContent>
-              <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-              <MyChart
-                type="pie"
-                data={{labels:prLabels,values:prValues,bgColors:prColors,borderColor:prColors}}
-                height={550} width={600}
-              />
-            </CardContent></Card>
-          </Grid>
-        )}
-        {/* location */}
-        {locLabels.length>0 && (
-          <Grid item xs={400} md={200}>
-            <Card><CardContent>
-              <Typography variant="h6" gutterBottom>Location Wise</Typography>
-              <MyChart
-                type="line"
-                data={{labels:locLabels,values:locValues,bgColors:locColors,borderColor:locColors}}
-                options={{
-                  scales:{
-                    x:{title:{display:true,text:'Location'}},
-                    y:{title:{display:true,text:'Alarm Count'}}
-                  }
-                }}
-                height={550} width={750}
-              />
-            </CardContent></Card>
-          </Grid>
-        )}
-      </Grid>
-
-      {/* P-by-L, Month & Operator in one row */}
-      <Grid container spacing={5} sx={{mb:4}}>
-        {/* Priority by Location */}
-        <Grid item xs={400} md={200}>
-          <Card><CardContent>
-            <Typography variant="h6" gutterBottom>Priority by Location</Typography>
-            <MyChart
-              type="line"
-              data={{labels:locations,datasets:seriesData}}
-              options={{
-                scales:{
-                  x:{title:{display:true,text:'Location'}},
-                  y:{title:{display:true,text:'Alarm Count'}}
-                },
-                plugins:{legend:{position:'bottom'}}
-              }}
-              height={500} width={750}
-            />
-          </CardContent></Card>
-        </Grid>
-
-        {/* Month Wise */}
-        <Grid item xs={5} md={4}>
-          <Card><CardContent>
-            <Typography variant="h6" gutterBottom>Month Wise</Typography>
-            <MyChart
-              type="line"
-              data={{labels:monthLabels,values:monthValues,bgColors:monthColors,borderColor:monthColors}}
-              options={{
-                scales:{
-                  x:{title:{display:true,text:'Month'}},
-                  y:{title:{display:true,text:'Alarm Count'}}
-                }
-              }}
-              height={500} width={600}
-            />
-          </CardContent></Card>
-        </Grid>
-
-        {/* Operator Wise */}
-        <Grid item xs={5} md={4}>
-          <Card><CardContent>
-            <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-            <MyChart
-              type="bar"
-              data={{labels:opLabels,values:opValues,bgColors:opColors,borderColor:opColors}}
-              options={{
-                scales:{
-                  x:{title:{display:true,text:'Operator'}},
-                  y:{title:{display:true,text:'Alarm Count'}}
-                }
-              }}
-              height={500} width={600}
-            />
-          </CardContent></Card>
-        </Grid>
-      </Grid>
-    </>
-  );
-}
-
-
-
-
-File Alarmcard.js
-
-
-
-// src/components/AlarmCard.js
-import React from 'react';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-export default function AlarmCard({ summary, rawAlarms, filters }) {
-  if (!summary) return null;
-
-  // helper to extract short month from date string (e.g. "Apr")
-  const getMonth = dateStr =>
-    new Date(dateStr).toLocaleString('en-US', { month: 'short' });
-
-  // 1) apply all filters (region, location, month, priority)
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region)                         return false;
-    if (filters.location && a.Location !== filters.location)                       return false;
-    if (filters.month    && getMonth(a.Date) !== filters.month)                   return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)     return false;
-    return true;
-  });
-
-  const totalAlarms = filtered.length;
-
-  // normalize helper
-  const normalize = str => (str || '').toString().trim().toLowerCase();
-
-  // 2) counts per your rules
-  const responseSentCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'no' &&
-    normalize(a['Action Taken']) === 'response sent'
-  ).length;
-
-  const notSentCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'no' &&
-    normalize(a['Action Taken']) === 'not sent'
-  ).length;
-
-  const reoccurredCount = filtered.filter(a =>
-    normalize(a['If Reoccured Yes/No']) === 'yes' &&
-    normalize(a['Action Taken']) === 'reoccured'
-  ).length;
-
-  const responseSentPercentage = totalAlarms
-    ? `${((responseSentCount / totalAlarms) * 100).toFixed(2)}%`
-    : '0%';
-
-  return (
-    <Grid container spacing={2} sx={{ mb: 3 }}>
-      {/* Total Alarms */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Total Alarms</Typography>
-            <Typography variant="h4">{totalAlarms}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Response Sent</Typography>
-            <Typography variant="h4">{responseSentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Not Sent */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Not Sent</Typography>
-            <Typography variant="h4">{notSentCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Re-occurred */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Re-occurred</Typography>
-            <Typography variant="h4">{reoccurredCount}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-
-      {/* Response Sent % */}
-      <Grid item xs={12} sm={6} md={2}>
-        <Card>
-          <CardContent>
-            <Typography variant="subtitle1">Response Sent %</Typography>
-            <Typography variant="h4">{responseSentPercentage}</Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-    </Grid>
-  );
-}
-
-
-
-
-
-File 2
-
-Summarycard.js
-
-
-import React from 'react';
-import MyChart from './Chart';
-import { Card, CardContent, Typography, Grid } from '@mui/material';
-
-const PRIORITY_COLORS = {
-  High: '#DC3912',
-  Medium: '#FF9900',
-  Low: '#109618'
-};
-
-const defaultColors = [
-  '#FF9900', '#109618', '#FED06A', '#DC3912',
-  '#990099', '#0099C6', '#C1D82F', '#66AA00',
-  '#3366CC', '#B82E2E', '#316395', '#71C9CD'
-];
-
-const REJECTION_COLORS = [
-  '#006400', '#00008B', '#8B008B', '#FF1493',
-  '#00CED1', '#2F4F4F', '#6f1c03', '#ff9a00'
-];
-
-const REJECTION_COLOR_MAP = {
-  'Wrong Pin':'#49A044',
-  'Facility code':'#49A044',
-  'Unknown card':'#49A044',
-  'Not activated':'#49A044',
-  'Site code':'#49A044',
-  'Clearance - Access Violation': '#FFDF00',
-  'Expired': '#FFDF00',
-  'Lost':'#FFDF00',
-  'Disabled Badge': '#FFA500',
-  'Duress Alarm':'#FFA500',
-};
-
-const getMonth = dateStr =>
-  new Date(dateStr).toLocaleString('en-US', { month: 'short' });
-
-export default function SummaryCards({ summary, filters, rawAlarms }) {
-  if (!summary) return null;
-
-  const {
-    rejectionTypeWise = {},
-    regionWise = {},
-    monthWise = {},
-    locationWise = {},
-    operatorWise = {}
-  } = summary;
-
-  const filtered = rawAlarms.filter(a => {
-    if (filters.region   && a.Region   !== filters.region) return false;
-    if (filters.location && a.Location !== filters.location) return false;
-    if (filters.month    && getMonth(a.Date) !== filters.month) return false;
-    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
-    return true;
-  });
-
-  const rejectionCounts = filtered.reduce((acc, a) => {
-    acc[a.Rejection] = (acc[a.Rejection] || 0) + 1;
-    return acc;
-  }, {});
-  const rejectionStats = Object.entries(rejectionCounts)
-    .map(([type, count], idx) => {
-      const percentage = filtered.length
-        ? `${((count / filtered.length) * 100).toFixed(2)}%`
-        : '0%';
-      const color = REJECTION_COLOR_MAP[type]
-        || REJECTION_COLORS[idx % REJECTION_COLORS.length];
-      return { type, count, percentage, color };
-    })
-    .sort((a, b) => b.count - a.count);
-
-  const prCounts = filtered.reduce((acc, a) => {
-    const p = a['CCURE Incident Priority'];
-    acc[p] = (acc[p] || 0) + 1;
-    return acc;
-  }, {});
-  const prLabels = Object.keys(prCounts);
-  const prValues = prLabels.map(l => prCounts[l]);
-  const prColors = prLabels.map(l => PRIORITY_COLORS[l] || '#999');
-
-  const opCountsObj = operatorWise || {};
-  const opLabels = Object.keys(opCountsObj);
-  const opValues = opLabels.map(l => opCountsObj[l].count || 0);
-  const opColors = defaultColors.slice(0, opLabels.length);
-
-  const partitionObj = !filters.region
-    ? Object.fromEntries(
-        Object.entries(regionWise).map(([r, info]) => [r, info.count || 0])
-      )
-    : filtered.reduce((acc, a) => {
-        acc[a.Location] = (acc[a.Location] || 0) + 1;
-        return acc;
-      }, {});
-  const partLabels = Object.keys(partitionObj);
-  const partValues = partLabels.map(l => partitionObj[l]);
-  const partColors = defaultColors.slice(0, partLabels.length);
-
-  const monthCounts = filtered.reduce((acc, a) => {
-    const key = getMonth(a.Date);
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const monthLabels = Object.keys(monthCounts)
-    .sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
-  const monthValues = monthLabels.map(m => monthCounts[m]);
-  const monthColors = defaultColors.slice(0, monthLabels.length);
-
-  const locCounts = filtered.reduce((acc, a) => {
-    acc[a.Location] = (acc[a.Location] || 0) + 1;
-    return acc;
-  }, {});
-  const locLabels = Object.keys(locCounts);
-  const locValues = locLabels.map(l => locCounts[l]);
-  const locColors = defaultColors.slice(0, locLabels.length);
-
-  const locations = [...new Set(filtered.map(a => a.Location))];
-  const priorities = ['Low', 'Medium', 'High', 'Critical'];
-  const seriesData = priorities.map((prio, idx) => ({
-    label: prio,
-    data: locations.map(loc =>
-      filtered.filter(a =>
-        a.Location === loc &&
-        a['CCURE Incident Priority'] === prio
-      ).length
-    ),
-    borderColor: PRIORITY_COLORS[prio] || defaultColors[idx % defaultColors.length],
-    backgroundColor: 'transparent',
-  }));
-
-  return (
-    <>
-      {/* Rejection Cards */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {rejectionStats.length > 0 ? rejectionStats.map(({ type, count, percentage, color }) => (
-          <Grid item xs={12} sm={6} md={3} key={type}>
-            <Card sx={{ border: `2px solid ${color}`, backgroundColor: color, color: '#fff' }}>
-              <CardContent>
-                <Typography variant="subtitle2">{type}</Typography>
-                <Typography variant="h6">{count}</Typography>
-                <Typography variant="body2">{percentage}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        )) : (
-          <Typography sx={{ m: 2 }}>No rejection data available.</Typography>
-        )}
-      </Grid>
-
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {partLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
-                </Typography>
-                <MyChart
-                  type="doughnut"
-                  data={{ labels: partLabels, values: partValues, bgColors: partColors, borderColor: partColors }}
-                  height={550}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {prLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Priority Wise</Typography>
-                <MyChart
-                  type="pie"
-                  data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
-                  height={550}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-        {locLabels.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Location Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={550}
-                  width={750}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-
-      <Grid container spacing={5} sx={{ mb: 4 }}>
-        {locations.length > 0 && (
-          <Grid item xs={400} md={200}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Priority by Location</Typography>
-                <MyChart
-                  type="line"
-                  data={{ labels: locations, datasets: seriesData }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Location' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    },
-                    plugins: { legend: { position: 'bottom' } }
-                  }}
-                  height={500}
-                  width={750}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {monthLabels.length > 0 && (
-          <Grid item xs={5} md={4}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Month Wise</Typography>
-                <MyChart
-                  type="line"
-                  data={{
-                    labels: monthLabels,
-                    values: monthValues,
-                    bgColors: monthColors,
-                    borderColor: monthColors
-                  }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Month' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={500}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {opLabels.length > 0 && (
-          <Grid item xs={5} md={4}>
-            <Card sx={{ border: '1px solid #ccc' }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Operator Wise</Typography>
-                <MyChart
-                  type="bar"
-                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
-                  options={{
-                    scales: {
-                      x: { title: { display: true, text: 'Operator' } },
-                      y: { title: { display: true, text: 'Alarm Count' } }
-                    }
-                  }}
-                  height={500}
-                  width={600}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-      </Grid>
-    </>
-  );
-}
-
-
-
-
-
-
 
 
 
