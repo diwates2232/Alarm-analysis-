@@ -1,3 +1,8 @@
+cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend-vite
+npm run dev
+
+
+
 After doing all step We got this error message.
 
 C:\Users\W0024618\Desktop\AlarmAnalysis\Backend>npm start
