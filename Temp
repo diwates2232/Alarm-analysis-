@@ -1,3 +1,7 @@
+npx rimraf node_modules/.cache
+npm cache clean --force
+
+
 // craco.config.js
 const webpack = require('webpack');
 
