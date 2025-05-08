@@ -1,335 +1,128 @@
-useEffect(() => {
-  if (!canvasRef.current) return;
+read below chart.js js 
 
-  const ctx = canvasRef.current.getContext('2d');
-
-  if (chartRef.current) {
-    chartRef.current.destroy();
-  }
-
-  // Create chart here (example)
-  chartRef.current = new Chart(ctx, {
-    type: 'bar',
-    data: {/* chart data */},
-    options: {/* chart options */}
-  });
-}, []);
-
-
-
-
-
-npm install cross-env --save-dev
-
-
-"scripts": {
-  "start": "cross-env CHOKIDAR_USEPOLLING=true react-scripts --openssl-legacy-provider start"
-}
-
-
-
-npm start
-
-
-
-
-
-
-
-npm uninstall react-router-dom
-npm install react-router-dom@5
-
-
-// craco.config.js
-const webpack = require('webpack');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (webpackConfig) => {
-      // Handle .mjs properly
-      webpackConfig.module.rules.push({
-        test: /\.mjs$/,
-        include: /node_modules/,
-        type: 'javascript/auto',
-      });
-
-      // Polyfill process for browser
-      webpackConfig.resolve = webpackConfig.resolve || {};
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        process: require.resolve('process/browser.js'),
-      };
-
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser',
-        })
-      );
-
-      return webpackConfig;
-    },
-  },
-};
-
-
-
-
-
-"scripts": {
-  "start": "CHOKIDAR_USEPOLLING=true react-scripts --openssl-legacy-provider start"
-}
-
-
-
-npx rimraf node_modules
-npm cache clean --force
-npm install
-npm start
-
-
-
-
-
-
-
-npx rimraf node_modules/.cache
-npm cache clean --force
-
-
-// craco.config.js
-const webpack = require('webpack');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-
-  webpack: {
-    configure: (webpackConfig) => {
-      // 1) Enable .mjs support in node_modules
-      webpackConfig.module.rules.push({
-        test: /\.mjs$/,
-        include: /node_modules/,
-        type: 'javascript/auto'
-      });
-
-      // 2) Polyfill process.env if needed
-      webpackConfig.resolve = webpackConfig.resolve || {};
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        process: require.resolve('process/browser.js')
-      };
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return webpackConfig;
-    }
-  }
-};
-
-
-
-
-
-
-
-
-
-
-
-
-// craco.config.js
-const webpack = require('webpack');
-const path = require('path');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (config) => {
-      // 1) Treat react-router-dom imports as the CJS build:
-      config.resolve.alias = {
-        ...(config.resolve.alias || {}),
-        // everything that starts with "react-router-dom" goes to its index.js
-        'react-router-dom$': path.resolve(
-          __dirname,
-          'node_modules/react-router-dom/index.js'
-        )
-      };
-
-      // 2) Make sure we don’t try to parse any .mjs files:
-      config.resolve.extensions = ['.js', '.jsx', '.ts', '.tsx'];
-
-      // 3) Prevent chokidar from choking on your DumpStack.log.tmp:
-      config.watchOptions = {
-        ignored: [
-          /node_modules/,
-          /C:\\DumpStack\.log\.tmp$/
-        ]
-      };
-
-      // 4) If you still need a browser "process" shim:
-      config.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return config;
-    }
-  }
-};
-
-
-
-
-
-
-
-
-
-
-
-// craco.config.js
-const webpack = require('webpack');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (config) => {
-      // 1) Tell Webpack to use "main" (CJS) before "module" (ESM).
-      //    This means it will load react-router-dom’s CJS bundle.
-      config.resolve.mainFields = ['browser', 'main'];
-
-      // 2) Drop ".mjs" from the extensions list so .mjs files aren’t picked up.
-      config.resolve.extensions = ['.js', '.jsx', '.ts', '.tsx'];
-
-      // 3) Prevent the watcher from scanning locked .tmp files (and node_modules).
-      config.watchOptions = {
-        ignored: [
-          /node_modules/,
-          /DumpStack\.log\.tmp$/
-        ]
-      };
-
-      // 4) (Optional) If you still need `process.env` shim in the browser:
-      config.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return config;
-    }
-  }
-};
-
-
-
-
-
-
-
-
-
-
-
-// craco.config.js
-const path = require('path');
-const webpack = require('webpack');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (config) => {
-      // 1) Alias the ESM entry to the CJS build so Webpack never tries to parse the .mjs
-      config.resolve = config.resolve || {};
-      config.resolve.alias = {
-        ...(config.resolve.alias || {}),
-        // Point any import of that .mjs file to the CJS bundle
-        'react-router-dom/dist/index.mjs': path.resolve(
-          __dirname,
-          'node_modules/react-router-dom/dist/react-router-dom.cjs.js'
-        )
-      };
-
-      // 2) Restrict extensions so .mjs isn’t auto-selected
-      config.resolve.extensions = ['.js', '.jsx', '.ts', '.tsx'];
-
-      // 3) Globally ignore any *.tmp (including DumpStack.log.tmp) from watch
-      config.watchOptions = {
-        ignored: [
-          /node_modules/,
-          /\.tmp$/,
-          // On Windows the locked file
-          /DumpStack\.log\.tmp$/
-        ]
-      };
-
-      // 4) Provide `process` shim (optional, if you still need it)
-      config.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return config;
-    }
-  }
-};
-
-
-
-
-
-
-
-
-
-read carefully and identify Where is issue and solve it
-
-
-Node.js v22.14.0
-
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
-
-> alarm-frontend@0.1.0 start
-> react-scripts --openssl-legacy-provider start
-? Something is already running on port 3000.
-
-Would you like to run the app on another port instead? Yes
-Starting the development server...
-
-(node:35188) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
-(Use `node --trace-deprecation ...` to show where the warning was created)
+and error message is 
 Failed to compile.
 
-./node_modules/react-router-dom/dist/index.mjs
-Can't reexport the namespace object from non EcmaScript module (only default export is available)
-Error from chokidar (C:\): Error: EBUSY: resource busy or locked, lstat 'C:\DumpStack.log.tmp'
+./src/components/Chart.js
+  Line 149:5:  Expected an assignment or function call and instead saw an expression  no-unused-expressions
+
+Search for the keywords to learn more about each error.
+Compiling...
+Failed to compile.
+
+
+
+
+
+
+// src/components/Chart.js
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+// stronger, fixed palette
+const defaultColors = [
+  '#3366CC', '#DC3912', '#FF9900', '#109618',
+  '#990099', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#316395'
+];
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  //Register the datalabels plugin once
+  useEffect(() => {
+    Chart.register(ChartDataLabels);
+  }, []);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    chartRef.current?.destroy();                              // line 149
+
+    // Prepare datasets with boxed labels
+    const datasets = Array.isArray(data.datasets)
+      ? data.datasets.map(ds => ({
+          ...ds,
+          borderWidth: 2,
+          fill: ds.fill ?? false,
+          datalabels: {
+            display: true,
+            formatter: v => v,
+            font: { weight: 'bold' },
+            color: '#000',
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            borderRadius: 4,
+            padding: 4,
+            anchor: 'end',
+            align: 'top',
+            clip: false  // allow beyond chart area
+          }
+        }))
+      : (() => {
+          const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+          const border = data.borderColor || bg;
+          return [{
+            label: data.label || '',
+            data: data.values,
+            backgroundColor: bg,
+            borderColor: border,
+            borderWidth: 2,
+            ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
+            datalabels: {
+              display: true,
+              formatter: v => v,
+              font: { weight: 'bold' },
+              color: '#000',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              borderRadius: 4,
+              padding: 4,
+              anchor: 'end',
+              align: 'top',
+              clip: false
+            }
+          }];
+        })();
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } },
+          datalabels: {
+            // ensure labels can render outside dataset elements
+            clip: false
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      }
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
