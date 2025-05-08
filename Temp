@@ -1,6 +1,6 @@
 npm install --save-dev @babel/preset-env @babel/plugin-proposal-class-properties
 
-
+import Chart from 'chart.js/auto';
 const webpack = require('webpack');
 
 module.exports = {
