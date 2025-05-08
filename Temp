@@ -1,4 +1,53 @@
 // craco.config.js
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    plugins: [
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-proposal-nullish-coalescing-operator'
+    ]
+  },
+  webpack: {
+    configure: (config) => {
+      // 1) Tell Webpack to use "main" (CJS) before "module" (ESM).
+      //    This means it will load react-router-dom’s CJS bundle.
+      config.resolve.mainFields = ['browser', 'main'];
+
+      // 2) Drop ".mjs" from the extensions list so .mjs files aren’t picked up.
+      config.resolve.extensions = ['.js', '.jsx', '.ts', '.tsx'];
+
+      // 3) Prevent the watcher from scanning locked .tmp files (and node_modules).
+      config.watchOptions = {
+        ignored: [
+          /node_modules/,
+          /DumpStack\.log\.tmp$/
+        ]
+      };
+
+      // 4) (Optional) If you still need `process.env` shim in the browser:
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+      );
+
+      return config;
+    }
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+// craco.config.js
 const path = require('path');
 const webpack = require('webpack');
 
