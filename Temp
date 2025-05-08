@@ -1,3 +1,7 @@
+npm install --save-dev @babel/plugin-proposal-class-properties @babel/preset-env
+
+
+
 rmdir /s /q node_modules
 del package-lock.json
 
