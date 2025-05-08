@@ -4,6 +4,68 @@ module.exports = {
   babel: {
     loaderOptions: {
       ignore: [],
+      presets: ['@babel/preset-env'], // Support ES6+ syntax
+      plugins: [
+        '@babel/plugin-proposal-optional-chaining',
+        '@babel/plugin-proposal-nullish-coalescing-operator',
+        '@babel/plugin-proposal-class-properties', // Required for static class fields (Chart.js)
+      ],
+    },
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      const oneOfRule = webpackConfig.module.rules.find((rule) => Array.isArray(rule.oneOf));
+      if (oneOfRule) {
+        oneOfRule.oneOf.forEach((rule) => {
+          if (
+            rule.loader &&
+            rule.loader.includes('babel-loader') &&
+            rule.include
+          ) {
+            // Extend Babel transpilation to include these modules
+            rule.include = [
+              rule.include,
+              /node_modules[\\/]@mui[\\/]material/,
+              /node_modules[\\/]@mui[\\/]system/,
+              /node_modules[\\/]@mui[\\/]x-data-grid/,
+              /node_modules[\\/]chart\.js/, // Transpile chart.js with Babel
+            ];
+          }
+        });
+      }
+
+      // Polyfill 'process' for browser
+      webpackConfig.resolve.alias = {
+        ...(webpackConfig.resolve.alias || {}),
+        process: require.resolve('process/browser'),
+      };
+
+      webpackConfig.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser',
+        })
+      );
+
+      return webpackConfig;
+    },
+  },
+};
+
+
+
+npm install --save-dev @babel/preset-env @babel/plugin-proposal-class-properties
+
+
+
+
+
+
+const webpack = require('webpack');
+
+module.exports = {
+  babel: {
+    loaderOptions: {
+      ignore: [],
     },
     plugins: [
       '@babel/plugin-proposal-optional-chaining',
