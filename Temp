@@ -1,249 +1,36 @@
-npx create-vite@latest alarm-frontend-vite --template react
-cd alarm-frontend-vite
-npm install
-npm install @mui/material @emotion/react @emotion/styled
+After doing all step We got this error message.
 
+C:\Users\W0024618\Desktop\AlarmAnalysis\Backend>npm start
 
+> alarm-backend@1.0.0 start
+> node server.js
 
+Server is running at http://localhost:3000
 
-const webpack = require('webpack');
+C:\Users\W0024618\Desktop\AlarmAnalysis\Backend>cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend
 
-module.exports = {
-  babel: {
-    loaderOptions: {
-      ignore: [],
-    },
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator',
-    ],
-  },
-  webpack: {
-    configure: (webpackConfig) => {
-      const oneOfRule = webpackConfig.module.rules.find((rule) => Array.isArray(rule.oneOf));
-      if (oneOfRule) {
-        oneOfRule.oneOf.forEach((rule) => {
-          if (
-            rule.loader &&
-            rule.loader.includes('babel-loader') &&
-            rule.include
-          ) {
-            // Add MUI ESM modules to be transpiled by Babel
-            rule.include = [
-              rule.include,
-              /node_modules[\\/]@mui[\\/]material/,
-              /node_modules[\\/]@mui[\\/]system/,
-              /node_modules[\\/]@mui[\\/]x-data-grid/,
-            ];
-          }
-        });
-      }
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm start
 
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        process: require.resolve('process/browser'),
-      };
+> alarm-frontend@0.1.0 start
+> cross-env CHOKIDAR_USEPOLLING=true react-scripts --openssl-legacy-provider start
+? Something is already running on port 3000.
 
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser',
-        })
-      );
+Would you like to run the app on another port instead? Yes
+i ｢wds｣: Project is running at http://10.199.34.103/
+i ｢wds｣: webpack output is served from
+i ｢wds｣: Content not from webpack is served from C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\public
+i ｢wds｣: 404s will fallback to /
+Starting the development server...
+Failed to compile.
 
-      return webpackConfig;
-    },
-  },
-};
+./node_modules/@mui/material/node_modules/@mui/system/esm/Grid/createGrid.js 101:37
+Module parse failed: Unexpected token (101:37)
+File was processed with these loaders:
+ * ./node_modules/babel-loader/lib/index.js
+You may need an additional loader to handle the result of these loaders.
+|     const size = parseResponsiveProp(sizeProp, theme.breakpoints, val => val !== false);
+|     const offset = parseResponsiveProp(offsetProp, theme.breakpoints);
+>     const columns = inProps.columns ?? (level ? undefined : columnsProp);
+|     const spacing = inProps.spacing ?? (level ? undefined : spacingProp);
+|     const rowSpacing = inProps.rowSpacing ?? inProps.spacing ?? (level ? undefined : rowSpacingProp);
 
-
-
-rd /s /q node_modules
-del package-lock.json
-npm cache clean --force
-npm install
-npm start
-
-
-
-
-
-
-
-const webpack = require('webpack');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (webpackConfig) => {
-      const oneOfRule = webpackConfig.module.rules.find(rule => Array.isArray(rule.oneOf));
-      
-      if (oneOfRule) {
-        oneOfRule.oneOf.forEach(rule => {
-          if (
-            rule.loader &&
-            rule.loader.includes('babel-loader') &&
-            rule.include &&
-            typeof rule.include !== 'function'
-          ) {
-            // Add MUI packages to be transpiled
-            rule.include = [
-              rule.include,
-              /node_modules[\\/]@mui[\\/]material/,
-              /node_modules[\\/]@mui[\\/]system/,
-              /node_modules[\\/]@mui[\\/]x-data-grid/
-            ];
-          }
-        });
-      }
-
-      webpackConfig.resolve = webpackConfig.resolve || {};
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        process: require.resolve('process/browser')
-      };
-
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return webpackConfig;
-    }
-  }
-};
-
-
-
-
-
-
-
-rd /s /q node_modules
-del package-lock.json
-npm cache clean --force
-npm install
-npm start
-
-
-
-const webpack = require('webpack');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (webpackConfig) => {
-      const oneOfRule = webpackConfig.module.rules.find(rule => Array.isArray(rule.oneOf));
-
-      if (oneOfRule) {
-        oneOfRule.oneOf.forEach(rule => {
-          // Only adjust Babel loader rules for JS/TS files (not file-loader or CSS)
-          if (
-            rule.test &&
-            rule.test.toString().includes('js') &&
-            rule.include
-          ) {
-            // Extend `include` instead of replacing
-            if (Array.isArray(rule.include)) {
-              rule.include.push(
-                /node_modules\/@mui\/material/,
-                /node_modules\/@mui\/system/,
-                /node_modules\/@mui\/x-data-grid/
-              );
-            } else {
-              rule.include = [
-                rule.include,
-                /node_modules\/@mui\/material/,
-                /node_modules\/@mui\/system/,
-                /node_modules\/@mui\/x-data-grid/
-              ];
-            }
-          }
-        });
-      }
-
-      // Add polyfill for `process` object
-      webpackConfig.resolve = webpackConfig.resolve || {};
-      webpackConfig.resolve.fallback = {
-        ...(webpackConfig.resolve.fallback || {}),
-        process: require.resolve('process/browser')
-      };
-
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return webpackConfig;
-    }
-  }
-};
-
-
-
-
-
-
-
-
-
-
-read my current file carefully and give me updated file We got again & agian same errors.
-
-craco.config.js
-
-
-
-
-const webpack = require('webpack');
-
-module.exports = {
-  babel: {
-    plugins: [
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-proposal-nullish-coalescing-operator'
-    ]
-  },
-  webpack: {
-    configure: (webpackConfig) => {
-      const oneOfRule = webpackConfig.module.rules.find(rule => Array.isArray(rule.oneOf));
-      if (oneOfRule) {
-        oneOfRule.oneOf.forEach(rule => {
-          if (rule.include && typeof rule.include !== 'function') {
-            rule.include = [
-              /node_modules\/@mui\/material/,
-              /node_modules\/@mui\/system/,
-              /node_modules\/@mui\/x-data-grid/,
-              /src/
-            ];
-          }
-        });
-      }
-
-      webpackConfig.resolve = webpackConfig.resolve || {};
-      webpackConfig.resolve.alias = {
-        ...(webpackConfig.resolve.alias || {}),
-        process: require.resolve('process/browser')
-      };
-
-      webpackConfig.plugins.push(
-        new webpack.ProvidePlugin({
-          process: 'process/browser'
-        })
-      );
-
-      return webpackConfig;
-    }
-  }
-};
