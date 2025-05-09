@@ -1,3 +1,8 @@
+Chart.plugins.register(ChartDataLabels);
+
+
+
+
 Read below Chart.js file carefully.
 and solve the issue.
 
