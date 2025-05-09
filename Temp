@@ -1,3 +1,51 @@
+<Container maxWidth={false} sx={{ py:4 }}>
+  {/* Filters + Export Buttons */}
+  {/* …your Filters + export buttons here… */}
+
+  {/* Cards */}
+  <Box ref={cardsRef} sx={{ mb: 4 }}>
+    {/* (optional) extra wrapper if you need spacing for an “Export Cards” button */}
+    <Box sx={{ mb:2 }}>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}
+      >
+        Export Cards
+      </Button>
+    </Box>
+
+    <AlarmCard
+      summary={filteredSummary}
+      rawAlarms={filtered}
+      filters={filters}
+    />
+  </Box>
+
+  {/* Charts */}
+  <Box ref={chartsRef} sx={{ mb: 4 }}>
+    <Box sx={{ mb:2 }}>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}
+      >
+        Export Charts
+      </Button>
+    </Box>
+
+    <SummaryCards
+      summary={filteredSummary}
+      filters={filters}
+      rawAlarms={filtered}
+    />
+  </Box>
+</Container>
+
+
+
+
+
 --- /pages/Dashboard.js
 +++ /pages/Dashboard.js
 @@ export default function Dashboard() {
