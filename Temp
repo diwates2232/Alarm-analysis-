@@ -1,3 +1,62 @@
+--- src/components/SummaryCards.js
+@@ Location Wise
+-                  <MyChart
+-                    type="line"
+-                    data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
+-                    options={{
+-                      scales: {
+-                        x: { title: { display: true, text: 'Location' } },
+-                        y: { title: { display: true, text: 'Alarm Count' } },
+-                      },
+-                    }}
+-                  />
++                  <MyChart
++                    type="line"
++                    data={{
++                      labels: locLabels,
++                      values: locValues,
++                      bgColors: locColors,         // your exact defaultColors slice
++                      borderColor: locColors       // same array here
++                    }}
++                    options={{
++                      scales: {
++                        x: { title: { display: true, text: 'Location' } },
++                        y: { title: { display: true, text: 'Alarm Count' } },
++                      },
++                    }}
++                  />
+@@ Month Wise
+-                  <MyChart
+-                    type="line"
+-                    data={{ labels: monthLabels, values: monthValues, bgColors: monthColors, borderColor: monthColors }}
+-                    options={{
+-                      scales: {
+-                        x: { title: { display: true, text: 'Month' } },
+-                        y: { title: { display: true, text: 'Alarm Count' } },
+-                      },
+-                    }}
+-                  />
++                  <MyChart
++                    type="line"
++                    data={{
++                      labels: monthLabels,
++                      values: monthValues,
++                      bgColors: monthColors,       // your exact defaultColors slice
++                      borderColor: monthColors     // same array here
++                    }}
++                    options={{
++                      scales: {
++                        x: { title: { display: true, text: 'Month' } },
++                        y: { title: { display: true, text: 'Alarm Count' } },
++                      },
++                    }}
++                  />
+
+
+
+
+
+
 Read Below files carefully .
 There is a few changes in i want to do.
 Dont use Diffrent colors to display Chart.
