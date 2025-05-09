@@ -10,12 +10,9 @@ kindly make changes carefully and give me updated js file carefully.
 dont make Changes in another file,
 if need i will share you another file details for more information
 
- 
 File 1
 
 Alarmcard.js
-
-
 
 // src/components/AlarmCard.js
 import React from 'react';
@@ -151,10 +148,6 @@ export default function MyChart({
     const ctx = canvasRef.current.getContext('2d');
     // chartRef.current?.destroy();
     if(chartRef.current)chartRef.current.destroy();
-
-    
-
-
     const datasets = Array.isArray(data.datasets)
   ? data.datasets.map(ds => ({
       ...ds,
@@ -199,11 +192,6 @@ export default function MyChart({
       }];
     })();
 
-
-
-
-
-
     chartRef.current = new Chart(ctx, {
       type,
       data: {
@@ -244,7 +232,6 @@ export default function MyChart({
 File 3
 
 SummaryCard.js
-
 
 // src/components/SummaryCards.js
 import React from 'react';
@@ -526,11 +513,7 @@ export default function SummaryCards({ summary, filters, rawAlarms }) {
   );
 }
 
-
-
-
 File 5
-
 
 // src/pages/Dashboard.js
 import React, { useEffect, useState, useMemo, useRef } from 'react';
