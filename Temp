@@ -1,117 +1,132 @@
-- import Chart from 'chart.js';
-- import 'chartjs-plugin-datalabels';
-+ import Chart from 'chart.js';
-+ import ChartDataLabels from 'chartjs-plugin-datalabels';
-+
-+ // register the datalabels plugin globally
-+ Chart.plugins.register(ChartDataLabels);
+Read below Chart.js file carefully.
+and solve the issue.
+
+ERROR
+chart_js__WEBPACK_IMPORTED_MODULE_1___default(...).register is not a function
+TypeError: chart_js__WEBPACK_IMPORTED_MODULE_1___default(...).register is not a function
+    at http://localhost:3001/main.ec48802ca30bbb8704f1.hot-update.js:158:53
+    at commitHookEffectListMount (http://localhost:3001/static/js/bundle.js:135265:30)
+    at commitPassiveMountOnFiber (http://localhost:3001/static/js/bundle.js:136758:17)
+    at commitPassiveMountEffects_complete (http://localhost:3001/static/js/bundle.js:136730:13)
+    at commitPassiveMountEffects_begin (http://localhost:3001/static/js/bundle.js:136720:11)
+    at commitPassiveMountEffects (http://localhost:3001/static/js/bundle.js:136710:7)
+    at flushPassiveEffectsImpl (http://localhost:3001/static/js/bundle.js:138593:7)
+    at flushPassiveEffects (http://localhost:3001/static/js/bundle.js:138546:18)
+    at performSyncWorkOnRoot (http://localhost:3001/static/js/bundle.js:137763:7)
+    at flushSyncCallbacks (http://localhost:3001/static/js/bundle.js:125772:26)
+ERROR
 
 
 
 
-C:\
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+Chart.plugins.register(ChartDataLabels);
 
-npm uninstall react-chartjs-2
-npm install react-chartjs-2@4.3.1 chart.js@2.9.4 chartjs-plugin-datalabels@0.7.0 pptxgenjs@2.6.0 --save --legacy-peer-deps
-rm -rf node_modules/.cache
-npm start
+// stronger, fixed palette
+const defaultColors = [
+  '#3366CC', '#DC3912', '#FF9900', '#109618',
+  '#990099', '#0099C6', '#DD4477', '#66AA00',
+  '#B82E2E', '#316395'
+];
 
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
 
+  //Register the datalabels plugin once
+  useEffect(() => {
+    Chart.register(ChartDataLabels);
+  }, []);
 
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    // chartRef.current?.destroy();
+    if(chartRef.current)chartRef.current.destroy();
 
+    // Prepare datasets with boxed labels
+    const datasets = Array.isArray(data.datasets)
+      ? data.datasets.map(ds => ({
+          ...ds,
+          borderWidth: 2,
+          fill: ds.fill ?? false,
+          datalabels: {
+            display: true,
+            formatter: v => v,
+            font: { weight: 'bold' },
+            color: '#000',
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            borderRadius: 4,
+            padding: 4,
+            anchor: 'end',
+            align: 'top',
+            clip: false  // allow beyond chart area
+          }
+        }))
+      : (() => {
+          const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+          const border = data.borderColor || bg;
+          return [{
+            label: data.label || '',
+            data: data.values,
+            backgroundColor: bg,
+            borderColor: border,
+            borderWidth: 2,
+            ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
+            datalabels: {
+              display: true,
+              formatter: v => v,
+              font: { weight: 'bold' },
+              color: '#000',
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              borderRadius: 4,
+              padding: 4,
+              anchor: 'end',
+              align: 'top',
+              clip: false
+            }
+          }];
+        })();
 
-Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm uninstall pptxgenjs
-npm error code ERESOLVE
-npm error ERESOLVE could not resolve
-npm error
-npm error While resolving: react-chartjs-2@5.3.0
-npm error Found: chart.js@2.9.4
-npm error node_modules/chart.js
-npm error   peer chart.js@">= 2.7.0 < 3" from chartjs-plugin-datalabels@0.7.0
-npm error   node_modules/chartjs-plugin-datalabels
-npm error     chartjs-plugin-datalabels@"^0.7.0" from the root project
-npm error   chart.js@"^2.9.4" from the root project
-npm error
-npm error Could not resolve dependency:
-npm error peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
-npm error node_modules/react-chartjs-2
-npm error   react-chartjs-2@"^5.3.0" from the root project
-npm error
-npm error Conflicting peer dependency: chart.js@4.4.9
-npm error node_modules/chart.js
-npm error   peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
-npm error   node_modules/react-chartjs-2
-npm error     react-chartjs-2@"^5.3.0" from the root project
-npm error
-npm error Fix the upstream dependency conflict, or retry
-npm error this command with --force or --legacy-peer-deps
-npm error to accept an incorrect (and potentially broken) dependency resolution.
-npm error
-npm error
-npm error For a full report see:
-npm error C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_11_587Z-eresolve-report.txt
-npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_11_587Z-debug-0.log
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } },
+          datalabels: {
+            // ensure labels can render outside dataset elements
+            clip: false
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      }
+    });
 
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install pptxgenjs@2.6.0 --save
-npm error code ERESOLVE
-npm error ERESOLVE could not resolve
-npm error
-npm error While resolving: react-chartjs-2@5.3.0
-npm error Found: chart.js@2.9.4
-npm error node_modules/chart.js
-npm error   peer chart.js@">= 2.7.0 < 3" from chartjs-plugin-datalabels@0.7.0
-npm error   node_modules/chartjs-plugin-datalabels
-npm error     chartjs-plugin-datalabels@"^0.7.0" from the root project
-npm error   chart.js@"^2.9.4" from the root project
-npm error
-npm error Could not resolve dependency:
-npm error peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
-npm error node_modules/react-chartjs-2
-npm error   react-chartjs-2@"^5.3.0" from the root project
-npm error
-npm error Conflicting peer dependency: chart.js@4.4.9
-npm error node_modules/chart.js
-npm error   peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
-npm error   node_modules/react-chartjs-2
-npm error     react-chartjs-2@"^5.3.0" from the root project
-npm error
-npm error Fix the upstream dependency conflict, or retry
-npm error this command with --force or --legacy-peer-deps
-npm error to accept an incorrect (and potentially broken) dependency resolution.
-npm error
-npm error
-npm error For a full report see:
-npm error C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_35_649Z-eresolve-report.txt
-npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_35_649Z-debug-0.log
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
 
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install pptxgenjs@2.6.0 --save
-npm error code ERESOLVE
-npm error ERESOLVE could not resolve
-npm error
-npm error While resolving: react-chartjs-2@5.3.0
-npm error Found: chart.js@2.9.4
-npm error node_modules/chart.js
-npm error   peer chart.js@">= 2.7.0 < 3" from chartjs-plugin-datalabels@0.7.0
-npm error   node_modules/chartjs-plugin-datalabels
-npm error     chartjs-plugin-datalabels@"^0.7.0" from the root project
-npm error   chart.js@"^2.9.4" from the root project
-npm error
-npm error Could not resolve dependency:
-npm error peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
-npm error node_modules/react-chartjs-2
-npm error   react-chartjs-2@"^5.3.0" from the root project
-npm error
-npm error Conflicting peer dependency: chart.js@4.4.9
-npm error node_modules/chart.js
-npm error   peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
-npm error   node_modules/react-chartjs-2
-npm error     react-chartjs-2@"^5.3.0" from the root project
-npm error
-npm error Fix the upstream dependency conflict, or retry
-npm error this command with --force or --legacy-peer-deps
-npm error to accept an incorrect (and potentially broken) dependency resolution.
-npm error
-npm error
-npm error For a full report see:
-npm error C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_49_219Z-eresolve-report.txt
-npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_49_219Z-debug-0.log
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
