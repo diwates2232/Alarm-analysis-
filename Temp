@@ -1,201 +1,232 @@
-Read Below file cxarefully and solve issue .Dont Make another changes in this file.
+Read Below file And solve the issue.
+ERROR in ./src/pages/Dashboard.js 346:0-32
+Module not found: Error: Can't resolve 'pptxgen' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\pages'
 
-// src/components/AlarmsTable.js
-import React, { useMemo } from 'react';
-import { DataGrid } from '@mui/x-data-grid';
-import { Button, Typography } from '@mui/material';
-import * as XLSX from 'xlsx';
 
-const AlarmsTable = ({
-  alarms = [],
-  maxRows = 10,
-  tableType = 'employee'
-}) => {
-  // Excel export
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(alarms);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Alarms');
-    XLSX.writeFile(wb, 'alarms.xlsx');
+
+
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container, Button } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+import PptxGenJS from 'pptxgen';
+
+
+// helper: convert "01-Apr-25" → "2025-04-01"
+function toISODate(apiDate) {
+  const [d, monAbbr, yy] = apiDate.split('-');
+  const monthNames = {
+    Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+    May: '05', Jun: '06', Jul: '07', Aug: '08',
+    Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+  };
+  const mm = monthNames[monAbbr] || '01';
+  const yyyy = `20${yy}`;
+  return `${yyyy}-${mm}-${d.padStart(2, '0')}`;
+}
+
+// helper: format month/year for dropdown (e.g. "Apr 25")
+function formatMonthYear(apiDate) {
+  const [d, monAbbr, yy] = apiDate.split('-');
+  return `${monAbbr} ${yy}`;
+}
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', month: '', date: '', priority: ''
+  });
+
+  // refs to sections for export
+  const dashRef = useRef();
+  const cardsRef = useRef();
+  const chartsRef = useRef();
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // 1️⃣ dropdown options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [],
+    [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [],
+    [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(() => {
+    const all = rawAlarms
+      .filter(a =>
+        (!filters.region   || a.Region   === filters.region) &&
+        (!filters.location || a.Location === filters.location)
+      )
+      .map(a => formatMonthYear(a.Date));
+    return Array.from(new Set(all))
+      .sort((a, b) => {
+        const [mA, yA] = a.split(' ');
+        const [mB, yB] = b.split(' ');
+        const dateA = new Date(`20${yA}-${mA}-01`);
+        const dateB = new Date(`20${yB}-${mB}-01`);
+        return dateA - dateB;
+      });
+  }, [rawAlarms, filters.region, filters.location]);
+
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
+
+  // 2️⃣ filtered base
+  const filtered = useMemo(() => (
+    rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)              return false;
+      if (filters.location && a.Location !== filters.location)            return false;
+      if (filters.month    && formatMonthYear(a.Date) !== filters.month)  return false;
+      if (filters.date     && toISODate(a.Date) !== filters.date)         return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    })
+  ), [rawAlarms, filters]);
+
+  // 3️⃣ filteredSummary for cards
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+
+    if (filters.region) {
+      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
+        });
+    }
+
+    if (filters.month) {
+      const mCount = filtered.filter(a => formatMonthYear(a.Date) === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {};
+    }
+
+    const opCounts = filtered.reduce((c, a) => {
+      const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+      c[op] = (c[op] || 0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
+    return fs;
+  }, [summary, filtered, filters, locationOptions]);
+
+  if (!summary) return <Typography>Loading dashboard…</Typography>;
+
+  // COMMON export logic
+  const exportSection = async (element, fileName = 'slide.pptx') => {
+    const canvas = await html2canvas(element);
+    const imgData = canvas.toDataURL('image/png');
+    const ppt = new PptxGenJS();
+    const slide = ppt.addSlide();
+    slide.addImage({ data: imgData, x:0, y:0, w:'100%', h:'100%' });
+    await ppt.writeFile(fileName);
   };
 
-  // 1) Employee stats with lastAction and ID
-  const employeeStats = useMemo(() => {
-    const stats = {};
-    alarms.forEach(a => {
-      const emp = a['Employee Name'] || 'Unknown';
-      const empId = a['Employee ID No'] ?? '';
-      const dt = a.Date + ' ' + a['Time of  Alarm (Local time)'];
-      if (!stats[emp]) {
-        stats[emp] = {
-          total: 0,
-          types: new Set(),
-          doorRej: {},
-          lastDt: dt,
-          lastRegion: a.Region,
-          lastLocation: a.Location,
-          lastAction: a['Action Taken'],
-          employeeId: empId
-        };
-      }
-      const e = stats[emp];
-      e.total += 1;
-      e.types.add(a.Rejection);
-      const drKey = `${a.Door}::${a.Rejection}`;
-      e.doorRej[drKey] = (e.doorRej[drKey] || 0) + 1;
-      if (dt > e.lastDt) {
-        e.lastDt = dt;
-        e.lastRegion = a.Region;
-        e.lastLocation = a.Location;
-        e.lastAction = a['Action Taken'];
-        e.employeeId = empId;
-      }
-    });
-
-    return Object.entries(stats).map(([emp, s], idx) => {
-      const repeats = Object.entries(s.doorRej).filter(([, c]) => c > 1);
-      let topDoor = '', topCount = 0;
-      if (repeats.length) {
-        const [key, cnt] = repeats.reduce((a, b) => a[1] > b[1] ? a : b);
-        [topDoor] = key.split('::');
-        topCount = cnt;
-      }
-      const [lastDate, lastTime] = s.lastDt.split(' ');
-      return {
-        id: idx,
-        srNo: idx + 1,
-        employeeId: s.employeeId,         // NEW
-        lastDate,
-        lastTime,
-        location: s.lastLocation,
-        region: s.lastRegion,
-        employee: emp,
-        lastAction: s.lastAction,
-        total: s.total,
-        repeatedDoor: topDoor,
-        repeatCount: topCount,
-        rejectionTypes: Array.from(s.types).join(', ')
-      };
-    });
-  }, [alarms]);
-
-  // 2) Door stats
-  const doorStats = useMemo(() => {
-    const d = {};
-    alarms.forEach(a => {
-      const door = a.Door || 'Unknown';
-      if (!d[door]) d[door] = { total: 0, rejections: {} };
-      d[door].total += 1;
-      d[door].rejections[a.Rejection] = (d[door].rejections[a.Rejection]||0) + 1;
-    });
-    return Object.entries(d)
-      .filter(([, s]) => s.total > 1)
-      .map(([door, s], idx) => ({
-        id: idx,
-        door,
-        total: s.total,
-        rejectionCounts: Object.entries(s.rejections)
-          .map(([t,c]) => `${t}:${c}`)
-          .join(', ')
-      }));
-  }, [alarms]);
-
-  // 3) Detailed raw rows
-  const rawRows = useMemo(() =>
-    alarms.map((a,i) => ({ id: i, ...a })), [alarms]
-  );
-
-  if (!alarms.length) {
-    return (
-      <Typography variant="h6" align="center" sx={{ mt: 4 }}>
-        No alarm records to display.
-      </Typography>
-    );
-  }
-
-  // Columns for each table
-  const empColumns = [
-    { field: 'srNo', headerName: 'Sr. No', width: 80 },
-    { field: 'employeeId', headerName: 'Employee ID', width: 120 },  // NEW
-    { field: 'lastDate', headerName: 'Date', width: 120 },
-    { field: 'lastTime', headerName: 'Time', width: 120 },
-    { field: 'location', headerName: 'Location', width: 150 },
-    { field: 'region', headerName: 'Region', width: 120 },
-    { field: 'employee', headerName: 'Employee Name', width: 180 },
-    { field: 'lastAction', headerName: 'Action Taken', width: 180 },
-    { field: 'total', headerName: 'Total Alarms', width: 130 },
-    { field: 'repeatedDoor', headerName: 'Repeated Door', width: 200 },
-    { field: 'repeatCount', headerName: 'Repeat Count', width: 130 },
-    { field: 'rejectionTypes', headerName: 'Types of Rejection', width: 300 },
-  ];
-
-  const doorColumns = [
-    { field: 'door', headerName: 'Door', width: 300 },
-    { field: 'total', headerName: 'Total Alarms', width: 150 },
-    { field: 'rejectionCounts', headerName: 'Rejection Counts', width: 400 }
-  ];
-
-  const rawColumns = [
-    { field: 'Sr. No', headerName: 'Sr. No', width: 90 },
-    { field: 'Date', headerName: 'Date', width: 120 },
-    { field: 'Time of  Alarm (Local time)', headerName: 'Time', width: 150 },
-    { field: 'Employee ID No', headerName: 'Employee ID', width: 150 },  // NEW
-    { field: 'Type of Alarm', headerName: 'Type', width: 150 },
-    { field: 'Door', headerName: 'Door', width: 250 },
-    { field: 'Location', headerName: 'Location', width: 150 },
-    { field: 'Region', headerName: 'Region', width: 120 },
-    { field: 'Rejection', headerName: 'Rejection', width: 180 },
-    { field: 'CCURE Incident Priority', headerName: 'Priority', width: 150 },
-    {
-      field: 'Name of Person Attending Alarms (First, Last Name)',
-      headerName: 'Operator', width: 200
-    },
-    { field: 'Action Taken', headerName: 'Action Taken', width: 150 },
-    { field: ' Time Taken (Min)', headerName: 'Time Taken (Min)', width: 150 }
-  ];
-
   return (
-    <div style={{ width: '100%', height: '100%' }}>
-      {tableType === 'employee' && (
-        <DataGrid
-          rows={employeeStats}
-          columns={empColumns}
-          pageSize={maxRows}
-          rowsPerPageOptions={[maxRows]}
-          autoHeight={false}
-        />
-      )}
+    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }} ref={dashRef}>
+      {/* Header */}
+      <Box component="header" sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p:2
+      }}>
+        <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+          <DashboardIcon fontSize="large"/>
+          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+        </Box>
+        <Box sx={{ display:'flex', gap:2 }}>
+          <Link to="/">➤ Dashboard</Link>
+          <Link to="/alarms">➤ Raw Alarms</Link>
+        </Box>
+      </Box>
 
-      {tableType === 'door' && (
-        <DataGrid
-          rows={doorStats}
-          columns={doorColumns}
-          pageSize={Math.min(5, maxRows)}
-          rowsPerPageOptions={[Math.min(5, maxRows)]}
-          autoHeight={false}
-        />
-      )}
-
-      {tableType === 'detailed' && (
-        <>
-          <Button variant="contained" color="primary" onClick={exportToExcel} sx={{ mb: 2 }}>
-            Export to Excel
+      <Container maxWidth={false} sx={{ py:4 }}>
+        {/* Export All */}
+        <Box sx={{ mb:2 }}>
+          <Button
+            variant="contained" color="primary"
+            onClick={() => exportSection(dashRef.current, 'Full_Dashboard.pptx')}
+          >
+            Export Dashboard PPT
           </Button>
-          <DataGrid
-            rows={rawRows}
-            columns={rawColumns}
-            getRowClassName={params =>
-              params.row[' Time Taken (Min)'] > 0 ? 'sla-breach' : ''
-            }
-            pageSize={maxRows}
-            rowsPerPageOptions={[10, 20, 50].filter(x => x <= rawRows.length)}
-            autoHeight={false}
-          />
-        </>
-      )}
-    </div>
-  );
-};
+        </Box>
 
-export default AlarmsTable;
+        {/* Filters */}
+        <Filters
+          filters={filters} setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          monthOptions={monthOptions}
+          priorityOptions={priorityOptions}
+        />
+
+        {/* Cards */}
+        <Box ref={cardsRef}>
+          <Box sx={{ mb:2 }}>
+            <Button
+              variant="outlined" size="small"
+              onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}
+              sx={{ mb:2 }}
+            >
+              Export Cards
+            </Button>
+          </Box>
+          <AlarmCard
+            summary={filteredSummary}
+            rawAlarms={filtered}
+            filters={filters}
+          />
+        </Box>
+
+        {/* Charts */}
+        <Box ref={chartsRef}>
+          <Box sx={{ mb:2 }}>
+            <Button
+              variant="outlined" size="small"
+              onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}
+              sx={{ mb:2 }}
+            >
+              Export Charts
+            </Button>
+          </Box>
+          <SummaryCards
+            summary={filteredSummary}
+            filters={filters}
+            rawAlarms={filtered}
+          />
+        </Box>
+      </Container>
+    </Box>
+  );
+}
+
+
 
