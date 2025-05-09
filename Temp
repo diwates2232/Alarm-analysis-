@@ -21,6 +21,139 @@ export default function MyChart({
 
     const isLine = type === 'line';
 
+    // Pull your exact arrays:
+    const bgColors     = data.bgColors     || [];
+    const borderColors = data.borderColor || [];
+
+    const datasets = Array.isArray(data.datasets)
+      ? data.datasets.map(ds => ({
+          ...ds,
+          data: ds.data,
+          borderWidth: 2,
+          borderColor: isLine
+            ? borderColors
+            : ds.borderColor || ds.backgroundColor,
+          backgroundColor: isLine
+            ? 'transparent'
+            : ds.backgroundColor,
+          pointBackgroundColor: isLine
+            ? bgColors
+            : undefined,
+          pointBorderColor: isLine
+            ? borderColors
+            : undefined,
+          fill: isLine ? false : ds.fill ?? false,
+          ...(isLine && { tension: 0.3, pointRadius: 6 }),
+          datalabels: {
+            display: true,
+            formatter: v => v,
+            font: { weight: 'bold' },
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            borderRadius: 4,
+            padding: 4,
+            anchor: 'end',
+            align: 'top',
+            clip: false
+          }
+        }))
+      : (() => {
+          const vals = data.values || [];
+          return [{
+            label: data.label || '',
+            data: vals,
+            borderWidth: 2,
+            borderColor: isLine
+              ? borderColors
+              : borderColors,
+            backgroundColor: isLine
+              ? 'transparent'
+              : bgColors,
+            pointBackgroundColor: isLine
+              ? bgColors
+              : undefined,
+            pointBorderColor: isLine
+              ? borderColors
+              : undefined,
+            fill: isLine ? false : true,
+            ...(isLine && { tension: 0.3, pointRadius: 6 }),
+            datalabels: {
+              display: true,
+              formatter: v => v,
+              font: { weight: 'bold' },
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              borderRadius: 4,
+              padding: 4,
+              anchor: 'end',
+              align: 'top',
+              clip: false
+            }
+          }];
+        })();
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: {
+        labels: data.labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } },
+          datalabels: { clip: false }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      }
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+// src/components/Chart.js
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+Chart.plugins.register(ChartDataLabels);
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+    chartRef.current?.destroy();
+
+    const isLine = type === 'line';
+
     const datasets = Array.isArray(data.datasets)
       ? data.datasets.map(ds => {
           // for multi-series you must supply ds.borderColor and ds.backgroundColor arrays
