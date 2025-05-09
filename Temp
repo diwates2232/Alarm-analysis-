@@ -1,3 +1,30 @@
+npm uninstall chart.js chartjs-plugin-datalabels
+npm install chart.js@2.9.4 chartjs-plugin-datalabels@0.7.0 --save
+
+
+
+import Chart from 'chart.js';
+import 'chartjs-plugin-datalabels';
+
+
+
+
+
+npm uninstall pptxgenjs
+npm install pptxgenjs@2.6.0 --save
+
+
+
+rm -rf node_modules/.cache
+npm start
+
+
+
+
+
+
+
+
 ERROR in ./src/components/Chart.js 112:0-34
 Module not found: Error: Can't resolve 'chart.js/auto' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\components'
 ERROR in ./node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.esm.js 7:0-126
