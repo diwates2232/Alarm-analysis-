@@ -1,3 +1,117 @@
+--- /pages/Dashboard.js
++++ /pages/Dashboard.js
+@@ export default function Dashboard() {
+-  return (
+-    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }} ref={dashRef}>
+-      {/* Header */}
++  return (
++    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }} ref={dashRef}>
++      {/* Header */}
+       <Box component="header" sx={{
+         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+         borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p:2
+       }}>
+@@
+       </Box>
+ 
+       <Container maxWidth={false} sx={{ py:4 }}>
+-        {/* Export All */}
+-        <Box sx={{ mb:2 }}>
+-          <Button
+-            variant="contained" color="primary"
+-            onClick={() => exportSection(dashRef.current, 'Full_Dashboard.pptx')}
+-          >
+-            Export Dashboard PPT
+-          </Button>
+-        </Box>
+-
+-        {/* Filters */}
+-        <Filters
++        {/* Filters + Export Buttons */}
++        <Box sx={{
++          mb: 2,
++          display: 'flex',
++          alignItems: 'center',
++          gap: 2,
++          flexWrap: 'wrap'
++        }}>
++          {/* your existing Filters row */}
++          <Filters
+             filters={filters} setFilters={setFilters}
+             regionOptions={regionOptions}
+             locationOptions={locationOptions}
+             monthOptions={monthOptions}
+             priorityOptions={priorityOptions}
+           />
++          {/* moved export buttons */}
++          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
++            <Button
++              variant="contained"
++              size="small"
++              onClick={() => exportSection(dashRef.current, 'Full_Dashboard.pptx')}
++            >
++              Export Dashboard PPT
++            </Button>
++            <Button
++              variant="outlined"
++              size="small"
++              onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}
++            >
++              Export Cards
++            </Button>
++            <Button
++              variant="outlined"
++              size="small"
++              onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}
++            >
++              Export Charts
++            </Button>
++          </Box>
++        </Box>
+ 
+         {/* Cards */}
+@@
+-        <Box ref={cardsRef}>
+-          <Box sx={{ mb:2 }}>
+-            <Button
+-              variant="outlined" size="small"
+-              onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}
+-              sx={{ mb:2 }}
+-            >
+-              Export Cards
+-            </Button>
+-          </Box>
++        <Box ref={cardsRef}>
+           <AlarmCard
+             summary={filteredSummary}
+             rawAlarms={filtered}
+@@
+-        <Box ref={chartsRef}>
+-          <Box sx={{ mb:2 }}>
+-            <Button
+-              variant="outlined" size="small"
+-              onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}
+-              sx={{ mb:2 }}
+-            >
+-              Export Charts
+-            </Button>
+-          </Box>
++        <Box ref={chartsRef}>
+           <SummaryCards
+             summary={filteredSummary}
+             filters={filters}
+
+
+
+
+
+
+
+
+
+
+
+
 read All file carefully.i want to do some changes in dashboard.
 
 Add this buttons on one line side of 
