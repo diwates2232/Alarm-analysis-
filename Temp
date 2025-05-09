@@ -1,7 +1,9 @@
-Read Below file And solve the issue.
-ERROR in ./src/pages/Dashboard.js 346:0-32
-Module not found: Error: Can't resolve 'pptxgen' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\pages'
+Raed All file carefully and solve this error
 
+ERROR
+ppt.addSlide is not a function
+TypeError: ppt.addSlide is not a function
+    at exportSection (http://localhost:3001/static/js/bundle.js:188928:23)
 
 
 
@@ -15,7 +17,7 @@ import SummaryCards from '../components/SummaryCards';
 import { getAlarmSummary, getRawAlarms } from '../services/api';
 import { Link } from 'react-router-dom';
 import html2canvas from 'html2canvas';
-import PptxGenJS from 'pptxgen';
+import PptxGenJS from 'pptxgenjs';
 
 
 // helper: convert "01-Apr-25" → "2025-04-01"
@@ -227,6 +229,4 @@ export default function Dashboard() {
     </Box>
   );
 }
-
-
 
