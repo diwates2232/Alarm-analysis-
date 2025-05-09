@@ -1,4 +1,51 @@
 
+const datasets = Array.isArray(data.datasets)
+  ? data.datasets.map(ds => ({
+      ...ds,
+      borderWidth: 2,
+      fill: type === 'line' ? false : ds.fill ?? false, // force no fill for line charts
+      datalabels: {
+        display: true,
+        formatter: v => v,
+        font: { weight: 'bold' },
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 4,
+        padding: 4,
+        anchor: 'end',
+        align: 'top',
+        clip: false
+      }
+    }))
+  : (() => {
+      const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+      const border = data.borderColor || bg;
+      return [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 2,
+        fill: type === 'line' ? false : true, // also make sure this path sets it properly
+        ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
+        datalabels: {
+          display: true,
+          formatter: v => v,
+          font: { weight: 'bold' },
+          color: '#000',
+          backgroundColor: 'rgba(255,255,255,0.8)',
+          borderRadius: 4,
+          padding: 4,
+          anchor: 'end',
+          align: 'top',
+          clip: false
+        }
+      }];
+    })();
+
+
+
+
+
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
