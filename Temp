@@ -1,3 +1,14 @@
+- import Chart from 'chart.js';
+- import 'chartjs-plugin-datalabels';
++ import Chart from 'chart.js';
++ import ChartDataLabels from 'chartjs-plugin-datalabels';
++
++ // register the datalabels plugin globally
++ Chart.plugins.register(ChartDataLabels);
+
+
+
+
 C:\
 
 npm uninstall react-chartjs-2
