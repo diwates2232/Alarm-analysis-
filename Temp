@@ -1,5 +1,44 @@
 --- src/pages/Dashboard.js
 +++ src/pages/Dashboard.js
+@@
+- import PptxGenJS from 'pptxgenjs';
++ // Use CommonJS‐style require so we get the right constructor
++ const PptxGenJS = require('pptxgenjs');
+
+ // …
+
+ export default function Dashboard() {
+   // …
+
+   // COMMON export logic
+-  const exportSection = async (element, fileName = 'slide.pptx') => {
++  const exportSection = async (element, fileName = 'Full_Dashboard.pptx') => {
+     const canvas = await html2canvas(element);
+     const imgData = canvas.toDataURL('image/png');
+-    const ppt = new PptxGenJS();
+-    // Use the correct method name (capital “S”)
+-    const slide = ppt.addSlide();
+-    slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
+-    // For PptxGenJS v3+, writeFile takes an options object:
+-    await ppt.writeFile({ fileName });
++    // Instantiate the PPTX generator
++    const ppt = new PptxGenJS();
++    // Create a new slide
++    const slide = ppt.addSlide();
++    // Insert our captured image
++    slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
++    // Save to file
++    await ppt.writeFile({ fileName });
+   };
+
+
+
+
+
+
+
+--- src/pages/Dashboard.js
++++ src/pages/Dashboard.js
 @@ export default function Dashboard() {
 -  // COMMON export logic
 -  const exportSection = async (element, fileName = 'slide.pptx') => {
