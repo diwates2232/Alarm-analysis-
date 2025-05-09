@@ -1,158 +1,15 @@
-// src/pages/Dashboard.js
-import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { Box, Typography, Container, Button } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import Filters from '../components/Filters';
-import AlarmCard from '../components/AlarmCard';
-import SummaryCards from '../components/SummaryCards';
-import { getAlarmSummary, getRawAlarms } from '../services/api';
-import { Link } from 'react-router-dom';
-import html2canvas from 'html2canvas';
-import PptxGenJS from 'pptxgenjs';
-
-// helper: convert "01-Apr-25" → "2025-04-01"
-function toISODate(apiDate) {
-  const [d, monAbbr, yy] = apiDate.split('-');
-  const monthNames = {
-    Jan: '01', Feb: '02', Mar: '03', Apr: '04',
-    May: '05', Jun: '06', Jul: '07', Aug: '08',
-    Sep: '09', Oct: '10', Nov: '11', Dec: '12'
-  };
-  const mm = monthNames[monAbbr] || '01';
-  const yyyy = `20${yy}`;
-  return `${yyyy}-${mm}-${d.padStart(2, '0')}`;
-}
-
-// helper: format month/year for dropdown (e.g. "Apr 25")
-function formatMonthYear(apiDate) {
-  const [d, monAbbr, yy] = apiDate.split('-');
-  return `${monAbbr} ${yy}`;
-}
-
-export default function Dashboard() {
-  const [summary, setSummary]     = useState(null);
-  const [rawAlarms, setRawAlarms] = useState([]);
-  const [filters, setFilters]     = useState({
-    region: '', location: '', month: '', date: '', priority: ''
-  });
-
-  const dashRef   = useRef();
-  const cardsRef  = useRef();
-  const chartsRef = useRef();
-
-  useEffect(() => {
-    Promise.all([getAlarmSummary(), getRawAlarms()])
-      .then(([sumRes, rawRes]) => {
-        setSummary(sumRes.data);
-        setRawAlarms(rawRes.data);
-      })
-      .catch(console.error);
-  }, []);
-
-  // … regionOptions, locationOptions, monthOptions, priorityOptions, filtered, filteredSummary … (unchanged)
-
-  if (!summary) return <Typography>Loading dashboard…</Typography>;
-
-  const exportSection = async (element, fileName) => {
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL('image/png');
-    const ppt = new PptxGenJS();
-    const slide = ppt.addSlide();
-    slide.addImage({ data: imgData, x:0, y:0, w:'100%', h:'100%' });
-    await ppt.writeFile(fileName);
-  };
-
-  return (
-    <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }} ref={dashRef}>
-      {/* Header */}
-      <Box component="header" sx={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '3px solid #1976d2', bgcolor: '#e3f2fd', p:2
-      }}>
-        <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
-          <DashboardIcon fontSize="large"/>
-          <Typography variant="h4">Alarm Analysis Dashboard</Typography>
-        </Box>
-        <Box sx={{ display:'flex', gap:2 }}>
-          <Link to="/">➤ Dashboard</Link>
-          <Link to="/alarms">➤ Raw Alarms</Link>
-        </Box>
-      </Box>
-
-      <Container maxWidth={false} sx={{ py:4 }}>
-        {/* Filters + Inline Export Buttons */}
-        <Box sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          mb: 3
-        }}>
-          <Filters
-            filters={filters} setFilters={setFilters}
-            regionOptions={regionOptions}
-            locationOptions={locationOptions}
-            monthOptions={monthOptions}
-            priorityOptions={priorityOptions}
-          />
-          {/* force no wrap so buttons hug the Priority dropdown */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-            <Button
-              variant="contained" size="small"
-              onClick={() => exportSection(dashRef.current, 'Full_Dashboard.pptx')}
-            >
-              Export Dashboard PPT
-            </Button>
-            <Button
-              variant="outlined" size="small"
-              onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}
-            >
-              Export Cards
-            </Button>
-            <Button
-              variant="outlined" size="small"
-              onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}
-            >
-              Export Charts
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Cards (no more export button here) */}
-        <Box ref={cardsRef} sx={{ mb: 4 }}>
-          <AlarmCard
-            summary={filteredSummary}
-            rawAlarms={filtered}
-            filters={filters}
-          />
-        </Box>
-
-        {/* Charts (no more export button here) */}
-        <Box ref={chartsRef} sx={{ mb: 4 }}>
-          <SummaryCards
-            summary={filteredSummary}
-            filters={filters}
-            rawAlarms={filtered}
-          />
-        </Box>
-      </Container>
-    </Box>
-  );
-}
+read Below file carefully ,issue is for line chart ,
+Line colors and Background Line colors are same use Diffrent Colours for Line chart. to display lines.
+use Multiple colors to display line chart
 
 
-
-
-
-
-
-// src/components/Chart.js
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-
+import { borderColor } from '@mui/system';
 Chart.plugins.register(ChartDataLabels);
 
-// fallback palette
+// stronger, fixed palette
 const defaultColors = [
   '#3366CC', '#DC3912', '#FF9900', '#109618',
   '#990099', '#0099C6', '#DD4477', '#66AA00',
@@ -169,69 +26,62 @@ export default function MyChart({
   const canvasRef = useRef(null);
   const chartRef  = useRef(null);
 
+
+  Chart.plugins.register(ChartDataLabels);
+
+
   useEffect(() => {
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
-    chartRef.current?.destroy();
+    // chartRef.current?.destroy();
+    if(chartRef.current)chartRef.current.destroy();
 
-    const isLine = type === 'line';
 
     const datasets = Array.isArray(data.datasets)
-      ? data.datasets.map(ds => {
-          // take an array of colors for line charts
-          const lineColors = isLine
-            ? (ds.bgColors || ds.backgroundColor || defaultColors).slice()
-            : null;
+  ? data.datasets.map(ds => ({
+      ...ds,
+      borderWidth: 2,
+      borderColor:ds.borderColor || '#3366CC',
+      fill: type === 'line' ? false : ds.fill ?? false, // force no fill for line charts
+      datalabels: {
+        display: true,
+        formatter: v => v,
+        font: { weight: 'bold' },
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 4,
+        padding: 4,
+        anchor: 'end',
+        align: 'top',
+        clip: false
+      }
+    }))
+  : (() => {
+      const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+      const border = data.borderColor || bg;
+      return [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 2,
+        fill: type === 'line' ? false : true, // also make sure this path sets it properly
+        ...(type === 'line' && { tension: 0.3, pointRadius: 6 }),
+        datalabels: {
+          display: true,
+          formatter: v => v,
+          font: { weight: 'bold' },
+          color: '#000',
+          backgroundColor: 'rgba(255,255,255,0.8)',
+          borderRadius: 4,
+          padding: 4,
+          anchor: 'end',
+          align: 'top',
+          clip: false
+        }
+      }];
+    })();
 
-          return {
-            ...ds,
-            borderWidth: 2,
-            borderColor: isLine
-              ? lineColors
-              : (ds.borderColor || '#3366CC'),
-            backgroundColor: ds.backgroundColor || defaultColors,
-            pointBackgroundColor: isLine
-              ? (ds.bgColors || defaultColors)
-              : undefined,
-            fill: isLine ? false : ds.fill ?? false,
-            ...(isLine && { tension: 0.3, pointRadius: 6 }),
-            datalabels: {
-              display: true,
-              formatter: v => v,
-              font: { weight: 'bold' },
-              backgroundColor: 'rgba(255,255,255,0.8)',
-              borderRadius: 4,
-              padding: 4,
-              anchor: 'end',
-              align: 'top',
-              clip: false
-            }
-          };
-        })
-      : (() => {
-          const bg = data.bgColors || defaultColors.slice(0, data.values.length);
-          return [{
-            label: data.label || '',
-            data: data.values,
-            backgroundColor: bg,
-            pointBackgroundColor: isLine ? bg : undefined,
-            borderColor: isLine ? bg : (data.borderColor || bg),
-            borderWidth: 2,
-            fill: isLine ? false : true,
-            ...(isLine && { tension: 0.3, pointRadius: 6 }),
-            datalabels: {
-              display: true,
-              formatter: v => v,
-              font: { weight: 'bold' },
-              backgroundColor: 'rgba(255,255,255,0.8)',
-              borderRadius: 4,
-              padding: 4,
-              anchor: 'end',
-              align: 'top',
-              clip: false
-            }
-          }];
-        })();
+
 
     chartRef.current = new Chart(ctx, {
       type,
@@ -245,7 +95,10 @@ export default function MyChart({
         animation: { duration: 800 },
         plugins: {
           legend: { labels: { font: { size: 14 } } },
-          datalabels: { clip: false }
+          datalabels: {
+            // ensure labels can render outside dataset elements
+            clip: false
+          }
         },
         scales: {
           x: { beginAtZero: true, ...(options.scales?.x || {}) },
@@ -264,3 +117,4 @@ export default function MyChart({
     </div>
   );
 }
+
