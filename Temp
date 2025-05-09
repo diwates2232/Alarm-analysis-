@@ -1,3 +1,169 @@
+// src/components/SummaryCards.js
+import React from 'react';
+import MyChart from './Chart';
+import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+
+// … all your constants and helpers unchanged …
+
+export default function SummaryCards({ summary, filters, rawAlarms }) {
+  if (!summary) return null;
+
+  // … your data-preparation code unchanged …
+
+  return (
+    <>
+      {/* Rejection Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {rejectionStats.map(r => (
+          <Grid item xs={12} sm={6} md={3} key={r.type}>
+            <Card sx={{ border: `2px solid ${r.color}`, bgcolor: r.color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2">{r.type}</Typography>
+                <Typography variant="h6">{r.count}</Typography>
+                <Typography variant="body2">{r.percentage}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Partition / Priority / Location */}
+      <Grid container spacing={5} sx={{ mb: 4 }}>
+        {partLabels.length > 0 && (
+          <Grid item xs={12} sm={6} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  {!filters.region ? 'Global Partition' : `${filters.region} → Location`}
+                </Typography>
+                <Box width="100%" height={400}>
+                  <MyChart
+                    type="doughnut"
+                    data={{ labels: partLabels, values: partValues, bgColors: partColors, borderColor: partColors }}
+                    // remove hard-coded width/height props here
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {prLabels.length > 0 && (
+          <Grid item xs={12} sm={6} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Priority Wise</Typography>
+                <Box width="100%" height={400}>
+                  <MyChart
+                    type="pie"
+                    data={{ labels: prLabels, values: prValues, bgColors: prColors, borderColor: prColors }}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+
+        {locLabels.length > 0 && (
+          <Grid item xs={12} sm={12} md={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>Location Wise</Typography>
+                <Box width="100%" height={400}>
+                  <MyChart
+                    type="line"
+                    data={{ labels: locLabels, values: locValues, bgColors: locColors, borderColor: locColors }}
+                    options={{
+                      scales: {
+                        x: { title: { display: true, text: 'Location' } },
+                        y: { title: { display: true, text: 'Alarm Count' } },
+                      },
+                    }}
+                  />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* P-by-L, Month & Operator in one row */}
+      <Grid container spacing={5} sx={{ mb: 4 }}>
+        {/* Priority by Location */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Priority by Location</Typography>
+              <Box width="100%" height={400}>
+                <MyChart
+                  type="line"
+                  data={{ labels: locations, datasets: seriesData }}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Location' } },
+                      y: { title: { display: true, text: 'Alarm Count' } },
+                    },
+                    plugins: { legend: { position: 'bottom' } },
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Month Wise */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Month Wise</Typography>
+              <Box width="100%" height={400}>
+                <MyChart
+                  type="line"
+                  data={{ labels: monthLabels, values: monthValues, bgColors: monthColors, borderColor: monthColors }}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Month' } },
+                      y: { title: { display: true, text: 'Alarm Count' } },
+                    },
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Operator Wise */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Operator Wise</Typography>
+              <Box width="100%" height={400}>
+                <MyChart
+                  type="bar"
+                  data={{ labels: opLabels, values: opValues, bgColors: opColors, borderColor: opColors }}
+                  options={{
+                    scales: {
+                      x: { title: { display: true, text: 'Operator' } },
+                      y: { title: { display: true, text: 'Alarm Count' } },
+                    },
+                  }}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
 raed All File Carefully and Solve issue .dont make Another changes in this file
 
 File 1
