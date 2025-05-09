@@ -1,3 +1,7 @@
+npm install chart.js@^3 chartjs-plugin-datalabels
+
+
+
 // src/components/Chart.js
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';               // ensure v3+
