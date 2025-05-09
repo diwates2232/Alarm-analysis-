@@ -1,3 +1,65 @@
+const datasets = Array.isArray(data.datasets)
+  ? data.datasets.map((ds, i) => ({
+      ...ds,
+      label: ds.label || `Series ${i + 1}`,
+      borderWidth: 3,
+      tension: 0.3,
+      pointRadius: 5,
+      backgroundColor: 'transparent',
+      borderColor: ds.borderColor || defaultColors[i % defaultColors.length],
+      fill: false,
+      datalabels: {
+        display: true,
+        formatter: v => v,
+        font: { weight: 'bold' },
+        color: '#000',
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 4,
+        padding: 4,
+        anchor: 'end',
+        align: 'top',
+        clip: false
+      }
+    }))
+  : (() => {
+      const bg = data.bgColors || defaultColors.slice(0, data.values.length);
+      const border = data.borderColor || bg;
+      return [{
+        label: data.label || '',
+        data: data.values,
+        backgroundColor: 'transparent',
+        borderColor: border,
+        borderWidth: 3,
+        fill: false,
+        tension: 0.3,
+        pointRadius: 5,
+        datalabels: {
+          display: true,
+          formatter: v => v,
+          font: { weight: 'bold' },
+          color: '#000',
+          backgroundColor: 'rgba(255,255,255,0.8)',
+          borderRadius: 4,
+          padding: 4,
+          anchor: 'end',
+          align: 'top',
+          clip: false
+        }
+      }];
+    })();
+
+
+
+
+
+
+
+
+
+
+
+
+
 read below Chart.js
 file carefully. 
 Location Wise -- chart
