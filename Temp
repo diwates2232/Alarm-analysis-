@@ -1,4 +1,15 @@
-C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm uninstall pptxgenjs
+C:\
+
+npm uninstall react-chartjs-2
+npm install react-chartjs-2@4.3.1 chart.js@2.9.4 chartjs-plugin-datalabels@0.7.0 pptxgenjs@2.6.0 --save --legacy-peer-deps
+rm -rf node_modules/.cache
+npm start
+
+
+
+
+
+Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm uninstall pptxgenjs
 npm error code ERESOLVE
 npm error ERESOLVE could not resolve
 npm error
