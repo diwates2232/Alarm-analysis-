@@ -1,3 +1,137 @@
+--- src/components/Chart.js
++++ src/components/Chart.js
+@@ useEffect(() => {
+-    const datasets = Array.isArray(data.datasets)
+-      ? data.datasets.map(ds => ({
+-          ...ds,
+-          borderWidth: 2,
+-          // for line: ds.borderColor must be an array of exact colours
+-          borderColor: isLine
+-            ? ds.borderColor
+-            : ds.borderColor || ds.backgroundColor,
+-          // fill under line is off
+-          backgroundColor: isLine
+-            ? 'transparent'
+-            : ds.backgroundColor,
+-          // colour each point from the same array
+-          pointBackgroundColor: isLine
+-            ? ds.backgroundColor
+-            : undefined,
+-          pointBorderColor: isLine
+-            ? ds.borderColor
+-            : undefined,
++    const datasets = Array.isArray(data.datasets)
++      ? data.datasets.map(ds => {
++          const bgArr     = Array.isArray(ds.backgroundColor) ? ds.backgroundColor : [ds.backgroundColor];
++          const strokeArr = Array.isArray(ds.borderColor)     ? ds.borderColor     : [ds.borderColor];
++          return {
++            ...ds,
++            borderWidth: 2,
++            // Single‐colour line: take the first colour in your palette
++            borderColor: isLine
++              ? strokeArr[0]
++              : strokeArr[0] || bgArr[0],
++            // no fill under the line
++            backgroundColor: isLine
++              ? 'transparent'
++              : bgArr,
++            // Per‐point fill correct
++            pointBackgroundColor: isLine
++              ? bgArr
++              : undefined,
++            // Point border also from the same array
++            pointBorderColor: isLine
++              ? strokeArr
++              : undefined,
+           fill: isLine ? false : ds.fill ?? false,
+           ...(isLine && { tension: 0.3, pointRadius: 6 }),
+           datalabels: {
+             display: true,
+             formatter: v => v,
+             font: { weight: 'bold' },
+             backgroundColor: 'rgba(255,255,255,0.8)',
+             borderRadius: 4,
+             padding: 4,
+             anchor: 'end',
+             align: 'top',
+             clip: false
+           }
+         };
+-        })
++        })
+       : (() => {
+           // single‐series fallback: pull your arrays
+           const vals = data.values || [];
+-          const bgArray     = data.bgColors   || [];
+-          const strokeArray = data.borderColor || bgArray;
+-          return [{
+-            label: data.label || '',
+-            data: vals,
+-            borderWidth: 2,
+-            // line segments in your exact strokeArray
+-            borderColor: isLine
+-              ? strokeArray
+-              : strokeArray,
+-            // no fill under line
+-            backgroundColor: isLine
+-              ? 'transparent'
+-              : bgArray,
+-            // each dot coloured from bgArray
+-            pointBackgroundColor: isLine
+-              ? bgArray
+-              : undefined,
+-            pointBorderColor: isLine
+-              ? strokeArray
+-              : undefined,
++          const bgArray     = data.bgColors   || [];
++          const strokeArray = data.borderColor|| bgArray;
++          return [{
++            label: data.label || '',
++            data: vals,
++            borderWidth: 2,
++            // **line** uses only the first colour
++            borderColor: isLine
++              ? strokeArray[0]
++              : strokeArray[0],
++            // **no** fill under the line
++            backgroundColor: isLine
++              ? 'transparent'
++              : bgArray[0],
++            // points still get the full array
++            pointBackgroundColor: isLine
++              ? bgArray
++              : undefined,
++            pointBorderColor: isLine
++              ? strokeArray
++              : undefined,
+             fill: isLine ? false : true,
+             ...(isLine && { tension: 0.3, pointRadius: 6 }),
+             datalabels: {
+               display: true,
+               formatter: v => v,
+               font: { weight: 'bold' },
+               backgroundColor: 'rgba(255,255,255,0.8)',
+               borderRadius: 4,
+               padding: 4,
+               anchor: 'end',
+               align: 'top',
+               clip: false
+             }
+           }];
+         })();
+
+
+
+
+
+
+
+
+
+
+
+
+
 // src/components/Chart.js
 import React, { useEffect, useRef } from 'react';
 import Chart from 'chart.js';
