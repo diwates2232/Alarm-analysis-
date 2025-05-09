@@ -1,3 +1,11 @@
+rmdir /s /q node_modules\.cache && npm start
+
+
+
+
+
+
+
 Chart.plugins.register(ChartDataLabels);
 
 
