@@ -1,3 +1,145 @@
+// src/components/Chart.js
+import React, { useEffect, useRef } from 'react';
+import Chart from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+Chart.plugins.register(ChartDataLabels);
+
+// --- Plugin: draw multicolor line segments before the default line is drawn ---
+Chart.plugins.register({
+  beforeDatasetsDraw: function(chart) {
+    chart.data.datasets.forEach((dataset, dsIndex) => {
+      // only for single-series line datasets with an array borderColor
+      if (chart.config.type === 'line' &&
+          Array.isArray(dataset.borderColor) &&
+          chart.getDatasetMeta(dsIndex).dataset._model.tension !== undefined
+      ) {
+        const meta = chart.getDatasetMeta(dsIndex);
+        const ctx = chart.chart.ctx;
+        const points = meta.data;
+        const colors = dataset.borderColor;
+
+        // hide the default line
+        meta.dataset._model.borderColor = 'transparent';
+
+        // draw each segment manually
+        for (let i = 1; i < points.length; i++) {
+          const a = points[i - 1]._view;
+          const b = points[i]._view;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.lineWidth = dataset.borderWidth;
+          ctx.strokeStyle = colors[(i - 1) % colors.length];
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    });
+  }
+});
+// -------------------------------------------------------------------------------
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const ctx = canvasRef.current.getContext('2d');
+    chartRef.current && chartRef.current.destroy();
+
+    const isLine = type === 'line';
+
+    // normalize into datasets array
+    const rawDatasets = Array.isArray(data.datasets)
+      ? data.datasets
+      : [{
+          label: data.label || '',
+          data: data.values || [],
+          backgroundColor: data.bgColors   || [],
+          borderColor:     data.borderColor|| []
+        }];
+
+    const datasets = rawDatasets.map(ds => {
+      const bgArr     = Array.isArray(ds.backgroundColor) ? ds.backgroundColor : [ds.backgroundColor];
+      const strokeArr = Array.isArray(ds.borderColor)     ? ds.borderColor     : [ds.borderColor];
+
+      return {
+        ...ds,
+        borderWidth: 2,
+        // we’ll let the plugin draw the colored segments
+        borderColor: strokeArr,
+        backgroundColor: isLine ? 'transparent' : bgArr,
+        pointBackgroundColor: isLine ? bgArr : undefined,
+        pointBorderColor:     isLine ? strokeArr : undefined,
+        fill: isLine ? false : ds.fill ?? false,
+        ...(isLine && { tension: 0.3, pointRadius: 6 }),
+        datalabels: {
+          display: true,
+          formatter: v => v,
+          font: { weight: 'bold' },
+          backgroundColor: 'rgba(255,255,255,0.8)',
+          borderRadius: 4,
+          padding: 4,
+          anchor: 'end',
+          align: 'top',
+          clip: false
+        }
+      };
+    });
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: { labels: data.labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } },
+          datalabels: { clip: false }
+        },
+        scales: {
+          x: { beginAtZero: true, ...(options.scales?.x || {}) },
+          y: { beginAtZero: true, ...(options.scales?.y || {}) }
+        },
+        ...options
+      }
+    });
+
+    return () => chartRef.current.destroy();
+  }, [type, data, options]);
+
+  return (
+    <div style={{ width, height, border: '1px solid #ccc', borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 npm install chart.js@^3 chartjs-plugin-datalabels
 
 
