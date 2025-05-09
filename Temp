@@ -1,92 +1,95 @@
-npm uninstall chart.js chartjs-plugin-datalabels
-npm install chart.js@2.9.4 chartjs-plugin-datalabels@0.7.0 --save
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm uninstall pptxgenjs
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: react-chartjs-2@5.3.0
+npm error Found: chart.js@2.9.4
+npm error node_modules/chart.js
+npm error   peer chart.js@">= 2.7.0 < 3" from chartjs-plugin-datalabels@0.7.0
+npm error   node_modules/chartjs-plugin-datalabels
+npm error     chartjs-plugin-datalabels@"^0.7.0" from the root project
+npm error   chart.js@"^2.9.4" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
+npm error node_modules/react-chartjs-2
+npm error   react-chartjs-2@"^5.3.0" from the root project
+npm error
+npm error Conflicting peer dependency: chart.js@4.4.9
+npm error node_modules/chart.js
+npm error   peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
+npm error   node_modules/react-chartjs-2
+npm error     react-chartjs-2@"^5.3.0" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_11_587Z-eresolve-report.txt
+npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_11_587Z-debug-0.log
 
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install pptxgenjs@2.6.0 --save
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: react-chartjs-2@5.3.0
+npm error Found: chart.js@2.9.4
+npm error node_modules/chart.js
+npm error   peer chart.js@">= 2.7.0 < 3" from chartjs-plugin-datalabels@0.7.0
+npm error   node_modules/chartjs-plugin-datalabels
+npm error     chartjs-plugin-datalabels@"^0.7.0" from the root project
+npm error   chart.js@"^2.9.4" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
+npm error node_modules/react-chartjs-2
+npm error   react-chartjs-2@"^5.3.0" from the root project
+npm error
+npm error Conflicting peer dependency: chart.js@4.4.9
+npm error node_modules/chart.js
+npm error   peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
+npm error   node_modules/react-chartjs-2
+npm error     react-chartjs-2@"^5.3.0" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_35_649Z-eresolve-report.txt
+npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_35_649Z-debug-0.log
 
-
-import Chart from 'chart.js';
-import 'chartjs-plugin-datalabels';
-
-
-
-
-
-npm uninstall pptxgenjs
-npm install pptxgenjs@2.6.0 --save
-
-
-
-rm -rf node_modules/.cache
-npm start
-
-
-
-
-
-
-
-
-ERROR in ./src/components/Chart.js 112:0-34
-Module not found: Error: Can't resolve 'chart.js/auto' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\src\components'
-ERROR in ./node_modules/chartjs-plugin-datalabels/dist/chartjs-plugin-datalabels.esm.js 7:0-126
-Module not found: Error: Can't resolve 'chart.js/helpers' in 'C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\chartjs-plugin-datalabels\dist'
-ERROR in node:fs/promises
-Module build failed: UnhandledSchemeError: Reading from "node:fs/promises" is not handled by plugins (Unhandled scheme).
-Webpack supports "data:" and "file:" URIs by default.
-You may need an additional plugin to handle "node:" URIs.
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1014:10
-    at Hook.eval [as callAsync] (eval at create (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\tapable\lib\HookCodeFactory.js:33:10), <anonymous>:6:1)
-    at Hook.CALL_ASYNC_DELEGATE [as _callAsync] (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\tapable\lib\Hook.js:18:14)
-    at Object.processResource (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1010:8)
-    at processResource (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:220:11)
-    at iteratePitchingLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:171:10)
-    at runLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:398:2)
-    at NormalModule._doBuild (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:995:3)
-    at NormalModule.build (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1184:15)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\Compilation.js:1519:12
-    at NormalModule.needBuild (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1525:32)
-    at Compilation._buildModule (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\Compilation.js:1500:10)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:340:10
-    at Hook.eval [as callAsync] (eval at create (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\tapable\lib\HookCodeFactory.js:33:10), <anonymous>:6:1)
-    at AsyncQueue._startProcessing (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:330:26)
-    at AsyncQueue._ensureProcessing (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:317:12)
-    at process.processImmediate (node:internal/timers:491:21)
-ERROR in node:fs
-Module build failed: UnhandledSchemeError: Reading from "node:fs" is not handled by plugins (Unhandled scheme).
-Webpack supports "data:" and "file:" URIs by default.
-You may need an additional plugin to handle "node:" URIs.
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1014:10
-    at Hook.eval [as callAsync] (eval at create (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\tapable\lib\HookCodeFactory.js:33:10), <anonymous>:6:1)
-    at Object.processResource (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1010:8)
-    at processResource (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:220:11)
-    at iteratePitchingLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:171:10)
-    at runLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:398:2)
-    at NormalModule._doBuild (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:995:3)
-    at NormalModule.build (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1184:15)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\Compilation.js:1519:12
-    at NormalModule.needBuild (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1525:32)
-    at Compilation._buildModule (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\Compilation.js:1500:10)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:340:10
-    at Hook.eval [as callAsync] (eval at create (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\tapable\lib\HookCodeFactory.js:33:10), <anonymous>:6:1)
-    at AsyncQueue._startProcessing (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:330:26)
-    at AsyncQueue._ensureProcessing (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:317:12)
-    at process.processImmediate (node:internal/timers:491:21)
-ERROR in node:https
-Module build failed: UnhandledSchemeError: Reading from "node:https" is not handled by plugins (Unhandled scheme).
-Webpack supports "data:" and "file:" URIs by default.
-You may need an additional plugin to handle "node:" URIs.
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1014:10
-    at Hook.eval [as callAsync] (eval at create (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\tapable\lib\HookCodeFactory.js:33:10), <anonymous>:6:1)
-    at Object.processResource (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1010:8)
-    at processResource (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:220:11)
-    at iteratePitchingLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:171:10)
-    at runLoaders (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\loader-runner\lib\LoaderRunner.js:398:2)
-    at NormalModule._doBuild (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:995:3)
-    at NormalModule.build (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1184:15)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\Compilation.js:1519:12
-    at NormalModule.needBuild (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\NormalModule.js:1525:32)
-    at Compilation._buildModule (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\Compilation.js:1500:10)
-    at C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:340:10
-    at Hook.eval [as callAsync] (eval at create (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\tapable\lib\HookCodeFactory.js:33:10), <anonymous>:6:1)
-    at AsyncQueue._startProcessing (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:330:26)
-    at AsyncQueue._ensureProcessing (C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend\node_modules\react-scripts\node_modules\webpack\lib\util\AsyncQueue.js:317:12)
-    at process.processImmediate (node:internal/timers:491:21)
+C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install pptxgenjs@2.6.0 --save
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: react-chartjs-2@5.3.0
+npm error Found: chart.js@2.9.4
+npm error node_modules/chart.js
+npm error   peer chart.js@">= 2.7.0 < 3" from chartjs-plugin-datalabels@0.7.0
+npm error   node_modules/chartjs-plugin-datalabels
+npm error     chartjs-plugin-datalabels@"^0.7.0" from the root project
+npm error   chart.js@"^2.9.4" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
+npm error node_modules/react-chartjs-2
+npm error   react-chartjs-2@"^5.3.0" from the root project
+npm error
+npm error Conflicting peer dependency: chart.js@4.4.9
+npm error node_modules/chart.js
+npm error   peer chart.js@"^4.1.1" from react-chartjs-2@5.3.0
+npm error   node_modules/react-chartjs-2
+npm error     react-chartjs-2@"^5.3.0" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_49_219Z-eresolve-report.txt
+npm error A complete log of this run can be found in: C:\Users\W0024618\AppData\Local\npm-cache\_logs\2025-05-09T07_04_49_219Z-debug-0.log
