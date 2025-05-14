@@ -1,3 +1,58 @@
+// src/App.js
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import RawAlarms from './pages/RawAlarms';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/alarms" element={<RawAlarms />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+
+
+
+
+// src/index.js
+import process from 'process';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { ThemeModeProvider } from './theme';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+
+window.process = process;
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <ThemeModeProvider>
+      {theme => (
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <App />
+        </ThemeProvider>
+      )}
+    </ThemeModeProvider>
+  </React.StrictMode>
+);
+
+reportWebVitals();
+
+
+
+
+
+
 This is my Current Files so update my both files and give me Updated js files Carefully
 
 // src/App.js
