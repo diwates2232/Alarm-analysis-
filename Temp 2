@@ -1,3 +1,7 @@
+npm install \
+  chart.js@^4.4.9 \
+  react-chartjs-2@^5.3.0
+
 
 npm uninstall chart.js react-chartjs-2
 npm install \
