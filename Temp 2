@@ -1,296 +1,45 @@
-<Typography variant="h4">Alarm Analysis Dashboard</Typography>
-
-
-
-scales: {
-  x: {
-    beginAtZero: true,
-    ticks: { color: theme.palette.text.primary },
-    grid: {
-      color: theme.palette.divider,
-      lineWidth: 1
-    },
-    border: {
-      display: true,
-      color: theme.palette.text.primary,
-      width: 2
-    },
-    ...(options.scales?.x || {})
-  },
-  y: {
-    beginAtZero: true,
-    ticks: { color: theme.palette.text.primary },
-    grid: {
-      color: theme.palette.divider,
-      lineWidth: 1
-    },
-    border: {
-      display: true,
-      color: theme.palette.text.primary,
-      width: 2
-    },
-    ...(options.scales?.y || {})
-  }
-}
+read Below file carefully and Increase the heading Alarm Analysis Dashboard size as h4 ans Increase same size of Icon 
+and place dashboard & raw alarms navigation on side of changing navigator in one side 
 
 
 
 
-
-
-// src/components/Chart.js
-import React, { useEffect, useRef } from 'react';
+// src/components/Navbar.js
+import React from 'react';
+import {
+  AppBar, Toolbar, IconButton,
+  Typography, Box, Link
+} from '@mui/material';
+import {
+  Dashboard as DashboardIcon,
+  Brightness4,
+  Brightness7
+} from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
-import Chart from 'chart.js/auto';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { useThemeMode } from '../theme';
 
-// register the datalabels plugin
-Chart.register(ChartDataLabels);
-
-// custom multicolor-line plugin
-Chart.register({
-  id: 'multicolorLine',
-  beforeDatasetsDraw(chart) {
-    const { ctx, data, config } = chart;
-    data.datasets.forEach((dataset, dsIndex) => {
-      if (
-        config.type === 'line' &&
-        Array.isArray(dataset.borderColor) &&
-        chart.getDatasetMeta(dsIndex).dataset.options.tension !== undefined
-      ) {
-        const meta = chart.getDatasetMeta(dsIndex);
-        const points = meta.data;
-        const colors = dataset.borderColor;
-
-        // hide the default line
-        meta.dataset.options.borderColor = 'transparent';
-
-        for (let i = 1; i < points.length; i++) {
-          const prev = points[i - 1].getProps(['x', 'y'], true);
-          const curr = points[i].getProps(['x', 'y'], true);
-
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(prev.x, prev.y);
-          ctx.lineTo(curr.x, curr.y);
-          ctx.lineWidth = dataset.borderWidth;
-          ctx.strokeStyle = colors[(i - 1) % colors.length];
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
-    });
-  }
-});
-
-export default function MyChart({
-  type = 'bar',
-  data,
-  options = {},
-  width = '100%',
-  height = '100%'
-}) {
-  const canvasRef = useRef(null);
-  const chartRef  = useRef(null);
-  const theme     = useTheme();
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const ctx = canvasRef.current.getContext('2d');
-
-    // Apply theme-based defaults before instantiating any chart
-    Chart.defaults.color = theme.palette.text.primary;
-    Chart.defaults.plugins.legend.labels.color = theme.palette.text.secondary;
-    Chart.defaults.plugins.datalabels.color = theme.palette.text.primary;
-    Chart.defaults.plugins.datalabels.backgroundColor = theme.palette.background.paper;
-    Chart.defaults.scale.grid.color = theme.palette.divider;
-    Chart.defaults.scale.ticks.color = theme.palette.text.primary;
-    Chart.defaults.plugins.title.color = theme.palette.text.primary;
-
-    chartRef.current?.destroy();
-    const isLine = type === 'line';
-
-    // normalize into datasets array
-    const rawDatasets = Array.isArray(data.datasets)
-      ? data.datasets
-      : [{
-          label: data.label || '',
-          data: data.values || [],
-          backgroundColor: data.bgColors   || [],
-          borderColor:     data.borderColor|| []
-        }];
-
-    const datasets = rawDatasets.map(ds => {
-      const bgArr     = Array.isArray(ds.backgroundColor) ? ds.backgroundColor : [ds.backgroundColor];
-      const strokeArr = Array.isArray(ds.borderColor)     ? ds.borderColor     : [ds.borderColor];
-
-      return {
-        ...ds,
-        borderWidth: 2,
-        borderColor: strokeArr,
-        backgroundColor: isLine ? 'transparent' : bgArr,
-        pointBackgroundColor: isLine ? bgArr : undefined,
-        pointBorderColor:     isLine ? strokeArr : undefined,
-        fill: isLine ? false : ds.fill ?? false,
-        ...(isLine && { tension: 0.3, pointRadius: 6 }),
-        datalabels: {
-          display: true,
-          color: theme.palette.text.primary,
-          formatter: v => v,
-          font: { weight: 'bold' },
-          backgroundColor: theme.palette.background.paper,
-          borderRadius: 4,
-          padding: 4,
-          anchor: 'end',
-          align: 'top',
-          clip: false
-        }
-      };
-    });
-
-    chartRef.current = new Chart(ctx, {
-      type,
-      data: { labels: data.labels, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 800 },
-        plugins: {
-          legend: { labels: { font: { size: 14 } } },
-          datalabels: { clip: false },
-          title: {} // so title.color default applies if you ever set a title
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            ticks: { color: theme.palette.text.primary },
-            grid:  { color: theme.palette.divider },
-            ...(options.scales?.x || {})
-          },
-          y: {
-            beginAtZero: true,
-            ticks: { color: theme.palette.text.primary },
-            grid:  { color: theme.palette.divider },
-            ...(options.scales?.y || {})
-          }
-        },
-        ...options
-      }
-    });
-
-    return () => chartRef.current.destroy();
-  }, [type, data, options, theme]);
+export default function Navbar() {
+  const theme = useTheme();
+  const { mode, toggleMode } = useThemeMode();
 
   return (
-    <div style={{ width, height, border: `1px solid ${theme.palette.divider}`, borderRadius: 4, padding: 8 }}>
-      <canvas ref={canvasRef} />
-    </div>
+    <AppBar position="static" color="default" elevation={1}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon />
+          <Typography variant="h6">Alarm Analysis Dashboard</Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Link href="/" underline="none" color="inherit">Dashboard</Link>
+          <Link href="/alarms" underline="none" color="inherit">Raw Alarms</Link>
+        </Box>
+
+        <IconButton onClick={toggleMode} color="inherit">
+          {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+        </IconButton>
+      </Toolbar>
+    </AppBar>
   );
 }
 
-
-
-
-
-
-// src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import RawAlarms from './pages/RawAlarms';
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/alarms" element={<RawAlarms />} />
-      </Routes>
-    </Router>
-  );
-}
-
-export default App;
-
-
-
-
-// src/index.js
-import process from 'process';
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-import { ThemeModeProvider } from './theme';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-
-window.process = process;
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <ThemeModeProvider>
-      {theme => (
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <App />
-        </ThemeProvider>
-      )}
-    </ThemeModeProvider>
-  </React.StrictMode>
-);
-
-reportWebVitals();
-
-
-
-
-
-
-This is my Current Files so update my both files and give me Updated js files Carefully
-
-// src/App.js
-import React from 'react';
-import ReactDOM from 'react-dom';
-import App from './App';
-import { ThemeModeProvider } from './theme';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-
-ReactDOM.render(
-  <ThemeModeProvider>
-    {theme => (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <App />
-      </ThemeProvider>
-    )}
-  </ThemeModeProvider>,
-  document.getElementById('root')
-);
-
-
-
-
-index.js
-
-
-import process from 'process';
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-window.process=process;
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
