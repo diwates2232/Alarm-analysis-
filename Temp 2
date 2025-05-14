@@ -1,3 +1,141 @@
+<Container maxWidth={false} sx={{ py: 2 }}>
+  {/* Filters + Export Buttons */}
+  <Box sx={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    mb: 2,
+    backgroundColor: '#FFD100',
+    padding: 1,
+    borderRadius: 1,
+    boxShadow: 1
+  }}>
+    <Filters
+      filters={filters} setFilters={setFilters}
+      regionOptions={regionOptions}
+      locationOptions={locationOptions}
+      monthOptions={monthOptions}
+      priorityOptions={priorityOptions}
+    />
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+      <Button variant="contained" size="small" onClick={() => exportSection(dashRef.current, 'Full_Dashboard.pptx')}>
+        Export Dashboard PPT
+      </Button>
+      <Button variant="outlined" size="small" onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}>
+        Export Cards
+      </Button>
+      <Button variant="outlined" size="small" onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}>
+        Export Charts
+      </Button>
+    </Box>
+  </Box>
+
+
+
+
+
+
+
+import React from 'react';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters }) {
+  if (!summary) return null;
+
+  const formatMonthYear = dateStr => {
+    const [ , mon, yy ] = dateStr.split('-');
+    return `${mon} ${yy}`;
+  };
+
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region   && a.Region   !== filters.region)                         return false;
+    if (filters.location && a.Location !== filters.location)                       return false;
+    if (filters.month    && formatMonthYear(a.Date) !== filters.month)             return false;
+    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)     return false;
+    return true;
+  });
+
+  const totalAlarms = filtered.length;
+
+  const normalize = str => (str || '').toString().trim().toLowerCase();
+
+  const responseSentCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'response sent'
+  ).length;
+
+  const notSentCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'not sent'
+  ).length;
+
+  const reoccurredCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'yes' &&
+    normalize(a['Action Taken']) === 'reoccured'
+  ).length;
+
+  const responseSentPercentage = totalAlarms
+    ? `${((responseSentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  const cardStyle = {
+    backgroundColor: '#FFD100',
+    color: '#000',
+    fontWeight: 'bold'
+  };
+
+  return (
+    <Grid container spacing={2} sx={{ mb: 2 }}>
+      <Grid item xs={3} sm={2} md={2}>
+        <Card sx={cardStyle}><CardContent>
+          <Typography variant="subtitle1">Total Alarms</Typography>
+          <Typography variant="h5">{totalAlarms}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      <Grid item xs={3} sm={2} md={2}>
+        <Card sx={cardStyle}><CardContent>
+          <Typography variant="subtitle1">Response Sent</Typography>
+          <Typography variant="h5">{responseSentCount}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      <Grid item xs={3} sm={2} md={2}>
+        <Card sx={cardStyle}><CardContent>
+          <Typography variant="subtitle1">Not Sent</Typography>
+          <Typography variant="h5">{notSentCount}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      <Grid item xs={3} sm={2} md={2}>
+        <Card sx={cardStyle}><CardContent>
+          <Typography variant="subtitle1">Re-occurred</Typography>
+          <Typography variant="h5">{reoccurredCount}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      <Grid item xs={3} sm={2} md={2}>
+        <Card sx={cardStyle}><CardContent>
+          <Typography variant="subtitle1">Response Sent %</Typography>
+          <Typography variant="h5">{responseSentPercentage}</Typography>
+        </CardContent></Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 Make Changes As per my requsest and give me updated js files carefully, Dont make Another changes in my file 
 
 File 1
