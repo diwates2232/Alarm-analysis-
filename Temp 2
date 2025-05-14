@@ -1,3 +1,7 @@
+cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend
+dir
+
+
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm install \
 npm error code ENOENT
 npm error syscall open
