@@ -1,3 +1,7 @@
+<Typography variant="h4">Alarm Analysis Dashboard</Typography>
+
+
+
 scales: {
   x: {
     beginAtZero: true,
