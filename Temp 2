@@ -1,3 +1,374 @@
+import React from 'react';
+import {
+  TextField,
+  MenuItem,
+  Grid,
+  InputAdornment
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles'; // <-- added
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EventIcon from '@mui/icons-material/Event';
+import SearchIcon from '@mui/icons-material/Search';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+
+export default function Filters({
+  filters,
+  setFilters,
+  regionOptions = [],
+  locationOptions = [],
+  monthOptions,
+  employeeOptions,
+  doorOptions,
+  priorityOptions,
+  rejectionOptions
+}) {
+  const theme = useTheme(); // <-- added
+  const iconColor = theme.palette.mode === 'dark' ? '#fff' : '#000'; // <-- added
+
+  const handleChange = field => e => {
+    const value = e.target.value;
+    setFilters(prev => {
+      const next = { ...prev, [field]: value };
+      if (field === 'region') {
+        next.location = '';
+        next.month = '';
+        next.date = '';
+        next.priority = '';
+        next.rejection = '';
+        next.employee = '';
+        next.door = '';
+      }
+      if (field === 'location') {
+        next.month = '';
+        next.date = '';
+        next.priority = '';
+        next.rejection = '';
+        next.employee = '';
+        next.door = '';
+      }
+      if (field === 'month') {
+        next.date = '';
+        next.priority = '';
+        next.rejection = '';
+      }
+      if (field === 'date') {
+        next.priority = '';
+        next.rejection = '';
+      }
+      if (field === 'priority') {
+        next.rejection = '';
+      }
+      if (field === 'door') {
+        next.rejection = '';
+      }
+      return next;
+    });
+  };
+
+  return (
+    <Grid container spacing={1} alignItems="center" sx={{ mb: 0 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          select label="Region" fullWidth
+          value={filters.region}
+          onChange={handleChange('region')}
+          size="medium"
+          sx={{ minWidth: 120 }}
+          InputProps={{
+            style: { color: iconColor },
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon sx={{ color: iconColor }} />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Regions</MenuItem>
+          {regionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Location */}
+      <Grid item>
+        <TextField
+          select label="Location" fullWidth
+          value={filters.location}
+          onChange={handleChange('location')}
+          size="medium"
+          sx={{ minWidth: 120 }}
+          disabled={!filters.region}
+          InputProps={{
+            style: { color: iconColor },
+            startAdornment: (
+              <InputAdornment position="start">
+                <LocationOnIcon sx={{ color: iconColor }} />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Locations</MenuItem>
+          {locationOptions.map(l => <MenuItem key={l} value={l}>{l}</MenuItem>)}
+        </TextField>
+      </Grid>
+
+      {/* Month */}
+      {monthOptions && (
+        <Grid item>
+          <TextField
+            select label="Month" fullWidth
+            value={filters.month}
+            onChange={handleChange('month')}
+            size="medium"
+            sx={{ minWidth: 120 }}
+            InputProps={{
+              style: { color: iconColor },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CalendarMonthIcon sx={{ color: iconColor }} />
+                </InputAdornment>
+              )
+            }}
+          >
+            <MenuItem value="">All Months</MenuItem>
+            {monthOptions.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Date */}
+      {filters.hasOwnProperty('date') && (
+        <Grid item>
+          <TextField
+            label="Date"
+            type="date"
+            fullWidth
+            value={filters.date}
+            onChange={handleChange('date')}
+            size="medium"
+            sx={{ minWidth: 120 }}
+            InputLabelProps={{ shrink: true }}
+            InputProps={{
+              style: { color: iconColor },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EventIcon sx={{ color: iconColor }} />
+                </InputAdornment>
+              )
+            }}
+          />
+        </Grid>
+      )}
+
+      {/* Priority */}
+      {priorityOptions && (
+        <Grid item>
+          <TextField
+            select label="Priority" fullWidth
+            value={filters.priority}
+            onChange={handleChange('priority')}
+            size="medium"
+            sx={{ minWidth: 120 }}
+            InputProps={{
+              style: { color: iconColor },
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PriorityHighIcon sx={{ color: iconColor }} />
+                </InputAdornment>
+              )
+            }}
+          >
+            <MenuItem value="">All Priorities</MenuItem>
+            {priorityOptions.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Rejection */}
+      {rejectionOptions && (
+        <Grid item>
+          <TextField
+            select label="Rejection" fullWidth
+            value={filters.rejection}
+            onChange={handleChange('rejection')}
+            size="medium"
+            sx={{ minWidth: 120 }}
+          >
+            <MenuItem value="">All Rejections</MenuItem>
+            {rejectionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Employee */}
+      {employeeOptions && (
+        <Grid item>
+          <TextField
+            select label="Employee" fullWidth
+            value={filters.employee}
+            onChange={handleChange('employee')}
+            size="medium"
+            sx={{ minWidth: 120 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: iconColor }} />
+                </InputAdornment>
+              )
+            }}
+          >
+            <MenuItem value="">All Employees</MenuItem>
+            {employeeOptions.map(e => <MenuItem key={e} value={e}>{e}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+
+      {/* Door */}
+      {doorOptions && (
+        <Grid item>
+          <TextField
+            select label="Door" fullWidth
+            value={filters.door}
+            onChange={handleChange('door')}
+            size="medium"
+            sx={{ minWidth: 120 }}
+          >
+            <MenuItem value="">All Doors</MenuItem>
+            {doorOptions.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
+          </TextField>
+        </Grid>
+      )}
+    </Grid>
+  );
+}
+
+
+
+
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container, Button } from '@mui/material';
+import { useTheme } from '@mui/material/styles'; // <-- added
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+const PptxGenJS = require('pptxgenjs');
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar'; // header
+
+// ... helper functions (unchanged)
+
+export default function Dashboard() {
+  const theme = useTheme(); // <-- added
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', month: '', date: '', priority: ''
+  });
+
+  const dashRef   = useRef();
+  const cardsRef  = useRef();
+  const chartsRef = useRef();
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // dropdown options (unchanged)
+  // filtered base (unchanged)
+  // filtered summary (unchanged)
+
+  if (!summary) return <Typography>Loading dashboard…</Typography>;
+
+  const exportSection = async (element, fileName = 'Full_Dashboard.pptx') => {
+    const ppt = new PptxGenJS();
+    const slide = ppt.addSlide();
+    slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
+    await ppt.writeFile({ fileName });
+  };
+
+  return (
+    <>
+      <Navbar />
+
+      <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }} ref={dashRef}>
+        <Container maxWidth={false} sx={{ py: 2 }}>
+          {/* Filters + Export Buttons */}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 2,
+            backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#FFD100',
+            color: theme.palette.mode === 'dark' ? '#fff' : '#000',
+            padding: 1,
+            borderRadius: 1,
+            boxShadow: 1
+          }}>
+            <Filters
+              filters={filters} setFilters={setFilters}
+              regionOptions={regionOptions}
+              locationOptions={locationOptions}
+              monthOptions={monthOptions}
+              priorityOptions={priorityOptions}
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+              <Button variant="contained" size="small" onClick={() => exportSection(dashRef.current, 'Full_Dashboard.pptx')}>
+                Export Dashboard PPT
+              </Button>
+              <Button variant="outlined" size="small" onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}>
+                Export Cards
+              </Button>
+              <Button variant="outlined" size="small" onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}>
+                Export Charts
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Cards */}
+          <Box ref={cardsRef} sx={{ mb: 1.5 }}>
+            <AlarmCard
+              summary={filteredSummary}
+              rawAlarms={filtered}
+              filters={filters}
+            />
+          </Box>
+
+          {/* Charts */}
+          <Box ref={chartsRef} sx={{ mb: 1.5 }}>
+            <SummaryCards
+              summary={filteredSummary}
+              filters={filters}
+              rawAlarms={filtered}
+            />
+          </Box>
+
+          <Container maxWidth={false} sx={{ py: 0 }}></Container>
+          <Footer />
+        </Container>
+      </Box>
+    </>
+  );
+}
+
+
+
+
+
+
+
+
 Read both file and add theme palette mode and give me Updated file carefully. Dont make another channges in this file
 
 File 1
