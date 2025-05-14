@@ -1,5 +1,186 @@
 // src/components/Footer.js
 import React from 'react';
+import {
+  Box,
+  Container,
+  Grid,
+  Typography,
+  Link as MuiLink,
+  Select,
+  MenuItem,
+  Chip,
+  Stack,
+  useTheme
+} from '@mui/material';
+import PublicIcon from '@mui/icons-material/Public';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import Logo from '../assets/wu-logo.png'; // your Western Union logo
+
+const popular = ['India', 'Mexico', 'Pakistan', 'China'];
+
+const importantPages = [
+  { label: 'Home', href: '/' },
+  { label: 'About us', href: '/about' },
+  { label: 'Contact us', href: '/contact' },
+  { label: 'Fraud awareness', href: '/fraud' },
+  { label: 'Privacy Statement', href: '/privacy' },
+  { label: 'Terms & Conditions', href: '/terms' },
+  { label: 'Ad Choices', href: '/ad-choices' },
+  { label: 'Cookie Information', href: '/cookies' },
+];
+
+export default function Footer() {
+  const theme = useTheme();
+  const dark = theme.palette.mode === 'dark';
+
+  return (
+    <Box
+      component="footer"
+      sx={{
+        bgcolor: dark ? '#111' : '#222',
+        color: dark ? '#eee' : '#fff',
+        pt: 6,
+        pb: 4,
+      }}
+    >
+      <Container maxWidth="lg">
+        {/* Top tagline + selector + destinations */}
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
+          We transfer world-wide
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          Send money online to 200 countries and territories with hundreds of thousands of Western Union agent locations.
+        </Typography>
+
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 4 }}>
+          {/* Location selector */}
+          <Grid item xs={12} md="auto">
+            <Select
+              startAdornment={<PublicIcon sx={{ mr: 1 }} />}
+              defaultValue="US"
+              sx={{
+                background: dark ? '#222' : '#333',
+                color: '#fff',
+                '& .MuiSelect-icon': { color: '#fff' }
+              }}
+            >
+              <MenuItem value="US">United States</MenuItem>
+              <MenuItem value="CA">Canada</MenuItem>
+              <MenuItem value="GB">United Kingdom</MenuItem>
+            </Select>
+          </Grid>
+
+          {/* Popular destinations */}
+          <Grid item xs>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {popular.map(dest => (
+                <Chip
+                  key={dest}
+                  label={dest}
+                  clickable
+                  sx={{
+                    background: dark ? '#333' : '#444',
+                    color: '#fff',
+                    height: 32
+                  }}
+                />
+              ))}
+            </Stack>
+          </Grid>
+        </Grid>
+
+        {/* Important pages */}
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          spacing={2}
+          sx={{ mb: 4 }}
+        >
+          {importantPages.map(p => (
+            <MuiLink
+              key={p.label}
+              href={p.href}
+              underline="hover"
+              sx={{ color: '#FFD100', fontSize: '0.875rem' }}
+            >
+              {p.label}
+            </MuiLink>
+          ))}
+        </Stack>
+
+        <Grid container spacing={4} alignItems="center">
+          {/* Logo */}
+          <Grid item xs={12} md={3} textAlign={{ xs: 'center', md: 'left' }}>
+            <Box
+              component="img"
+              src={Logo}
+              alt="Western Union"
+              sx={{ height: 56 }}
+            />
+          </Grid>
+
+          {/* Legal text */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="caption" display="block">
+              Services may be provided by Western Union Financial Services, Inc. NMLS# 906983 and/or Western Union International Services, LLC NMLS# 906985.
+            </Typography>
+            <Typography variant="caption" display="block">
+              © 2025 Western Union Holdings, Inc. All Rights Reserved.
+            </Typography>
+          </Grid>
+
+          {/* Social icons */}
+          <Grid item xs={12} md={3} textAlign={{ xs: 'center', md: 'right' }}>
+            <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <MuiLink href="https://facebook.com" color="inherit">
+                <FacebookIcon />
+              </MuiLink>
+              <MuiLink href="https://youtube.com" color="inherit">
+                <YouTubeIcon />
+              </MuiLink>
+              <MuiLink href="https://instagram.com" color="inherit">
+                <InstagramIcon />
+              </MuiLink>
+              <MuiLink href="https://twitter.com" color="inherit">
+                <TwitterIcon />
+              </MuiLink>
+            </Stack>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// src/components/Footer.js
+
+
+
+
+
+import React from 'react';
 import { Box, Typography, useTheme, Grid, Link as MuiLink } from '@mui/material';
 import Logo from '../assets/wu-logo.png'; // Update this path to your actual logo
 
