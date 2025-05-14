@@ -1,3 +1,86 @@
+// src/theme.js
+import { createContext, useContext, useMemo, useState } from 'react';
+import { createTheme } from '@mui/material/styles';
+
+const ThemeModeContext = createContext();
+
+export function useThemeMode() {
+  return useContext(ThemeModeContext);
+}
+
+export function ThemeModeProvider({ children }) {
+  const [mode, setMode] = useState('light');
+  const toggleMode = () => setMode(m => (m === 'light' ? 'dark' : 'light'));
+
+  const theme = useMemo(() => createTheme({
+    palette: {
+      mode,
+      background: {
+        default: mode === 'dark' ? '#121212' : '#fafafa',
+        paper:   mode === 'dark' ? '#1e1e1e' : '#ffffff'
+      },
+      text: {
+        primary:   mode === 'dark' ? '#ffffff' : '#000000',
+        secondary: mode === 'dark' ? '#bbbbbb' : '#333333'
+      }
+    }
+  }), [mode]);
+
+  return (
+    <ThemeModeContext.Provider value={{ mode, toggleMode }}>
+      {children(theme)}
+    </ThemeModeContext.Provider>
+  );
+}
+
+
+
+
+// src/components/Navbar.js
+import React from 'react';
+import {
+  AppBar, Toolbar, IconButton,
+  Typography, Box, Link
+} from '@mui/material';
+import {
+  Dashboard as DashboardIcon,
+  Brightness4,
+  Brightness7
+} from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import { useThemeMode } from '../theme';
+
+export default function Navbar() {
+  const theme = useTheme();
+  const { mode, toggleMode } = useThemeMode();
+
+  return (
+    <AppBar position="static" color="default" elevation={1}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon />
+          <Typography variant="h6">Alarm Analysis Dashboard</Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Link href="/" underline="none" color="inherit">Dashboard</Link>
+          <Link href="/alarms" underline="none" color="inherit">Raw Alarms</Link>
+        </Box>
+
+        <IconButton onClick={toggleMode} color="inherit">
+          {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+        </IconButton>
+      </Toolbar>
+    </AppBar>
+  );
+}
+
+
+
+
+
+
+
 
 // src/pages/Dashboard.js
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
