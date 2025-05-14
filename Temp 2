@@ -1,3 +1,69 @@
+
+import React from 'react';
+import { Box, Typography, Link, Divider, Grid } from '@mui/material';
+
+export default function Footer() {
+  return (
+    <Box
+      component="footer"
+      sx={{
+        bgcolor: 'background.paper',
+        color: 'text.secondary',
+        mt: 4,
+        py: 3,
+        px: { xs: 2, sm: 4 },
+        borderTop: '1px solid',
+        borderColor: 'divider'
+      }}
+    >
+      <Grid container spacing={4}>
+        {/* Company Info */}
+        <Grid item xs={12} sm={4}>
+          <Typography variant="h6" gutterBottom>Company</Typography>
+          <Typography variant="body2">ABC Corp</Typography>
+          <Typography variant="body2">© {new Date().getFullYear()} All rights reserved.</Typography>
+        </Grid>
+
+        {/* Dashboard Info */}
+        <Grid item xs={12} sm={4}>
+          <Typography variant="h6" gutterBottom>About Dashboard</Typography>
+          <Typography variant="body2">
+            This dashboard visualizes and exports alarm data including summaries, charts, and raw alarm details.
+          </Typography>
+        </Grid>
+
+        {/* Useful Links */}
+        <Grid item xs={12} sm={4}>
+          <Typography variant="h6" gutterBottom>Links</Typography>
+          <Link href="/" color="inherit" underline="hover" display="block">Dashboard</Link>
+          <Link href="/alarms" color="inherit" underline="hover" display="block">Raw Alarms</Link>
+          <Link href="#" color="inherit" underline="hover" display="block">Support</Link>
+        </Grid>
+      </Grid>
+
+      <Divider sx={{ my: 2 }} />
+
+      <Typography variant="body2" align="center">
+        Built with React & Material UI
+      </Typography>
+    </Box>
+  );
+}
+
+
+import Footer from '../components/Footer';
+
+
+<Container maxWidth={false} sx={{ py: 4 }}>
+  {/* ...existing content... */}
+</Container>
+
+<Footer />
+
+
+
+
+
 // src/components/Navbar.js
 import React from 'react';
 import {
