@@ -1,3 +1,158 @@
+// src/components/Chart.js
+import React, { useEffect, useRef } from 'react';
+import { useTheme } from '@mui/material/styles';
+import Chart from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+// register the datalabels plugin
+Chart.register(ChartDataLabels);
+
+// custom multicolor-line plugin
+Chart.register({
+  id: 'multicolorLine',
+  beforeDatasetsDraw(chart) {
+    const { ctx, data, config } = chart;
+    data.datasets.forEach((dataset, dsIndex) => {
+      if (
+        config.type === 'line' &&
+        Array.isArray(dataset.borderColor) &&
+        chart.getDatasetMeta(dsIndex).dataset.options.tension !== undefined
+      ) {
+        const meta = chart.getDatasetMeta(dsIndex);
+        const points = meta.data;
+        const colors = dataset.borderColor;
+
+        // hide the default line
+        meta.dataset.options.borderColor = 'transparent';
+
+        for (let i = 1; i < points.length; i++) {
+          const prev = points[i - 1].getProps(['x', 'y'], true);
+          const curr = points[i].getProps(['x', 'y'], true);
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(prev.x, prev.y);
+          ctx.lineTo(curr.x, curr.y);
+          ctx.lineWidth = dataset.borderWidth;
+          ctx.strokeStyle = colors[(i - 1) % colors.length];
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    });
+  }
+});
+
+export default function MyChart({
+  type = 'bar',
+  data,
+  options = {},
+  width = '100%',
+  height = '100%'
+}) {
+  const canvasRef = useRef(null);
+  const chartRef  = useRef(null);
+  const theme     = useTheme();
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
+
+    // Apply theme-based defaults before instantiating any chart
+    Chart.defaults.color = theme.palette.text.primary;
+    Chart.defaults.plugins.legend.labels.color = theme.palette.text.secondary;
+    Chart.defaults.plugins.datalabels.color = theme.palette.text.primary;
+    Chart.defaults.plugins.datalabels.backgroundColor = theme.palette.background.paper;
+    Chart.defaults.scale.grid.color = theme.palette.divider;
+    Chart.defaults.scale.ticks.color = theme.palette.text.primary;
+    Chart.defaults.plugins.title.color = theme.palette.text.primary;
+
+    chartRef.current?.destroy();
+    const isLine = type === 'line';
+
+    // normalize into datasets array
+    const rawDatasets = Array.isArray(data.datasets)
+      ? data.datasets
+      : [{
+          label: data.label || '',
+          data: data.values || [],
+          backgroundColor: data.bgColors   || [],
+          borderColor:     data.borderColor|| []
+        }];
+
+    const datasets = rawDatasets.map(ds => {
+      const bgArr     = Array.isArray(ds.backgroundColor) ? ds.backgroundColor : [ds.backgroundColor];
+      const strokeArr = Array.isArray(ds.borderColor)     ? ds.borderColor     : [ds.borderColor];
+
+      return {
+        ...ds,
+        borderWidth: 2,
+        borderColor: strokeArr,
+        backgroundColor: isLine ? 'transparent' : bgArr,
+        pointBackgroundColor: isLine ? bgArr : undefined,
+        pointBorderColor:     isLine ? strokeArr : undefined,
+        fill: isLine ? false : ds.fill ?? false,
+        ...(isLine && { tension: 0.3, pointRadius: 6 }),
+        datalabels: {
+          display: true,
+          color: theme.palette.text.primary,
+          formatter: v => v,
+          font: { weight: 'bold' },
+          backgroundColor: theme.palette.background.paper,
+          borderRadius: 4,
+          padding: 4,
+          anchor: 'end',
+          align: 'top',
+          clip: false
+        }
+      };
+    });
+
+    chartRef.current = new Chart(ctx, {
+      type,
+      data: { labels: data.labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800 },
+        plugins: {
+          legend: { labels: { font: { size: 14 } } },
+          datalabels: { clip: false },
+          title: {} // so title.color default applies if you ever set a title
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { color: theme.palette.text.primary },
+            grid:  { color: theme.palette.divider },
+            ...(options.scales?.x || {})
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: theme.palette.text.primary },
+            grid:  { color: theme.palette.divider },
+            ...(options.scales?.y || {})
+          }
+        },
+        ...options
+      }
+    });
+
+    return () => chartRef.current.destroy();
+  }, [type, data, options, theme]);
+
+  return (
+    <div style={{ width, height, border: `1px solid ${theme.palette.divider}`, borderRadius: 4, padding: 8 }}>
+      <canvas ref={canvasRef} />
+    </div>
+  );
+}
+
+
+
+
+
+
 // src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
