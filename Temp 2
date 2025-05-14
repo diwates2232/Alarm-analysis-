@@ -1,3 +1,6 @@
+npm install chart.js@^4.4.9 react-chartjs-2@^5.3.0
+
+
 C:\Users\W0024618>cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend
 
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm i
