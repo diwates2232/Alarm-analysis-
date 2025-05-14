@@ -1,3 +1,51 @@
+// src/components/Navbar.js
+import React from 'react';
+import {
+  AppBar, Toolbar, IconButton,
+  Typography, Box, Link
+} from '@mui/material';
+import {
+  Dashboard as DashboardIcon,
+  Brightness4,
+  Brightness7
+} from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import { useThemeMode } from '../theme';
+
+export default function Navbar() {
+  const theme = useTheme();
+  const { mode, toggleMode } = useThemeMode();
+
+  return (
+    <AppBar position="static" color="default" elevation={1}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        {/* Left: Icon + Heading */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DashboardIcon fontSize="large" />
+          <Typography variant="h4" sx={{ fontWeight: 600 }}>
+            Alarm Analysis Dashboard
+          </Typography>
+        </Box>
+
+        {/* Right: Navigation + Theme Toggle */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Link href="/" underline="none" color="inherit">Dashboard</Link>
+          <Link href="/alarms" underline="none" color="inherit">Raw Alarms</Link>
+          <IconButton onClick={toggleMode} color="inherit">
+            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+}
+
+
+
+
+
+
+
 read Below file carefully and Increase the heading Alarm Analysis Dashboard size as h4 ans Increase same size of Icon 
 and place dashboard & raw alarms navigation on side of changing navigator in one side 
 
