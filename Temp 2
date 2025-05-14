@@ -1,3 +1,6 @@
+npm uninstall chart.js chartjs-plugin-datalabels react-chartjs-2
+
+
 npm install chart.js@^3.9.1 chartjs-plugin-datalabels@^2.0.0 react-chartjs-2@^4.4.0p
 
 
