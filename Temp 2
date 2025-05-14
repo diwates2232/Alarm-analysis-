@@ -1,3 +1,7 @@
+npm install chart.js@^3.9.1 chartjs-plugin-datalabels@^2.0.0 react-chartjs-2@^4.4.0p
+
+
+
 cd C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend
 dir
 
