@@ -1,4 +1,61 @@
-<Container maxWidth={false} sx={{ py: 2 }}>
+import React from 'react';
+import { Box, Typography } from '@mui/material';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+
+export default function Navbar() {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        px: 2,
+        py: 1,
+        backgroundColor: '#000', // black background
+        color: '#FFD100',        // yellow text
+        fontWeight: 'bold',
+        boxShadow: 2,
+      }}
+    >
+      <WarningAmberIcon sx={{ fontSize: 36, mr: 1 }} />
+      <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#FFD100' }}>
+        Alarm Analysis Dashboard
+      </Typography>
+    </Box>
+  );
+}
+
+
+
+
+
+
+
+
+<TextField
+  label="Region"
+  select
+  value={filters.region}
+  onChange={e => setFilters({ ...filters, region: e.target.value })}
+  size="small"
+  sx={{ minWidth: 120 }}
+  InputLabelProps={{
+    style: { color: 'inherit' }
+  }}
+  SelectProps={{
+    native: true,
+    style: { color: 'inherit' }
+  }}
+/>
+
+
+
+import { useTheme } from '@mui/material/styles';
+const theme = useTheme();
+
+
+
+
+Container maxWidth={false} sx={{ py: 2 }}>
   {/* Filters + Export Buttons */}
   <Box sx={{
     display: 'flex',
