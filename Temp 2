@@ -1,115 +1,6 @@
-// src/components/Footer.js
-import React from 'react';
-import { Typography, Container, Grid, Link } from '@mui/material';
-import SupportAgentIcon from '@mui/icons-material/SupportAgent';
-import EmailIcon from '@mui/icons-material/Email';
-import Logo from '../assets/wu-logo.png'; // Place your Western Union logo in src/assets
+Make Changes As per my requsest and give me updated js files carefully, Dont make Another changes in my file 
 
-export default function Footer() {
-  return (
-    <footer style={{
-      backgroundColor: '#000',
-      color: '#FFD700',
-      padding: '30px 0',
-      marginTop: 'auto',
-    }}>
-      <Container maxWidth="lg">
-        <Grid container spacing={4} alignItems="center">
-          <Grid item xs={12} sm={4} style={{ textAlign: 'center' }}>
-            <img src={Logo} alt="Western Union" style={{ width: 100, height: 'auto' }} />
-            <Typography variant="body2" style={{ color: '#FFF', marginTop: 8 }}>
-              © {new Date().getFullYear()} Western Union. All rights reserved.
-            </Typography>
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <Typography variant="h6" gutterBottom>Quick Links</Typography>
-            <Link href="/" color="inherit" underline="hover">Dashboard</Link><br />
-            <Link href="/alarms" color="inherit" underline="hover">Raw Alarms</Link>
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <Typography variant="h6" gutterBottom>Support</Typography>
-            <Typography variant="body2">
-              <SupportAgentIcon fontSize="small" style={{ verticalAlign: 'middle' }} /> +1-800-123-4567
-            </Typography>
-            <Typography variant="body2">
-              <EmailIcon fontSize="small" style={{ verticalAlign: 'middle' }} /> support@westernunion.com
-            </Typography>
-          </Grid>
-        </Grid>
-      </Container>
-    </footer>
-  );
-}
-
-
-
-
-
-import React from 'react';
-import { Box, Typography, Link, Divider, Grid } from '@mui/material';
-
-export default function Footer() {
-  return (
-    <Box
-      component="footer"
-      sx={{
-        bgcolor: 'background.paper',
-        color: 'text.secondary',
-        mt: 4,
-        py: 3,
-        px: { xs: 2, sm: 4 },
-        borderTop: '1px solid',
-        borderColor: 'divider'
-      }}
-    >
-      <Grid container spacing={4}>
-        {/* Company Info */}
-        <Grid item xs={12} sm={4}>
-          <Typography variant="h6" gutterBottom>Company</Typography>
-          <Typography variant="body2">ABC Corp</Typography>
-          <Typography variant="body2">© {new Date().getFullYear()} All rights reserved.</Typography>
-        </Grid>
-
-        {/* Dashboard Info */}
-        <Grid item xs={12} sm={4}>
-          <Typography variant="h6" gutterBottom>About Dashboard</Typography>
-          <Typography variant="body2">
-            This dashboard visualizes and exports alarm data including summaries, charts, and raw alarm details.
-          </Typography>
-        </Grid>
-
-        {/* Useful Links */}
-        <Grid item xs={12} sm={4}>
-          <Typography variant="h6" gutterBottom>Links</Typography>
-          <Link href="/" color="inherit" underline="hover" display="block">Dashboard</Link>
-          <Link href="/alarms" color="inherit" underline="hover" display="block">Raw Alarms</Link>
-          <Link href="#" color="inherit" underline="hover" display="block">Support</Link>
-        </Grid>
-      </Grid>
-
-      <Divider sx={{ my: 2 }} />
-
-      <Typography variant="body2" align="center">
-        Built with React & Material UI
-      </Typography>
-    </Box>
-  );
-}
-
-
-import Footer from '../components/Footer';
-
-
-<Container maxWidth={false} sx={{ py: 4 }}>
-  {/* ...existing content... */}
-</Container>
-
-<Footer />
-
-
-
+File 1
 
 
 // src/components/Navbar.js
@@ -134,7 +25,7 @@ export default function Navbar() {
     <AppBar position="static" color="default" elevation={1}>
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         {/* Left: Icon + Heading */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2,mb:1.5 }}>
           <DashboardIcon fontSize="large" />
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
             Alarm Analysis Dashboard
@@ -142,7 +33,7 @@ export default function Navbar() {
         </Box>
 
         {/* Right: Navigation + Theme Toggle */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1,mb:1.5 }}>
           <Link href="/" underline="none" color="inherit">Dashboard</Link>
           <Link href="/alarms" underline="none" color="inherit">Raw Alarms</Link>
           <IconButton onClick={toggleMode} color="inherit">
@@ -157,51 +48,369 @@ export default function Navbar() {
 
 
 
-
-
-
-read Below file carefully and Increase the heading Alarm Analysis Dashboard size as h4 ans Increase same size of Icon 
-and place dashboard & raw alarms navigation on side of changing navigator in one side 
+file 2
 
 
 
 
-// src/components/Navbar.js
-import React from 'react';
-import {
-  AppBar, Toolbar, IconButton,
-  Typography, Box, Link
-} from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  Brightness4,
-  Brightness7
-} from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
-import { useThemeMode } from '../theme';
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { Box, Typography, Container, Button } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+const PptxGenJS = require('pptxgenjs');
+import Footer from '../components/Footer';
 
-export default function Navbar() {
-  const theme = useTheme();
-  const { mode, toggleMode } = useThemeMode();
+
+// helper: convert "01-Apr-25" → "2025-04-01"
+function toISODate(apiDate) {
+  const [d, monAbbr, yy] = apiDate.split('-');
+  const monthNames = {
+    Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+    May: '05', Jun: '06', Jul: '07', Aug: '08',
+    Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+  };
+  const mm = monthNames[monAbbr] || '01';
+  const yyyy = `20${yy}`;
+  return `${yyyy}-${mm}-${d.padStart(2, '0')}`;
+}
+
+// helper: format month/year for dropdown (e.g. "Apr 25")
+function formatMonthYear(apiDate) {
+  const [d, monAbbr, yy] = apiDate.split('-');
+  return `${monAbbr} ${yy}`;
+}
+
+// replace header with Navbar
+import Navbar from '../components/Navbar';
+
+export default function Dashboard() {
+  const [summary, setSummary]     = useState(null);
+  const [rawAlarms, setRawAlarms] = useState([]);
+  const [filters, setFilters]     = useState({
+    region: '', location: '', month: '', date: '', priority: ''
+  });
+
+  const dashRef   = useRef();
+  const cardsRef  = useRef();
+  const chartsRef = useRef();
+
+  useEffect(() => {
+    Promise.all([getAlarmSummary(), getRawAlarms()])
+      .then(([sumRes, rawRes]) => {
+        setSummary(sumRes.data);
+        setRawAlarms(rawRes.data);
+      })
+      .catch(console.error);
+  }, []);
+
+  // 1️⃣ dropdown options
+  const regionOptions = useMemo(
+    () => summary ? Object.keys(summary.regionWise) : [],
+    [summary]
+  );
+  const locationOptions = useMemo(
+    () => filters.region
+      ? Array.from(new Set(
+          rawAlarms.filter(a => a.Region === filters.region).map(a => a.Location)
+        ))
+      : [],
+    [rawAlarms, filters.region]
+  );
+  const monthOptions = useMemo(() => {
+    const all = rawAlarms
+      .filter(a =>
+        (!filters.region   || a.Region   === filters.region) &&
+        (!filters.location || a.Location === filters.location)
+      )
+      .map(a => formatMonthYear(a.Date));
+    return Array.from(new Set(all))
+      .sort((a, b) => {
+        const [mA, yA] = a.split(' ');
+        const [mB, yB] = b.split(' ');
+        const dateA = new Date(`20${yA}-${mA}-01`);
+        const dateB = new Date(`20${yB}-${mB}-01`);
+        return dateA - dateB;
+      });
+  }, [rawAlarms, filters.region, filters.location]);
+
+  const priorityOptions = useMemo(
+    () => Array.from(new Set(rawAlarms.map(a => a['CCURE Incident Priority']))),
+    [rawAlarms]
+  );
+
+  // 2️⃣ filtered base
+  const filtered = useMemo(() => (
+    rawAlarms.filter(a => {
+      if (filters.region   && a.Region   !== filters.region)              return false;
+      if (filters.location && a.Location !== filters.location)            return false;
+      if (filters.month    && formatMonthYear(a.Date) !== filters.month)  return false;
+      if (filters.date     && toISODate(a.Date) !== filters.date)         return false;
+      if (filters.priority && a['CCURE Incident Priority'] !== filters.priority) return false;
+      return true;
+    })
+  ), [rawAlarms, filters]);
+
+  // 3️⃣ filteredSummary for cards
+  const filteredSummary = useMemo(() => {
+    if (!summary) return null;
+    const fs = { ...summary };
+
+    if (filters.region) {
+      fs.regionWise   = { [filters.region]: summary.regionWise[filters.region] };
+      fs.locationWise = {};
+      locationOptions
+        .filter(l => !filters.location || l === filters.location)
+        .forEach(l => {
+          fs.locationWise[l] = summary.locationWise[l];
+        });
+    }
+
+    if (filters.month) {
+      const mCount = filtered.filter(a => formatMonthYear(a.Date) === filters.month).length;
+      fs.monthWise = { [filters.month]: { count: mCount } };
+    } else {
+      fs.monthWise = {};
+    }
+
+    const opCounts = filtered.reduce((c, a) => {
+      const op = a['Name of Person Attending Alarms (First, Last Name)'] || 'Unknown';
+      c[op] = (c[op] || 0) + 1;
+      return c;
+    }, {});
+    fs.operatorWise = Object.fromEntries(
+      Object.entries(opCounts).map(([k, v]) => [k, { count: v }])
+    );
+
+    return fs;
+  }, [summary, filtered, filters, locationOptions]);
+
+
+  if (!summary) return <Typography>Loading dashboard…</Typography>;
+
+
+  // COMMON export logic
+  const exportSection = async (element, fileName = 'Full_Dashboard.pptx') => {
+    const ppt = new PptxGenJS();
+    const slide = ppt.addSlide();
+    slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
+    await ppt.writeFile({ fileName });
+  };
+
 
   return (
-    <AppBar position="static" color="default" elevation={1}>
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <DashboardIcon />
-          <Typography variant="h6">Alarm Analysis Dashboard</Typography>
-        </Box>
+    <>
+      <Navbar />
+  
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Link href="/" underline="none" color="inherit">Dashboard</Link>
-          <Link href="/alarms" underline="none" color="inherit">Raw Alarms</Link>
-        </Box>
+      <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }} ref={dashRef}>
+        {/* Header removed: now in <Navbar /> */}
 
-        <IconButton onClick={toggleMode} color="inherit">
-          {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
-        </IconButton>
-      </Toolbar>
-    </AppBar>
+        <Container maxWidth={false} sx={{ py:2 }}>
+          {/* Filters + Inline Export Buttons */}
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mb: 1.5
+          }}>
+            <Filters
+              filters={filters} setFilters={setFilters}
+              regionOptions={regionOptions}
+              locationOptions={locationOptions}
+              monthOptions={monthOptions}
+              priorityOptions={priorityOptions}
+            />
+            {/* force no wrap so buttons hug the Priority dropdown */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb:1.5, flexShrink: 0 }}>
+              <Button
+                variant="contained" size="small"
+                onClick={() => exportSection(dashRef.current, 'Full_Dashboard.pptx')}
+              >
+                Export Dashboard PPT
+              </Button>
+              <Button
+                variant="outlined" size="small"
+                onClick={() => exportSection(cardsRef.current, 'Cards_Slide.pptx')}
+              >
+                Export Cards
+              </Button>
+              <Button
+                variant="outlined" size="small"
+                onClick={() => exportSection(chartsRef.current, 'Charts_Slide.pptx')}
+              >
+                Export Charts
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Cards (no more export button here) */}
+          <Box ref={cardsRef} sx={{ mb: 1.5 }}>
+            <AlarmCard
+              summary={filteredSummary}
+              rawAlarms={filtered}
+              filters={filters}
+            />
+          </Box>
+
+          {/* Charts (no more export button here) */}
+          <Box ref={chartsRef} sx={{ mb: 1.5 }}>
+            <SummaryCards
+              summary={filteredSummary}
+              filters={filters}
+              rawAlarms={filtered}
+            />
+          </Box>
+
+     <Container maxWidth={false} sx={{ py: 0 }}>
+        {/* ...existing content... */}
+        </Container>
+
+        <Footer />
+        </Container>
+      </Box>
+    </>
   );
 }
 
+
+
+File 3
+
+
+// src/components/AlarmCard.js
+import React from 'react';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters }) {
+  if (!summary) return null;
+
+  // helper: turn "01-Apr-25" → "Apr 25"
+  const formatMonthYear = dateStr => {
+    const [ , mon, yy ] = dateStr.split('-');
+    return `${mon} ${yy}`;
+  };
+
+  // 1) apply all filters (region, location, month, priority)
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region   && a.Region   !== filters.region)                         return false;
+    if (filters.location && a.Location !== filters.location)                       return false;
+    if (filters.month    && formatMonthYear(a.Date) !== filters.month)             return false;
+    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)     return false;
+    return true;
+  });
+
+  const totalAlarms = filtered.length;
+
+  // normalize helper
+  const normalize = str => (str || '').toString().trim().toLowerCase();
+
+  // 2) counts per your rules
+  const responseSentCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'response sent'
+  ).length;
+
+  const notSentCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'not sent'
+  ).length;
+
+  const reoccurredCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'yes' &&
+    normalize(a['Action Taken']) === 'reoccured'
+  ).length;
+
+  const responseSentPercentage = totalAlarms
+    ? `${((responseSentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  return (
+    <Grid container spacing={1} sx={{ mb: 1.5 }}>
+      {/* Total Alarms */}
+      <Grid item xs={3} sm={1} md={1.5}>
+        <Card><CardContent>
+          <Typography variant="subtitle1">Total Alarms</Typography>
+          <Typography variant="h4">{totalAlarms}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      {/* Response Sent */}
+      <Grid item xs={3} sm={1} md={1.5}>
+        <Card><CardContent>
+          <Typography variant="subtitle1">Response Sent</Typography>
+          <Typography variant="h4">{responseSentCount}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      {/* Not Sent */}
+      <Grid item xs={3} sm={1} md={1.5}>
+        <Card><CardContent>
+          <Typography variant="subtitle1">Not Sent</Typography>
+          <Typography variant="h4">{notSentCount}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      {/* Re-occurred */}
+      <Grid item xs={3} sm={1} md={1.5}>
+        <Card><CardContent>
+          <Typography variant="subtitle1">Re-occurred</Typography>
+          <Typography variant="h4">{reoccurredCount}</Typography>
+        </CardContent></Card>
+      </Grid>
+
+      {/* Response Sent % */}
+      <Grid item xs={3} sm={1} md={1.5}>
+        <Card><CardContent>
+          <Typography variant="subtitle1">Response Sent %</Typography>
+          <Typography variant="h4">{responseSentPercentage}</Typography>
+        </CardContent></Card>
+      </Grid>
+    </Grid>
+  );
+}
+
+
+
+
+File 4
+
+// src/theme.js
+import { createContext, useContext, useMemo, useState } from 'react';
+import { createTheme } from '@mui/material/styles';
+
+const ThemeModeContext = createContext();
+
+export function useThemeMode() {
+  return useContext(ThemeModeContext);
+}
+
+export function ThemeModeProvider({ children }) {
+  const [mode, setMode] = useState('light');
+  const toggleMode = () => setMode(m => (m === 'light' ? 'dark' : 'light'));
+
+  const theme = useMemo(() => createTheme({
+    palette: {
+      mode,
+      background: {
+        default: mode === 'dark' ? '#121212' : '#fafafa',
+        paper:   mode === 'dark' ? '#1e1e1e' : '#ffffff'
+      },
+      text: {
+        primary:   mode === 'dark' ? '#ffffff' : '#000000',
+        secondary: mode === 'dark' ? '#bbbbbb' : '#333333'
+      }
+    }
+  }), [mode]);
+
+  return (
+    <ThemeModeContext.Provider value={{ mode, toggleMode }}>
+      {children(theme)}
+    </ThemeModeContext.Provider>
+  );
+}
