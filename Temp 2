@@ -1,3 +1,7 @@
+rd /s /q node_modules
+del package-lock.json
+
+
 npm uninstall chart.js chartjs-plugin-datalabels react-chartjs-2
 
 
