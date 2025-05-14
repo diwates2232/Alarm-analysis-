@@ -1,3 +1,39 @@
+scales: {
+  x: {
+    beginAtZero: true,
+    ticks: { color: theme.palette.text.primary },
+    grid: {
+      color: theme.palette.divider,
+      lineWidth: 1
+    },
+    border: {
+      display: true,
+      color: theme.palette.text.primary,
+      width: 2
+    },
+    ...(options.scales?.x || {})
+  },
+  y: {
+    beginAtZero: true,
+    ticks: { color: theme.palette.text.primary },
+    grid: {
+      color: theme.palette.divider,
+      lineWidth: 1
+    },
+    border: {
+      display: true,
+      color: theme.palette.text.primary,
+      width: 2
+    },
+    ...(options.scales?.y || {})
+  }
+}
+
+
+
+
+
+
 // src/components/Chart.js
 import React, { useEffect, useRef } from 'react';
 import { useTheme } from '@mui/material/styles';
