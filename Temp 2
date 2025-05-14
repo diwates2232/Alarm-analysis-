@@ -15,6 +15,104 @@ import { Link } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 const PptxGenJS = require('pptxgenjs');
 
+// ... [keep all your helpers and imports unchanged]
+
+export default function Dashboard() {
+  // theme mode state
+  const [mode, setMode] = useState('light');
+
+  // create a theme that overrides background/text for dark mode
+  const theme = useMemo(() =>
+    createTheme({
+      palette: {
+        mode,
+        ...(mode === 'dark'
+          ? {
+              background: {
+                default: '#121212',
+                paper:   '#1e1e1e'
+              },
+              text: {
+                primary:   '#ffffff',
+                secondary: '#bbbbbb'
+              }
+            }
+          : {
+              background: {
+                default: '#fafafa',
+                paper:   '#ffffff'
+              },
+              text: {
+                primary:   '#000000',
+                secondary: '#333333'
+              }
+            }
+        )
+      },
+      components: {
+        MuiLink: {
+          styleOverrides: {
+            root: { textDecoration: 'none', color: 'inherit' }
+          }
+        }
+      }
+    }),
+  [mode]);
+
+  const toggleTheme = useCallback(() => {
+    setMode(prev => (prev === 'light' ? 'dark' : 'light'));
+  }, []);
+
+  // ... [all of your existing state, effects, memoized filters, export logic, etc. remain exactly the same]
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ width: '100vw', minHeight: '100vh', overflowX: 'hidden' }} ref={dashRef}>
+        {/* Header */}
+        <Box component="header" sx={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper', p: 2
+        }}>
+          <Box sx={{ display:'flex', alignItems:'center', gap:1 }}>
+            <DashboardIcon fontSize="large"/>
+            <Typography variant="h4">Alarm Analysis Dashboard</Typography>
+          </Box>
+          <Box sx={{ display:'flex', alignItems: 'center', gap:2 }}>
+            <Link to="/">➤ Dashboard</Link>
+            <Link to="/alarms">➤ Raw Alarms</Link>
+          </Box>
+          <IconButton onClick={toggleTheme} sx={{ ml: 1 }}>
+            {mode === 'dark' ? <Brightness7Icon/> : <Brightness4Icon/>}
+          </IconButton>
+        </Box>
+
+        {/* ... rest of your JSX exactly as before ... */}
+
+      </Box>
+    </ThemeProvider>
+  );
+}
+
+
+
+// src/pages/Dashboard.js
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import {
+  Box, Typography, Container, Button,
+  IconButton, createTheme, ThemeProvider, CssBaseline
+} from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import Filters from '../components/Filters';
+import AlarmCard from '../components/AlarmCard';
+import SummaryCards from '../components/SummaryCards';
+import { getAlarmSummary, getRawAlarms } from '../services/api';
+import { Link } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+const PptxGenJS = require('pptxgenjs');
+
 // helper: convert "01-Apr-25" → "2025-04-01"
 function toISODate(apiDate) {
   const [d, monAbbr, yy] = apiDate.split('-');
