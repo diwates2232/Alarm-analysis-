@@ -1,3 +1,10 @@
+npm uninstall chart.js chartjs-plugin-datalabels react-chartjs-2
+rd /s /q node_modules
+del package-lock.json
+npm install chart.js@^3.9.1 chartjs-plugin-datalabels@^2.0.0 react-chartjs-2@^4.3.1 --legacy-peer-deps
+
+
+
 C:\Users\W0024618\Desktop\AlarmAnalysis\alarm-frontend>npm view react-chartjs-2 versions --json
 [
   "1.0.0",
