@@ -1,3 +1,51 @@
+// src/components/Footer.js
+import React from 'react';
+import { Typography, Container, Grid, Link } from '@mui/material';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import EmailIcon from '@mui/icons-material/Email';
+import Logo from '../assets/wu-logo.png'; // Place your Western Union logo in src/assets
+
+export default function Footer() {
+  return (
+    <footer style={{
+      backgroundColor: '#000',
+      color: '#FFD700',
+      padding: '30px 0',
+      marginTop: 'auto',
+    }}>
+      <Container maxWidth="lg">
+        <Grid container spacing={4} alignItems="center">
+          <Grid item xs={12} sm={4} style={{ textAlign: 'center' }}>
+            <img src={Logo} alt="Western Union" style={{ width: 100, height: 'auto' }} />
+            <Typography variant="body2" style={{ color: '#FFF', marginTop: 8 }}>
+              © {new Date().getFullYear()} Western Union. All rights reserved.
+            </Typography>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Typography variant="h6" gutterBottom>Quick Links</Typography>
+            <Link href="/" color="inherit" underline="hover">Dashboard</Link><br />
+            <Link href="/alarms" color="inherit" underline="hover">Raw Alarms</Link>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Typography variant="h6" gutterBottom>Support</Typography>
+            <Typography variant="body2">
+              <SupportAgentIcon fontSize="small" style={{ verticalAlign: 'middle' }} /> +1-800-123-4567
+            </Typography>
+            <Typography variant="body2">
+              <EmailIcon fontSize="small" style={{ verticalAlign: 'middle' }} /> support@westernunion.com
+            </Typography>
+          </Grid>
+        </Grid>
+      </Container>
+    </footer>
+  );
+}
+
+
+
+
 
 import React from 'react';
 import { Box, Typography, Link, Divider, Grid } from '@mui/material';
