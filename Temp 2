@@ -1,4 +1,45 @@
 import React from 'react';
+import { AppBar, Toolbar, IconButton, Typography, Box, Link } from '@mui/material';
+import { Dashboard as DashboardIcon, Brightness4, Brightness7 } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import { useThemeMode } from '../theme';
+
+export default function Navbar() {
+  const theme = useTheme();
+  const { mode, toggleMode } = useThemeMode();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <AppBar position="static" elevation={1} sx={{ backgroundColor: isDark ? '#000' : '#FFD100' }}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Box sx={{ display:'flex',alignItems:'center',gap:2 }}>
+          <DashboardIcon fontSize="large" sx={{ color: isDark ? '#FFD100' : '#000' }} />
+          <Typography variant="h4" sx={{ color: isDark ? '#FFD100' : '#000', fontWeight:600 }}>
+            Alarm Analysis Dashboard
+          </Typography>
+        </Box>
+        <Box sx={{ display:'flex',alignItems:'center',gap:2 }}>
+          <Link href="/" color="inherit" underline="none" sx={{ color: isDark? '#fff':'#000' }}>Dashboard</Link>
+          <Link href="/alarms" color="inherit" underline="none" sx={{ color: isDark? '#fff':'#000' }}>Raw Alarms</Link>
+          <IconButton onClick={toggleMode} sx={{ color: isDark ? '#FFD100' : '#000' }}>
+            {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </AppBar>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+import React from 'react';
 import { TextField, MenuItem, Grid, InputAdornment } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import PublicIcon from '@mui/icons-material/Public';
