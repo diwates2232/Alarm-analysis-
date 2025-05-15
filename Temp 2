@@ -1,3 +1,76 @@
+import React from 'react';
+import { useTheme } from '@mui/material/styles';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+
+export default function AlarmCard({ summary, rawAlarms, filters }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  if (!summary) return null;
+
+  const formatMonthYear = dateStr => {
+    const [ , mon, yy ] = dateStr.split('-');
+    return `${mon} ${yy}`;
+  };
+
+  const filtered = rawAlarms.filter(a => {
+    if (filters.region   && a.Region   !== filters.region)                         return false;
+    if (filters.location && a.Location !== filters.location)                       return false;
+    if (filters.month    && formatMonthYear(a.Date) !== filters.month)             return false;
+    if (filters.priority && a['CCURE Incident Priority'] !== filters.priority)     return false;
+    return true;
+  });
+
+  const totalAlarms = filtered.length;
+  const normalize = str => (str || '').toString().trim().toLowerCase();
+  const responseSentCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'response sent'
+  ).length;
+  const notSentCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'no' &&
+    normalize(a['Action Taken']) === 'not sent'
+  ).length;
+  const reoccurredCount = filtered.filter(a =>
+    normalize(a['If Reoccured Yes/No']) === 'yes' &&
+    normalize(a['Action Taken']) === 'reoccured'
+  ).length;
+  const responseSentPercentage = totalAlarms
+    ? `${((responseSentCount / totalAlarms) * 100).toFixed(2)}%`
+    : '0%';
+
+  const cardBg = isDark ? '#555' : '#FFD100';
+  const cardColor = isDark ? '#fff' : '#000';
+
+  return (
+    <Grid container spacing={1} sx={{ mb: 1.5 }}>
+      {[
+        ['Total Alarms', totalAlarms],
+        ['Response Sent', responseSentCount],
+        ['Not Sent', notSentCount],
+        ['Re-occurred', reoccurredCount],
+        ['Response Sent %', responseSentPercentage]
+      ].map(([label, value], idx) => (
+        <Grid key={idx} item xs={3} sm={1} md={1.5}>
+          <Card sx={{ backgroundColor: cardBg, color: cardColor }}>
+            <CardContent>
+              <Typography variant="subtitle1">{label}</Typography>
+              <Typography variant="h4">{value}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+
 File 1
 
 
