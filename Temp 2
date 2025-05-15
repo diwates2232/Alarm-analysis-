@@ -1,3 +1,60 @@
+import React from 'react';
+import { TextField, MenuItem, Grid, InputAdornment } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EventIcon from '@mui/icons-material/Event';
+import SearchIcon from '@mui/icons-material/Search';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+
+export default function Filters({ filters, setFilters, regionOptions = [], locationOptions = [], monthOptions, employeeOptions, doorOptions, priorityOptions, rejectionOptions }) {
+  const theme = useTheme();
+  const iconColor = theme.palette.mode === 'dark' ? '#fff' : '#000';
+
+  // handleChange unchanged...
+
+  return (
+    <Grid container spacing={1} alignItems="center" sx={{ mb: 0 }}>
+      {/* Region */}
+      <Grid item>
+        <TextField
+          select label="Region" fullWidth
+          value={filters.region}
+          onChange={handleChange('region')}
+          size="medium"
+          sx={{ minWidth: 120, '& .MuiInputBase-root': { color: iconColor } }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PublicIcon sx={{ color: iconColor }} />
+              </InputAdornment>
+            )
+          }}
+        >
+          <MenuItem value="">All Regions</MenuItem>
+          {regionOptions.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+        </TextField>
+      </Grid>
+      {/* ... other fields updated similarly ... */}
+    </Grid>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useMemo } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { DataGrid } from '@mui/x-data-grid';
