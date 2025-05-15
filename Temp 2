@@ -1,3 +1,184 @@
+// src/pages/RawAlarms.js
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import {
+  Typography,
+  Container,
+  Grid,
+  Box,
+  Button,
+  Link as MuiLink,
+  Card,
+  CardContent
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';            // ← added
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import Filters from '../components/Filters';
+import AlarmsTable from '../components/AlarmsTable';
+import { getRawAlarms } from '../services/api';
+import * as XLSX from 'xlsx';
+
+// ... helper functions unchanged ...
+
+export default function RawAlarms() {
+  const theme = useTheme();                                 // ← added
+  const isDark = theme.palette.mode === 'dark';
+  const headerBg = isDark ? '#1e1e1e' : '#e3f2fd';           // dark vs light header
+  const headerColor = isDark ? '#fff' : '#000';
+
+  // state hooks unchanged ...
+  const [alarms, setAlarms]   = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ region:'',location:'',door:'',employee:'',priority:'',rejection:'',month:'',date:'' });
+  const [view, setView]       = useState('employee');
+  const filteredRef          = useRef([]);
+
+  // filtered, options, and export logic unchanged ...
+
+  if (loading) {
+    return (
+      <Container maxWidth={false} sx={{ pt: 4 }}>
+        <Typography variant="h4">Raw Alarms</Typography>
+        <Typography>Loading…</Typography>
+      </Container>
+    );
+  }
+
+  // summary counts unchanged ...
+  const totalAlarms       = filtered.length;
+  const responseSentCount = /* ... */;
+  const notSentCount      = /* ... */;
+  const reoccurredCount   = /* ... */;
+
+  // Excel exports unchanged ...
+
+  return (
+    <Container maxWidth={false} sx={{ p: 0, height: '100vh', overflow: 'auto' }}>
+      {/* Header */}
+      <Box sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        bgcolor: headerBg, color: headerColor,
+        p: 2, borderBottom: 1, borderColor: 'divider'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TableChartIcon fontSize="large" sx={{ color: headerColor }} />
+          <Typography variant="h4" sx={{ color: headerColor }}>
+            Raw Alarms Analysis
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <MuiLink href="/" sx={{ display: 'flex', alignItems: 'center', color: headerColor, textDecoration: 'none' }}>
+            <DashboardIcon sx={{ mr: .5, color: headerColor }} /> Dashboard
+          </MuiLink>
+          <MuiLink href="/alarms" sx={{ display: 'flex', alignItems: 'center', color: headerColor, textDecoration: 'none' }}>
+            <TableChartIcon sx={{ mr: .5, color: headerColor }} /> Raw Alarms
+          </MuiLink>
+        </Box>
+      </Box>
+
+      {/* Filters */}
+      <Box sx={{
+        p: 2,
+        backgroundColor: isDark ? '#333' : '#FFD100',
+        color: isDark ? '#fff' : '#000',
+        borderRadius: 1,
+        mb: 2
+      }}>
+        <Filters
+          filters={filters}
+          setFilters={setFilters}
+          regionOptions={regionOptions}
+          locationOptions={locationOptions}
+          doorOptions={doorOptions}
+          employeeOptions={employeeOptions}
+          priorityOptions={priorityOptions}
+          rejectionOptions={rejectionOptions}
+          monthOptions={monthOptions}
+        />
+      </Box>
+
+      {/* Summary Cards */}
+      <Grid container spacing={2} sx={{ px: 2, mb: 3 }}>
+        {[
+          ['Total Alarms', totalAlarms],
+          ['Response Sent', responseSentCount],
+          ['Not Sent', notSentCount],
+          ['Re-occurred', reoccurredCount]
+        ].map(([label, val], i) => (
+          <Grid key={i} item xs={6} sm={3} md={2}>
+            <Card sx={{
+              backgroundColor: isDark ? '#555' : '#FFD100',
+              color: isDark ? '#fff' : '#000'
+            }}>
+              <CardContent>
+                <Typography variant="subtitle1">{label}</Typography>
+                <Typography variant="h4">{val}</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* View Toggle Buttons */}
+      <Box sx={{ p: 2, display: 'flex', gap: 2 }}>
+        {['employee','door','detailed'].map(v => (
+          <Button
+            key={v}
+            variant={view === v ? 'contained' : 'outlined'}
+            onClick={() => setView(v)}
+            sx={{
+              backgroundColor: view===v
+                ? (isDark ? '#FFD100' : '#000')
+                : 'inherit',
+              color: view===v
+                ? (isDark ? '#000' : '#FFD100')
+                : 'inherit'
+            }}
+          >
+            {v.charAt(0).toUpperCase() + v.slice(1)} Analysis
+          </Button>
+        ))}
+      </Box>
+
+      {/* Table & Exports */}
+      <Box sx={{ p: 2 }}>
+        {view === 'employee' && (
+          <>
+            <Button variant="contained" onClick={exportEmployee} sx={{ mb: 2 }}>
+              Export Employee Analysis
+            </Button>
+            <AlarmsTable alarms={filtered} maxRows={100} tableType="employee" />
+          </>
+        )}
+        {view === 'door' && (
+          <>
+            <Button variant="contained" onClick={exportDoor} sx={{ mb: 2 }}>
+              Export Door Analysis
+            </Button>
+            <AlarmsTable alarms={filtered} maxRows={100} tableType="door" />
+          </>
+        )}
+        {view === 'detailed' && (
+          <AlarmsTable alarms={filtered} maxRows={100} tableType="detailed" />
+        )}
+      </Box>
+    </Container>
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Read this file carefully Add all Improvement details in this page same as dashboard.js file .if need i will share you anothertr file . dont make another changes in this file
 File 1
 
