@@ -1,3 +1,93 @@
+import React, { useMemo } from 'react';
+import { useTheme } from '@mui/material/styles';
+import { DataGrid } from '@mui/x-data-grid';
+import { Button, Typography } from '@mui/material';
+import * as XLSX from 'xlsx';
+
+const AlarmsTable = ({ alarms = [], maxRows = 10, tableType = 'employee' }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const headerColor = isDark ? '#fff' : '#000';
+  const gridBg = isDark ? '#1e1e1e' : '#fafafa';
+
+  const exportToExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(alarms);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Alarms');
+    XLSX.writeFile(wb, 'alarms.xlsx');
+  };
+
+  // ... employeeStats, doorStats, rawRows unchanged ...
+
+  if (!alarms.length) {
+    return (
+      <Typography variant="h6" align="center" sx={{ mt: 4, color: headerColor }}>
+        No alarm records to display.
+      </Typography>
+    );
+  }
+
+  const commonProps = {
+    pageSize: maxRows,
+    rowsPerPageOptions: [maxRows],
+    autoHeight: true,
+    sx: {
+      bgcolor: gridBg,
+      '.MuiDataGrid-cell, .MuiDataGrid-columnHeaders': {
+        color: headerColor
+      },
+      '.MuiDataGrid-columnSeparator': {
+        display: 'none'
+      }
+    }
+  };
+
+  return (
+    <>
+      {tableType === 'employee' && (
+        <DataGrid rows={employeeStats} columns={empColumns} {...commonProps} />
+      )}
+      {tableType === 'door' && (
+        <DataGrid
+          rows={doorStats}
+          columns={doorColumns}
+          pageSize={Math.min(5, maxRows)}
+          rowsPerPageOptions={[Math.min(5, maxRows)]}
+          autoHeight
+          sx={commonProps.sx}
+        />
+      )}
+      {tableType === 'detailed' && (
+        <>
+          <Button
+            variant="contained"
+            sx={{ mb: 2, backgroundColor: isDark ? '#FFD100' : '#000', color: isDark ? '#000' : '#FFD100' }}
+            onClick={exportToExcel}
+          >
+            Export to Excel
+          </Button>
+          <DataGrid rows={rawRows} columns={rawColumns} {...commonProps} />
+        </>
+      )}
+    </>
+  );
+};
+
+export default AlarmsTable;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import { Card, CardContent, Typography, Grid } from '@mui/material';
